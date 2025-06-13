@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Products Page Content -->
+<div class="products-page">
+    <div class="container py-5">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="products-page-title">Products{% if category %} - {{ category|title }}{% endif %}</h1>
+            </div>
+        </div>
+
+        <!-- Filters and Sort -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <!-- Filter Sidebar -->
+                <div class="filters-sidebar">
+                    <button class="btn btn-outline-primary w-100 mb-3 d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                        <i class="fas fa-filter me-2"></i>Filter
+                    </button>
+
+                    <div class="collapse d-md-block" id="filtersCollapse">
+                        <div class="filter-section">
+                            <h6 class="filter-title">Filter</h6>
+
+                            <!-- Availability Filter -->
+                            <div class="filter-group mb-4">
+                                <h6 class="filter-subtitle">Availability</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="inStock">
+                                    <label class="form-check-label" for="inStock">In stock</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="outStock">
+                                    <label class="form-check-label" for="outStock">Out of stock</label>
+                                </div>
+                            </div>
+
+                            <!-- Price Filter -->
+                            <div class="filter-group mb-4">
+                                <h6 class="filter-subtitle">Price</h6>
+                                <div class="price-range">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm" placeholder="Min" id="priceMin">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm" placeholder="Max" id="priceMax">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Size Filter -->
+                            <div class="filter-group mb-4">
+                                <h6 class="filter-subtitle">Size</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="sizeS">
+                                    <label class="form-check-label" for="sizeS">Small (S)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="sizeM">
+                                    <label class="form-check-label" for="sizeM">Medium (M)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="sizeL">
+                                    <label class="form-check-label" for="sizeL">Large (L)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="sizeXL">
+                                    <label class="form-check-label" for="sizeXL">Extra large (XL)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <!-- Sort Options -->
+                <div class="sort-section mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <span class="results-count">{{ products|length }} products</span>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <select class="form-select form-select-sm d-inline-block w-auto" id="sortSelect">
+                                <option value="featured">Featured</option>
+                                <option value="best-selling">Best selling</option>
+                                <option value="alphabetical-az">Alphabetically, A-Z</option>
+                                <option value="alphabetical-za">Alphabetically, Z-A</option>
+                                <option value="price-low-high">Price, low to high</option>
+                                <option value="price-high-low">Price, high to low</option>
+                                <option value="date-new-old">Date, new to old</option>
+                                <option value="date-old-new">Date, old to new</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="row g-4" id="productsGrid">
+                    {% for product in products %}
+                    <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+                        <div class="product-card fade-in clickable-card" data-product-id="{{ product.id }}" data-product-url="/products/{{ product.id }}/" style="cursor: pointer;">
+                            <div class="product-image-wrapper">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                                {% else %}
+                                    <img src="{% static 'images/placeholder-product.jpg' %}" alt="{{ product.name }}" class="product-image">
+                                {% endif %}
+
+                                {% if product.sale_percent %}
+                                    <div class="product-badge">-{{ product.sale_percent }}%</div>
+                                {% endif %}
+
+                                <div class="product-actions">
+                                    <button class="product-action-btn" data-action="wishlist" title="Add to Wishlist">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                    <button class="product-action-btn" data-action="quickview" title="Quick View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-title">{{ product.name }}</h3>
+                                <div class="product-price">
+                                    {% if product.sale_percent %}
+                                        <span class="price-current">{{ product.discounted_price|floatformat:2 }} EGP</span>
+                                        <span class="price-original">{{ product.price }} EGP</span>
+                                    {% else %}
+                                        <span class="price-current">{{ product.price }} EGP</span>
+                                    {% endif %}
+                                </div>
+                                <div class="product-colors">
+                                    {% for color_variant in product.color_variants.all %}
+                                        {% if color_variant.is_active %}
+                                            <span class="color-option-small"
+                                                  data-color="{{ color_variant.color }}"
+                                                  title="{{ color_variant.color }}"
+                                                  style="background-color: {{ color_variant.color_hex|default:'#000000' }};">
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center">
+                        <p class="text-muted">No products available at the moment.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Load More Button -->
+                {% if products|length >= 12 %}
+                <div class="text-center mt-5">
+                    <button class="btn btn-outline-primary load-more-btn">Load more</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer bg-dark text-white py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">ABOUT SHORTCUT STORE</h5>
+                <p class="footer-text">
+                    We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
+                </p>
+                <div class="social-links">
+                    <a href="#" class="social-link me-3"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="social-link me-3"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link me-3"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">Quick Links</h5>
+                <ul class="footer-links">
+                    <li><a href="#">About us</a></li>
+                    <li><a href="#">Contact us</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Shipping & Delivery</a></li>
+                    <li><a href="#">Return & Exchange</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">Join For Exclusive Email Offers!</h5>
+                <p class="footer-text">Enter your email to receive the latest offers and new products.</p>
+                <form class="newsletter-form">
+                    <div class="input-group">
+                        <input type="email" class="form-control" placeholder="Your email">
+                        <button class="btn btn-primary" type="submit">Subscribe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="copyright mb-0">© 2025 RIGHTS RESERVED TO <strong>SHORTCUT STORE</strong></p>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="payment-icons">
+                    <img src="{% static 'images/visa.svg' %}" alt="Visa" class="payment-icon">
+                    <img src="{% static 'images/mastercard.svg' %}" alt="Mastercard" class="payment-icon">
+                    <img src="{% static 'images/meeza.svg' %}" alt="Meeza" class="payment-icon">
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Wishlist Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasWishlist" aria-labelledby="offcanvasWishlistLabel" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasWishlistLabel">Wishlist</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="wishlist-content">
+            <div class="empty-wishlist text-center" id="emptyWishlist">
+                <i class="fas fa-heart-broken mb-3" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <h6>Your wishlist is empty</h6>
+                <p class="text-muted">You may check out all the available products and add some to your wishlist.</p>
+                <a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+            </div>
+
+            <div class="wishlist-items" id="wishlistItems" style="display: none;">
+                <!-- Wishlist items will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasCartLabel">Shopping cart</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="cart-content">
+            <div class="empty-cart text-center" id="emptyCart">
+                <i class="fas fa-shopping-cart mb-3" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <h6>Your cart is empty</h6>
+                <p class="text-muted">You may check out all the available products and buy some in the shop.</p>
+                <a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+            </div>
+
+            <div class="cart-items" id="cartItems" style="display: none;">
+                <!-- Cart items will be populated here -->
+                <div class="cart-footer mt-4">
+                    <div class="cart-total mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Subtotal:</span>
+                            <span class="fw-bold" id="cartSubtotal">LE 0.00</span>
+                        </div>
+                    </div>
+                    <div class="cart-actions">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="viewCart()">View cart</button>
+                        <button class="btn btn-primary w-100" onclick="checkout()">Check out</button>
+                    </div>
+                    <div class="shipping-info mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-truck me-1"></i>
+                            Free shipping on orders over LE 1000
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Backdrop for Offcanvas -->
+<div id="customBackdrop" class="custom-backdrop"></div>
+
+<!-- Include FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- Custom JavaScript -->
+<script src="{% static 'js/shortcut-store.js' %}"></script>
+<script src="{% static 'js/products.js' %}"></script>
+
+{% endblock %}

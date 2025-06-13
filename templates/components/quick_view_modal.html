@@ -1,0 +1,398 @@
+{% load static %}
+
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="quickViewModalLabel">Quick View</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="quick-view-content" id="quickViewContent">
+                    <!-- Loading state -->
+                    <div class="quick-view-loading text-center py-5" id="quickViewLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Loading product details...</p>
+                    </div>
+                    
+                    <!-- Product content will be loaded here -->
+                    <div class="quick-view-product" id="quickViewProduct" style="display: none;">
+                        <div class="row g-0">
+                            <!-- Product Images -->
+                            <div class="col-md-6">
+                                <div class="quick-view-images p-3">
+                                    <div class="main-image-container mb-3">
+                                        <img src="" alt="Product Image" class="img-fluid rounded main-quick-image" id="quickViewMainImage">
+                                    </div>
+                                    <div class="thumbnail-images d-flex gap-2" id="quickViewThumbnails">
+                                        <!-- Thumbnail images will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="col-md-6">
+                                <div class="quick-view-details p-4">
+                                    <!-- Product Title -->
+                                    <h4 class="product-title mb-3" id="quickViewTitle"></h4>
+                                    
+                                    <!-- Product Price -->
+                                    <div class="product-price mb-3" id="quickViewPrice">
+                                        <!-- Price will be populated here -->
+                                    </div>
+                                    
+                                    <!-- Product Description -->
+                                    <div class="product-description mb-3" id="quickViewDescription">
+                                        <!-- Description will be populated here -->
+                                    </div>
+                                    
+                                    <!-- Color Selection -->
+                                    <div class="color-selection mb-3" id="quickViewColors" style="display: none;">
+                                        <label class="form-label fw-bold">Color:</label>
+                                        <div class="color-options d-flex gap-2" id="quickViewColorOptions">
+                                            <!-- Color options will be populated here -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Size Selection -->
+                                    <div class="size-selection mb-3" id="quickViewSizes" style="display: none;">
+                                        <label class="form-label fw-bold">Size:</label>
+                                        <div class="size-options d-flex gap-2" id="quickViewSizeOptions">
+                                            <!-- Size options will be populated here -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Stock Status -->
+                                    <div class="stock-status mb-3" id="quickViewStock">
+                                        <!-- Stock status will be populated here -->
+                                    </div>
+                                    
+                                    <!-- Quantity Selection -->
+                                    <div class="quantity-selection mb-3" id="quickViewQuantity" style="display: none;">
+                                        <label class="form-label fw-bold">Quantity:</label>
+                                        <div class="quantity-controls d-flex align-items-center gap-2">
+                                            <button class="btn btn-outline-secondary btn-sm quantity-btn" data-action="decrease">-</button>
+                                            <input type="number" class="form-control form-control-sm text-center" 
+                                                   value="1" min="1" max="10" style="width: 60px;" id="quickViewQuantityInput">
+                                            <button class="btn btn-outline-secondary btn-sm quantity-btn" data-action="increase">+</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary w-100 mb-2" id="quickViewAddToCart">
+                                            <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                        </button>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <button class="btn btn-outline-danger w-100" id="quickViewAddToWishlist">
+                                                    <i class="far fa-heart me-2"></i>Wishlist
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <a href="#" class="btn btn-outline-secondary w-100" id="quickViewFullDetails">
+                                                    <i class="fas fa-eye me-2"></i>Full Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Error state -->
+                    <div class="quick-view-error text-center py-5" id="quickViewError" style="display: none;">
+                        <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 3rem;"></i>
+                        <h5>Error Loading Product</h5>
+                        <p class="text-muted">Sorry, we couldn't load the product details. Please try again.</p>
+                        <button class="btn btn-primary" onclick="retryQuickView()">Retry</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-view-images {
+    background: var(--shortcut-bg-secondary);
+}
+
+.main-quick-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    cursor: zoom-in;
+    border-radius: 8px;
+}
+
+.quick-view-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quick-view-thumbnail:hover,
+.quick-view-thumbnail.active {
+    border-color: var(--shortcut-army-green);
+    transform: scale(1.05);
+}
+
+.quick-view-details {
+    height: 100%;
+    overflow-y: auto;
+    background: var(--shortcut-bg-primary);
+    color: var(--shortcut-text-primary);
+}
+
+.color-option-quick {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.color-option-quick:hover,
+.color-option-quick.active {
+    border-color: var(--shortcut-army-green);
+    transform: scale(1.1);
+}
+
+.size-option-quick {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--shortcut-border-light);
+    border-radius: 4px;
+    background: var(--shortcut-bg-secondary);
+    color: var(--shortcut-text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 40px;
+    text-align: center;
+}
+
+.size-option-quick:hover,
+.size-option-quick.active {
+    background: var(--shortcut-army-green);
+    color: white;
+    border-color: var(--shortcut-army-green);
+}
+
+.quantity-controls .quantity-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--shortcut-bg-secondary);
+    border-color: var(--shortcut-border-light);
+    color: var(--shortcut-text-primary);
+}
+
+.quantity-controls .quantity-btn:hover {
+    background: var(--shortcut-army-green);
+    border-color: var(--shortcut-army-green);
+    color: white;
+}
+
+.modal-content {
+    background: var(--shortcut-bg-primary);
+    border: 1px solid var(--shortcut-border-light);
+}
+
+.modal-header {
+    background: var(--shortcut-bg-secondary);
+    color: var(--shortcut-text-primary);
+    border-bottom: 1px solid var(--shortcut-border-light);
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+#quickViewAddToCart {
+    background: linear-gradient(135deg, var(--shortcut-army-green), var(--shortcut-dark-army));
+    border: none;
+}
+
+#quickViewAddToCart:hover {
+    background: linear-gradient(135deg, var(--shortcut-neon-green), var(--shortcut-army-green));
+    transform: translateY(-2px) scale(1.05);
+}
+
+#quickViewAddToWishlist {
+    border-color: var(--shortcut-army-green);
+    color: var(--shortcut-army-green);
+}
+
+#quickViewAddToWishlist:hover {
+    background: var(--shortcut-army-green);
+    border-color: var(--shortcut-army-green);
+}
+
+#quickViewFullDetails {
+    border-color: var(--shortcut-border-light);
+    color: var(--shortcut-text-secondary);
+}
+
+#quickViewFullDetails:hover {
+    background: var(--shortcut-bg-secondary);
+    border-color: var(--shortcut-army-green);
+    color: var(--shortcut-army-green);
+}
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .quick-view-content .row {
+        flex-direction: column;
+    }
+    
+    .main-quick-image {
+        height: 250px;
+    }
+    
+    .quick-view-details {
+        max-height: 400px;
+    }
+}
+</style>
+
+<script>
+// Quick View Modal JavaScript
+let currentQuickViewProductId = null;
+
+// Initialize quick view modal event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Quantity controls in quick view
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#quickViewModal .quantity-btn')) {
+            const btn = e.target.closest('.quantity-btn');
+            const action = btn.dataset.action;
+            const input = document.getElementById('quickViewQuantityInput');
+            let quantity = parseInt(input.value) || 1;
+            
+            if (action === 'increase') {
+                quantity = Math.min(quantity + 1, 10);
+            } else if (action === 'decrease') {
+                quantity = Math.max(quantity - 1, 1);
+            }
+            
+            input.value = quantity;
+        }
+    });
+    
+    // Thumbnail image clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('quick-view-thumbnail')) {
+            const mainImage = document.getElementById('quickViewMainImage');
+            const thumbnails = document.querySelectorAll('.quick-view-thumbnail');
+            
+            // Update active thumbnail
+            thumbnails.forEach(thumb => thumb.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Update main image
+            mainImage.src = e.target.src;
+        }
+    });
+    
+    // Color selection
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('color-option-quick')) {
+            const colorOptions = document.querySelectorAll('.color-option-quick');
+            colorOptions.forEach(option => option.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Update images for selected color if needed
+            updateQuickViewImagesForColor(e.target.dataset.color);
+        }
+    });
+    
+    // Size selection
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('size-option-quick')) {
+            const sizeOptions = document.querySelectorAll('.size-option-quick');
+            sizeOptions.forEach(option => option.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Update stock status for selected size
+            updateQuickViewStockStatus();
+        }
+    });
+    
+    // Add to cart from quick view
+    document.getElementById('quickViewAddToCart').addEventListener('click', function() {
+        addToCartFromQuickView();
+    });
+    
+    // Add to wishlist from quick view
+    document.getElementById('quickViewAddToWishlist').addEventListener('click', function() {
+        addToWishlistFromQuickView();
+    });
+});
+
+function updateQuickViewImagesForColor(color) {
+    // This would update the images based on the selected color
+    // Implementation depends on your product data structure
+    console.log('Updating images for color:', color);
+}
+
+function updateQuickViewStockStatus() {
+    // This would check stock status for the selected color/size combination
+    // Implementation depends on your stock checking system
+    console.log('Updating stock status');
+}
+
+async function addToCartFromQuickView() {
+    if (!currentQuickViewProductId) return;
+
+    const selectedColor = document.querySelector('.color-option-quick.active')?.dataset.color;
+    const selectedSize = document.querySelector('.size-option-quick.active')?.dataset.size;
+    const quantity = parseInt(document.getElementById('quickViewQuantityInput').value) || 1;
+
+    if (!selectedColor || !selectedSize) {
+        showNotification('Please select color and size', 'warning');
+        return;
+    }
+
+    // Use the existing addToCart function with correct parameters
+    if (typeof addToCart === 'function') {
+        const result = await addToCart(currentQuickViewProductId, selectedColor, selectedSize, quantity);
+
+        if (result) {
+            // Close modal after successful add
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('quickViewModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            }, 1000);
+        }
+    }
+}
+
+function addToWishlistFromQuickView() {
+    if (!currentQuickViewProductId) return;
+    
+    // Use the existing addToWishlist function
+    if (typeof addToWishlist === 'function') {
+        addToWishlist(currentQuickViewProductId, 'toggle');
+    }
+}
+
+function retryQuickView() {
+    if (currentQuickViewProductId) {
+        showQuickView(currentQuickViewProductId);
+    }
+}
+</script>

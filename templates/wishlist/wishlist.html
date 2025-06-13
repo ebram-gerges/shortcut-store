@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Wishlist - Shortcut Store{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">My Wishlist</h2>
+            
+            {% if wishlist_items %}
+                <div class="row">
+                    {% for item in wishlist_items %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <div class="wishlist-item-card border rounded p-3" data-item-id="{{ item.id }}">
+                            <!-- Product Image -->
+                            <div class="product-image-container position-relative mb-3">
+                                <a href="/products/{{ item.product.id }}/">
+                                    <img src="{{ item.product.get_first_image.image.url }}" 
+                                         alt="{{ item.product.name }}" 
+                                         class="img-fluid rounded w-100" 
+                                         style="height: 200px; object-fit: cover;">
+                                </a>
+                                
+                                <!-- Remove from Wishlist Button -->
+                                <button class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2 remove-wishlist-btn" 
+                                        data-item-id="{{ item.id }}" 
+                                        title="Remove from wishlist">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                
+                                <!-- Sale Badge -->
+                                {% if item.product.is_on_sale %}
+                                <div class="sale-badge position-absolute top-0 start-0 m-2">
+                                    <span class="badge bg-danger">
+                                        -{{ item.product.discount_percentage|floatformat:0 }}%
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="product-details">
+                                <h6 class="product-name mb-2">
+                                    <a href="/products/{{ item.product.id }}/" class="text-decoration-none">
+                                        {{ item.product.name }}
+                                    </a>
+                                </h6>
+                                
+                                <!-- Price -->
+                                <div class="product-price mb-3">
+                                    {% if item.product.is_on_sale %}
+                                        <span class="price-original text-muted text-decoration-line-through me-2">
+                                            LE {{ item.product.price|floatformat:2 }}
+                                        </span>
+                                        <span class="price-sale fw-bold text-danger">
+                                            LE {{ item.product.discounted_price|floatformat:2 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="price fw-bold">
+                                            LE {{ item.product.price|floatformat:2 }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Stock Status -->
+                                <div class="stock-status mb-3">
+                                    {% if item.product.total_stock > 0 %}
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>In Stock
+                                        </small>
+                                    {% else %}
+                                        <small class="text-danger">
+                                            <i class="fas fa-times-circle me-1"></i>Out of Stock
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="action-buttons">
+                                    {% if item.product.total_stock > 0 %}
+                                        <a href="/products/{{ item.product.id }}/" class="btn btn-primary btn-sm w-100 mb-2">
+                                            View Product
+                                        </a>
+                                        <button class="btn btn-outline-primary btn-sm w-100 quick-add-to-cart-btn" 
+                                                data-product-id="{{ item.product.id }}">
+                                            Quick Add to Cart
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm w-100" disabled>
+                                            Out of Stock
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Wishlist Actions -->
+                <div class="wishlist-actions mt-4 text-center">
+                    <a href="/products/" class="btn btn-outline-primary me-3">Continue Shopping</a>
+                    <button class="btn btn-danger" onclick="clearWishlist()">Clear Wishlist</button>
+                </div>
+            {% else %}
+                <!-- Empty Wishlist -->
+                <div class="empty-wishlist text-center py-5">
+                    <i class="fas fa-heart-broken mb-3" style="font-size: 4rem; color: var(--text-muted);"></i>
+                    <h4>Your wishlist is empty</h4>
+                    <p class="text-muted mb-4">You may check out all the available products and add some to your wishlist.</p>
+                    <a href="/products/" class="btn btn-primary">Start Shopping</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom Warning Modal for Item Removal -->
+<div class="modal fade" id="removeWishlistItemModal" tabindex="-1" aria-labelledby="removeWishlistItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="removeWishlistItemModalLabel">Remove from Wishlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove this item from your wishlist?</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmRemoveWishlistBtn">Remove Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Wishlist Modal -->
+<div class="modal fade" id="clearWishlistModal" tabindex="-1" aria-labelledby="clearWishlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="clearWishlistModalLabel">Clear Wishlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove all items from your wishlist? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmClearWishlistBtn">Clear All</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove wishlist item buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-wishlist-btn')) {
+            const itemId = e.target.closest('.remove-wishlist-btn').dataset.itemId;
+            showRemoveWishlistItemModal(itemId);
+        }
+    });
+    
+    // Quick add to cart buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('quick-add-to-cart-btn')) {
+            const productId = e.target.dataset.productId;
+            quickAddToCart(productId);
+        }
+    });
+});
+
+function showRemoveWishlistItemModal(itemId) {
+    const modal = new bootstrap.Modal(document.getElementById('removeWishlistItemModal'));
+    const confirmBtn = document.getElementById('confirmRemoveWishlistBtn');
+    
+    confirmBtn.onclick = function() {
+        removeWishlistItem(itemId);
+        modal.hide();
+    };
+    
+    modal.show();
+}
+
+function removeWishlistItem(itemId) {
+    fetch('/wishlist/remove/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            item_id: itemId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove item from DOM
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (itemElement) {
+                itemElement.remove();
+            }
+            
+            // Update wishlist counter
+            updateWishlistCounter(data.wishlist_count);
+            
+            // Show empty state if no items left
+            if (data.wishlist_count === 0) {
+                location.reload();
+            }
+            
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.error || 'Error removing item', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error removing item:', error);
+        showNotification('Error removing item', 'error');
+    });
+}
+
+function quickAddToCart(productId) {
+    // For quick add, we'll redirect to product page since we need size/color selection
+    // In a full implementation, this could open a quick selection modal
+    window.location.href = `/products/${productId}/`;
+}
+
+function clearWishlist() {
+    const modal = new bootstrap.Modal(document.getElementById('clearWishlistModal'));
+    const confirmBtn = document.getElementById('confirmClearWishlistBtn');
+    
+    confirmBtn.onclick = function() {
+        // Remove all items one by one (could be optimized with a bulk endpoint)
+        const itemElements = document.querySelectorAll('[data-item-id]');
+        itemElements.forEach(element => {
+            const itemId = element.dataset.itemId;
+            removeWishlistItem(itemId);
+        });
+        modal.hide();
+    };
+    
+    modal.show();
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+function updateWishlistCounter(newCount) {
+    const wishlistIndicator = document.getElementById('wishlistIndicator');
+    if (wishlistIndicator) {
+        if (newCount > 0) {
+            wishlistIndicator.style.display = 'block';
+        } else {
+            wishlistIndicator.style.display = 'none';
+        }
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Use existing notification system from shortcut-store.js
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+    } else {
+        alert(message);
+    }
+}
+</script>
+{% endblock %}

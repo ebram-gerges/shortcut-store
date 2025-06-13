@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - Shortcut Store{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<style>
+.profile-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, var(--shortcut-army-green), var(--shortcut-dark-army));
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    background: var(--shortcut-neon-green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--shortcut-dark-army);
+}
+
+.profile-info {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid var(--shortcut-neon-green);
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--shortcut-army-green);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    color: var(--auth-text);
+    font-size: 1rem;
+}
+
+.verification-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.verified {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--auth-success);
+}
+
+.unverified {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--auth-error);
+}
+
+.profile-actions {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        margin: 1rem auto;
+    }
+    
+    .profile-header {
+        padding: 1.5rem;
+    }
+    
+    .profile-info {
+        padding: 1.5rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {% if user.fullName %}
+                {{ user.fullName|first|upper }}
+            {% else %}
+                {{ user.email|first|upper }}
+            {% endif %}
+        </div>
+        <h1>
+            {% if user.fullName %}
+                {{ user.fullName }}
+            {% else %}
+                {{ user.email }}
+            {% endif %}
+        </h1>
+        <p>Shortcut Store Member since {{ user.date_joined|date:"F Y" }}</p>
+    </div>
+
+    <!-- Profile Information -->
+    <div class="profile-info">
+        <h2 style="margin-bottom: 1.5rem; color: var(--shortcut-army-green);">Account Information</h2>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Email Address</div>
+                <div class="info-value">
+                    {{ user.email }}
+                    <span class="verification-badge {% if user.email_verified %}verified{% else %}unverified{% endif %}">
+                        <i class="fas fa-{% if user.email_verified %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                        {% if user.email_verified %}Verified{% else %}Unverified{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Full Name</div>
+                <div class="info-value">{{ user.fullName|default:"Not provided" }}</div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Primary Phone</div>
+                <div class="info-value">{{ user.phone|default:"Not provided" }}</div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Secondary Phone</div>
+                <div class="info-value">{{ user.secondary_phone|default:"Not provided" }}</div>
+            </div>
+
+            <div class="info-item" style="grid-column: 1 / -1;">
+                <div class="info-label">Address</div>
+                <div class="info-value">{{ user.address|default:"Not provided" }}</div>
+            </div>
+
+            {% if user.height or user.weight %}
+            <div class="info-item">
+                <div class="info-label">Height</div>
+                <div class="info-value">{{ user.height|default:"Not provided" }}{% if user.height %} cm{% endif %}</div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Weight</div>
+                <div class="info-value">{{ user.weight|default:"Not provided" }}{% if user.weight %} kg{% endif %}</div>
+            </div>
+            {% endif %}
+
+            <div class="info-item">
+                <div class="info-label">Account Status</div>
+                <div class="info-value">
+                    <span class="verification-badge {% if user.is_active %}verified{% else %}unverified{% endif %}">
+                        <i class="fas fa-{% if user.is_active %}check-circle{% else %}times-circle{% endif %}"></i>
+                        {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Last Login</div>
+                <div class="info-value">{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</div>
+            </div>
+        </div>
+
+        <!-- Profile Actions -->
+        <div class="profile-actions">
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-edit"></i>
+                Edit Profile
+            </a>
+            <a href="#" class="btn btn-link">
+                <i class="fas fa-key"></i>
+                Change Password
+            </a>
+            {% if not user.email_verified %}
+            <a href="{% url 'accounts:verify_email' %}" class="btn btn-link">
+                <i class="fas fa-envelope"></i>
+                Verify Email
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any profile-specific JavaScript here
+    console.log('Profile page loaded for user:', '{{ user.email }}');
+});
+</script>
+{% endblock %}

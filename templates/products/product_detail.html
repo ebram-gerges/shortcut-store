@@ -1,0 +1,510 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<!-- CSRF Token for AJAX requests -->
+<meta name="csrf-token" content="{{ csrf_token }}" />
+
+<!-- Product Detail Page -->
+<div class="product-detail-page">
+	<div class="container py-5">
+		<div class="row">
+			<!-- Product Images -->
+			<div class="col-lg-6 mb-4">
+				<div class="product-images">
+					<!-- Main Image -->
+					<div class="main-image-container mb-3">
+						{% if current_color_variant.images.all %} {% with
+						current_color_variant.images.all|first as main_image %}
+						<img
+							src="{{ main_image.image.url }}"
+							alt="{{ product.name }}"
+							class="main-product-image"
+							id="mainProductImage"
+						/>
+						{% endwith %} {% elif product.image %}
+						<img
+							src="{{ product.image.url }}"
+							alt="{{ product.name }}"
+							class="main-product-image"
+							id="mainProductImage"
+						/>
+						{% else %}
+						<img
+							src="{% static 'images/placeholder-product.jpg' %}"
+							alt="{{ product.name }}"
+							class="main-product-image"
+							id="mainProductImage"
+						/>
+						{% endif %}
+					</div>
+
+					<!-- Thumbnail Images -->
+					<div class="thumbnail-images">
+						<div class="row g-2" id="thumbnailContainer">
+							{% if current_color_variant.images.all %} {% for image in
+							current_color_variant.images.all %}
+							<div class="col-3">
+								<img
+									src="{{ image.image.url }}"
+									alt="{{ product.name }}"
+									class="thumbnail-image {% if forloop.first %}active{% endif %}"
+									data-main-src="{{ image.image.url }}"
+								/>
+							</div>
+							{% endfor %} {% elif product.image %}
+							<div class="col-3">
+								<img
+									src="{{ product.image.url }}"
+									alt="{{ product.name }}"
+									class="thumbnail-image active"
+									data-main-src="{{ product.image.url }}"
+								/>
+							</div>
+							{% endif %}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Product Info -->
+			<div class="col-lg-6">
+				<div class="product-info-detail">
+					<!-- Product Title -->
+					<h1 class="product-detail-title">{{ product.name }}</h1>
+
+					<!-- Rating (placeholder) -->
+					<div class="product-rating mb-3">
+						<div class="stars">
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+							<i class="fas fa-star"></i>
+						</div>
+						<span class="rating-text">(5.0)</span>
+					</div>
+
+					<!-- Price -->
+					<div class="product-price-detail mb-4">
+						{% if product.sale_percent %}
+						<span class="price-original-detail">LE {{ product.price }}</span>
+						<span class="price-current-detail"
+							>LE {{ product.discounted_price|floatformat:2 }}</span
+						>
+						<span class="discount-badge">{{ product.sale_percent }}% OFF</span>
+						{% else %}
+						<span class="price-current-detail">LE {{ product.price }}</span>
+						{% endif %}
+						<div class="unit-price">
+							<small class="text-muted">Unit price / per</small>
+						</div>
+					</div>
+
+					<!-- Color Selection -->
+					{% if color_variants %}
+					<div class="color-selection mb-4">
+						<label class="form-label fw-bold"
+							>Color:
+							<span id="selectedColorName">{{ selected_color }}</span></label
+						>
+						<div class="color-options">
+							{% for variant in color_variants %}
+							<div
+								class="color-option {% if variant.color == selected_color %}active{% endif %}"
+								data-color="{{ variant.color }}"
+								data-color-hex="{{ variant.color_hex|default:'#000000' }}"
+								title="{{ variant.color }}"
+							>
+								{% if variant.color_hex %}
+								<div
+									class="color-swatch"
+									style="background-color: {{ variant.color_hex }};"
+								></div>
+								{% else %}
+								<div class="color-swatch color-{{ variant.color|lower }}"></div>
+								{% endif %}
+							</div>
+							{% endfor %}
+						</div>
+					</div>
+					{% endif %}
+
+					<!-- Size Selection -->
+					{% if size_variants %}
+					<div class="size-selection mb-4">
+						<label class="form-label fw-bold">Size:</label>
+						<div class="size-options">
+							{% for variant in size_variants %}
+							<input
+								type="radio"
+								class="btn-check"
+								name="size"
+								id="size-{{ variant.size|lower }}"
+								value="{{ variant.size }}"
+							/>
+							<label
+								class="btn btn-outline-dark size-btn"
+								for="size-{{ variant.size|lower }}"
+							>
+								{{ variant.size }}
+							</label>
+							{% endfor %}
+						</div>
+					</div>
+					{% endif %}
+
+					<!-- Stock Status Display -->
+					<div class="stock-status mb-4" id="stockStatus">
+						<div class="stock-indicator">
+							<span class="stock-text" id="stockText"
+								>Select color and size to check availability</span
+							>
+							<div class="stock-badge" id="stockBadge"></div>
+						</div>
+					</div>
+
+					<!-- Quantity -->
+					<div class="quantity-selection mb-4">
+						<label class="form-label fw-bold">Quantity:</label>
+						<div class="quantity-controls">
+							<button
+								type="button"
+								class="btn btn-outline-secondary quantity-btn"
+								id="decreaseQty"
+							>
+								-
+							</button>
+							<input
+								type="number"
+								class="form-control quantity-input"
+								id="quantity"
+								value="1"
+								min="1"
+								max="10"
+							/>
+							<button
+								type="button"
+								class="btn btn-outline-secondary quantity-btn"
+								id="increaseQty"
+							>
+								+
+							</button>
+						</div>
+					</div>
+
+					<!-- Add to Cart Button -->
+					<div class="add-to-cart-section mb-4">
+						<button
+							class="btn btn-dark add-to-cart-btn w-100"
+							id="addToCartBtn"
+							disabled
+						>
+							<span id="addToCartText"
+								>Add to Cart - LE {{ product.price }}</span
+							>
+						</button>
+						<button
+							class="btn btn-outline-dark add-to-wishlist-btn w-100 mt-2"
+							id="addToWishlistBtn"
+							onclick="addToWishlist({{ product.id }})"
+						>
+							<i class="far fa-heart me-2" id="wishlistIcon"></i>Add to Wishlist
+						</button>
+					</div>
+
+					<!-- Ask a Question -->
+					<div class="ask-question mb-4">
+						<button
+							class="btn btn-link p-0 text-decoration-underline"
+							data-bs-toggle="modal"
+							data-bs-target="#askQuestionModal"
+						>
+							Ask a question
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Product Details Tabs -->
+		<div class="row mt-5">
+			<div class="col-12">
+				<div class="product-details-tabs">
+					<ul class="nav nav-tabs" id="productTabs" role="tablist">
+						<li class="nav-item" role="presentation">
+							<button
+								class="nav-link active"
+								id="description-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#description"
+								type="button"
+								role="tab"
+							>
+								Description
+							</button>
+						</li>
+						<li class="nav-item" role="presentation">
+							<button
+								class="nav-link"
+								id="details-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#details"
+								type="button"
+								role="tab"
+							>
+								Details
+							</button>
+						</li>
+						<li class="nav-item" role="presentation">
+							<button
+								class="nav-link"
+								id="reviews-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#reviews"
+								type="button"
+								role="tab"
+							>
+								Reviews
+							</button>
+						</li>
+					</ul>
+					<div class="tab-content" id="productTabsContent">
+						<div
+							class="tab-pane fade show active"
+							id="description"
+							role="tabpanel"
+						>
+							<div class="tab-content-inner">
+								<ul>
+									<li>Embroidered Oversized Tees</li>
+									<li>100% cotton</li>
+									<li>270 GSM</li>
+									<li>Male model 185cm wearing size <strong>L</strong></li>
+									<li>Female model 165cm wearing size <strong>S</strong></li>
+								</ul>
+								{% if product.description %}
+								<p>{{ product.description }}</p>
+								{% endif %}
+							</div>
+						</div>
+						<div class="tab-pane fade" id="details" role="tabpanel">
+							<div class="tab-content-inner">
+								<h6>Size</h6>
+								<p>S, M, L, XL</p>
+
+								<h6>Material</h6>
+								<p>100% Cotton</p>
+
+								<h6>Care Instructions</h6>
+								<p>Machine wash cold, tumble dry low</p>
+							</div>
+						</div>
+						<div class="tab-pane fade" id="reviews" role="tabpanel">
+							<div class="tab-content-inner">
+								<p>No reviews yet. Be the first to review this product!</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Ask Question Modal -->
+<div class="modal fade" id="askQuestionModal" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Ask a question</h5>
+				<button
+					type="button"
+					class="btn-close"
+					data-bs-dismiss="modal"
+				></button>
+			</div>
+			<div class="modal-body">
+				<form id="askQuestionForm">
+					<div class="mb-3">
+						<label for="questionName" class="form-label">Name *</label>
+						<input
+							type="text"
+							class="form-control"
+							id="questionName"
+							required
+						/>
+					</div>
+					<div class="mb-3">
+						<label for="questionEmail" class="form-label">Email *</label>
+						<input
+							type="email"
+							class="form-control"
+							id="questionEmail"
+							required
+						/>
+					</div>
+					<div class="mb-3">
+						<label for="questionPhone" class="form-label">Phone number</label>
+						<input type="tel" class="form-control" id="questionPhone" />
+					</div>
+					<div class="mb-3">
+						<label for="questionMessage" class="form-label">Message</label>
+						<textarea
+							class="form-control"
+							id="questionMessage"
+							rows="4"
+						></textarea>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+					Cancel
+				</button>
+				<button type="button" class="btn btn-primary" id="sendQuestionBtn">
+					Send
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Wishlist Sidebar -->
+<div
+	class="offcanvas offcanvas-end"
+	tabindex="-1"
+	id="offcanvasWishlist"
+	aria-labelledby="offcanvasWishlistLabel"
+	data-bs-backdrop="false"
+>
+	<div class="offcanvas-header">
+		<h5 class="offcanvas-title" id="offcanvasWishlistLabel">Wishlist</h5>
+		<button
+			type="button"
+			class="btn-close"
+			data-bs-dismiss="offcanvas"
+			aria-label="Close"
+		></button>
+	</div>
+	<div class="offcanvas-body">
+		<div class="wishlist-content">
+			<div class="empty-wishlist text-center" id="emptyWishlist">
+				<i
+					class="fas fa-heart-broken mb-3"
+					style="font-size: 3rem; color: var(--text-muted)"
+				></i>
+				<h6>Your wishlist is empty</h6>
+				<p class="text-muted">
+					You may check out all the available products and add some to your
+					wishlist.
+				</p>
+				<a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+			</div>
+
+			<div class="wishlist-items" id="wishlistItems" style="display: none">
+				<!-- Wishlist items will be populated here -->
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Cart Sidebar -->
+<div
+	class="offcanvas offcanvas-end"
+	tabindex="-1"
+	id="offcanvasCart"
+	aria-labelledby="offcanvasCartLabel"
+	data-bs-backdrop="false"
+>
+	<div class="offcanvas-header">
+		<h5 class="offcanvas-title" id="offcanvasCartLabel">Shopping cart</h5>
+		<button
+			type="button"
+			class="btn-close"
+			data-bs-dismiss="offcanvas"
+			aria-label="Close"
+		></button>
+	</div>
+	<div class="offcanvas-body">
+		<div class="cart-content">
+			<div class="empty-cart text-center" id="emptyCart">
+				<i
+					class="fas fa-shopping-cart mb-3"
+					style="font-size: 3rem; color: var(--text-muted)"
+				></i>
+				<h6>Your cart is empty</h6>
+				<p class="text-muted">
+					You may check out all the available products and buy some in the shop.
+				</p>
+				<a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+			</div>
+
+			<div class="cart-items" id="cartItems" style="display: none">
+				<!-- Cart Pricing Summary -->
+				<div class="cart-pricing-summary" id="cartPricingSummary">
+					<div class="pricing-row">
+						<span class="pricing-label">Subtotal (Before Discounts):</span>
+						<span class="pricing-value" id="cartOriginalSubtotal">LE 0.00</span>
+					</div>
+					<div class="pricing-row" id="discountRow" style="display: none">
+						<span class="pricing-label">Total Discounts:</span>
+						<span class="pricing-value discount" id="cartTotalDiscounts"
+							>-LE 0.00</span
+						>
+					</div>
+					<div class="pricing-row">
+						<span class="pricing-label">Final Total:</span>
+						<span class="pricing-value total" id="cartFinalTotal">LE 0.00</span>
+					</div>
+				</div>
+
+				<!-- Free Shipping Indicator -->
+				<div
+					class="free-shipping-indicator"
+					id="freeShippingIndicator"
+					style="display: none"
+				>
+					<i class="fas fa-truck me-2"></i>
+					Free Shipping Applied!
+				</div>
+
+				<!-- Cart items will be populated here -->
+				<div id="cartItemsList"></div>
+
+				<div class="cart-footer mt-4">
+					<div class="cart-actions">
+						<button
+							class="btn btn-outline-primary w-100 mb-2"
+							onclick="viewCart()"
+						>
+							View cart
+						</button>
+						<button class="btn btn-primary w-100" onclick="checkout()">
+							Check out
+						</button>
+					</div>
+					<div class="shipping-info mt-3">
+						<small class="text-muted">
+							<i class="fas fa-truck me-1"></i>
+							Free shipping on orders over LE 1000
+						</small>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Custom Backdrop for Offcanvas -->
+<div id="customBackdrop" class="custom-backdrop"></div>
+
+<!-- Include FontAwesome -->
+<link
+	rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+/>
+
+<!-- Custom JavaScript -->
+<script src="{% static 'js/dxlr-clone.js' %}"></script>
+<script src="{% static 'js/product-detail.js' %}"></script>
+
+{% endblock %}

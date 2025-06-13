@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Shortcut Store - Main Page -->
+
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-image-container">
+        {% if newest_product and newest_product.image %}
+            <img src="{{ newest_product.image.url }}" alt="Hero Image" class="hero-image">
+        {% else %}
+            <img src="{% static 'images/hero-image.jpg' %}" alt="Hero Image" class="hero-image">
+        {% endif %}
+        <div class="hero-overlay">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-6 text-center">
+                        {% if newest_product %}
+                            <h1 class="hero-title">{{ newest_product.name }}</h1>
+                            <p class="hero-subtitle text-white mb-4">Latest Arrival! Be the first to grab it.</p>
+                            <a href="/products/{{ newest_product.id }}/" class="btn btn-primary hero-btn">Shop Now</a>
+                        {% else %}
+                            <h1 class="hero-title">Simplify Your Style</h1>
+                            <a href="/products/" class="btn btn-primary hero-btn">Shop Now</a>
+                        {% endif %}
+                        <a href="/products/?sale={{ max_sale_percent }}" class="sale-badge clickable-sale-badge" title="Shop {{ max_sale_percent }}% off items">
+                            <span class="sale-text">SALE UP TO {{ max_sale_percent }}%</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="categories-section py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-5">Shop by Categories</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="category-card">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'images/tshirts-category.jpg' %}" alt="T-Shirts" class="category-image">
+                        <div class="category-overlay">
+                            <h3 class="category-title">T-Shirts</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="category-card">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'images/bottoms-category.jpg' %}" alt="Bottoms" class="category-image">
+                        <div class="category-overlay">
+                            <h3 class="category-title">BOTTOMS</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="category-card">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'images/sets-category.jpg' %}" alt="Sets" class="category-image">
+                        <div class="category-overlay">
+                            <h3 class="category-title">SETS</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Summer Collection Section -->
+<section class="summer-collection py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">Summer Collection</h2>
+                <p class="section-subtitle">Discover the summer collection from <strong>Shortcut Store</strong></p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for product in all_products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <a href="/products/{{ product.id }}/" class="product-card-link">
+                    <div class="product-card fade-in hero-product-card" data-product-id="{{ product.id }}">
+                        <div class="product-image-wrapper">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                            {% else %}
+                                <img src="{% static 'images/placeholder-product.jpg' %}" alt="{{ product.name }}" class="product-image">
+                            {% endif %}
+
+                            {% if product.sale_percent %}
+                                <div class="product-badge">-{{ product.sale_percent }}%</div>
+                            {% endif %}
+
+                            <div class="product-actions">
+                                <button class="product-action-btn" data-action="wishlist" title="Add to Wishlist" onclick="event.stopPropagation(); event.preventDefault();">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                                <button class="product-action-btn" data-action="quickview" title="Quick View" onclick="event.stopPropagation(); event.preventDefault();">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-title">{{ product.name }}</h3>
+                            <div class="product-price">
+                                {% if product.sale_percent %}
+                                    <span class="price-current">{{ product.discounted_price|floatformat:2 }} EGP</span>
+                                    <span class="price-original">{{ product.price }} EGP</span>
+                                {% else %}
+                                    <span class="price-current">{{ product.price }} EGP</span>
+                                {% endif %}
+                            </div>
+                            <div class="product-sizes">
+                                <span class="size-option" data-size="S">S</span>
+                                <span class="size-option" data-size="M">M</span>
+                                <span class="size-option" data-size="L">L</span>
+                                <span class="size-option" data-size="XL">XL</span>
+                            </div>
+                            <span class="quick-add-btn">
+                                View Product
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No products available at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="about-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h3 class="about-title">ABOUT SHORTCUT STORE</h3>
+                <p class="about-text">
+                    We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
+                    Our products blend comfort with minimalist design, offering a style that celebrates
+                    individuality in the digital age.
+                </p>
+                <a href="/products/" class="btn btn-outline-primary">Discover Products</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer bg-dark text-white py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">ABOUT SHORTCUT STORE</h5>
+                <p class="footer-text">
+                    We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
+                </p>
+                <div class="social-links">
+                    <a href="#" class="social-link me-3"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="social-link me-3"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link me-3"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">Quick Links</h5>
+                <ul class="footer-links">
+                    <li><a href="#">About us</a></li>
+                    <li><a href="#">Contact us</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Shipping & Delivery</a></li>
+                    <li><a href="#">Return & Exchange</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">Join For Exclusive Email Offers!</h5>
+                <p class="footer-text">Enter your email to receive the latest offers and new products.</p>
+                <form class="newsletter-form">
+                    <div class="input-group">
+                        <input type="email" class="form-control" placeholder="Your email">
+                        <button class="btn btn-primary" type="submit">Subscribe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="copyright mb-0">© 2025 RIGHTS RESERVED TO <strong>SHORTCUT STORE</strong></p>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="payment-icons">
+                    <img src="{% static 'images/visa.svg' %}" alt="Visa Payment" class="payment-icon">
+                    <img src="{% static 'images/mastercard.svg' %}" alt="Mastercard Payment" class="payment-icon">
+                    <img src="{% static 'images/meeza.svg' %}" alt="Meeza Payment" class="payment-icon">
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+{% endblock %}

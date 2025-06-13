@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Shortcut Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --shortcut-army-green: #10b981;
+            --shortcut-dark-army: #047857;
+            --shortcut-neon-green: #39ff14;
+            --shortcut-bg-primary: #0f172a;
+            --shortcut-bg-secondary: #1e293b;
+            --shortcut-text-primary: #f8fafc;
+            --shortcut-text-secondary: #cbd5e1;
+            --shortcut-border-light: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--shortcut-bg-primary) 0%, var(--shortcut-bg-secondary) 100%);
+            color: var(--shortcut-text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .error-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .spider-web {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .web-line {
+            position: absolute;
+            background: linear-gradient(45deg, 
+                rgba(16, 185, 129, 0.3) 0%, 
+                rgba(16, 185, 129, 0.6) 50%, 
+                rgba(16, 185, 129, 0.3) 100%);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+            animation: webGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes webGlow {
+            0% {
+                box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+                opacity: 0.6;
+            }
+            100% {
+                box-shadow: 0 0 20px rgba(57, 255, 20, 0.8);
+                opacity: 1;
+            }
+        }
+
+        /* Radial web lines */
+        .web-line.radial-1 {
+            width: 2px;
+            height: 40%;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%) rotate(0deg);
+            transform-origin: bottom center;
+        }
+
+        .web-line.radial-2 {
+            width: 2px;
+            height: 35%;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%) rotate(30deg);
+            transform-origin: bottom center;
+        }
+
+        .web-line.radial-3 {
+            width: 2px;
+            height: 35%;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%) rotate(60deg);
+            transform-origin: bottom center;
+        }
+
+        .web-line.radial-4 {
+            width: 2px;
+            height: 35%;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%) rotate(90deg);
+            transform-origin: bottom center;
+        }
+
+        .web-line.radial-5 {
+            width: 2px;
+            height: 35%;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%) rotate(120deg);
+            transform-origin: bottom center;
+        }
+
+        .web-line.radial-6 {
+            width: 2px;
+            height: 35%;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%) rotate(150deg);
+            transform-origin: bottom center;
+        }
+
+        /* Circular web lines */
+        .web-line.circle-1 {
+            width: 200px;
+            height: 2px;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            border: 2px solid rgba(16, 185, 129, 0.4);
+            background: transparent;
+            width: 200px;
+            height: 200px;
+        }
+
+        .web-line.circle-2 {
+            width: 300px;
+            height: 300px;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            background: transparent;
+        }
+
+        .web-line.circle-3 {
+            width: 400px;
+            height: 400px;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            background: transparent;
+        }
+
+        .child-character {
+            position: absolute;
+            top: 45%;
+            left: 30%;
+            width: 80px;
+            height: 80px;
+            background: var(--shortcut-army-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            animation: searchMove 4s ease-in-out infinite;
+            z-index: 5;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+        }
+
+        @keyframes searchMove {
+            0% {
+                transform: translate(0, 0) scale(1);
+                top: 45%;
+                left: 30%;
+            }
+            25% {
+                transform: translate(0, 0) scale(1.1);
+                top: 35%;
+                left: 45%;
+            }
+            50% {
+                transform: translate(0, 0) scale(1);
+                top: 55%;
+                left: 60%;
+            }
+            75% {
+                transform: translate(0, 0) scale(1.1);
+                top: 40%;
+                left: 35%;
+            }
+            100% {
+                transform: translate(0, 0) scale(1);
+                top: 45%;
+                left: 30%;
+            }
+        }
+
+        .child-character::before {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: rgba(57, 255, 20, 0.3);
+            border-radius: 50%;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: searchLight 4s ease-in-out infinite;
+        }
+
+        @keyframes searchLight {
+            0%, 100% {
+                opacity: 0.3;
+                transform: translateX(-50%) scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateX(-50%) scale(1.5);
+            }
+        }
+
+        .error-content {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 2px solid var(--shortcut-border-light);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            margin: 0 2rem;
+        }
+
+        .error-title {
+            font-size: 6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--shortcut-army-green), var(--shortcut-neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: titlePulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            0% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            100% {
+                transform: scale(1.05);
+                filter: brightness(1.2);
+            }
+        }
+
+        .error-subtitle {
+            font-size: 1.5rem;
+            color: var(--shortcut-text-primary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .error-message {
+            font-size: 1.1rem;
+            color: var(--shortcut-text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-home {
+            background: linear-gradient(135deg, var(--shortcut-army-green), var(--shortcut-dark-army));
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-home:hover {
+            background: linear-gradient(135deg, var(--shortcut-neon-green), var(--shortcut-army-green));
+            transform: translateY(-2px) scale(1.05);
+            color: var(--shortcut-bg-primary);
+            text-decoration: none;
+        }
+
+        .btn-search {
+            background: transparent;
+            color: var(--shortcut-army-green);
+            padding: 1rem 2rem;
+            border: 2px solid var(--shortcut-army-green);
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-search:hover {
+            background: var(--shortcut-army-green);
+            color: white;
+            transform: translateY(-2px) scale(1.05);
+            text-decoration: none;
+        }
+
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--shortcut-neon-green);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 1;
+            }
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 20%; animation-delay: 1s; }
+        .particle:nth-child(3) { left: 30%; animation-delay: 2s; }
+        .particle:nth-child(4) { left: 40%; animation-delay: 3s; }
+        .particle:nth-child(5) { left: 50%; animation-delay: 4s; }
+        .particle:nth-child(6) { left: 60%; animation-delay: 5s; }
+        .particle:nth-child(7) { left: 70%; animation-delay: 1.5s; }
+        .particle:nth-child(8) { left: 80%; animation-delay: 2.5s; }
+        .particle:nth-child(9) { left: 90%; animation-delay: 3.5s; }
+
+        @media (max-width: 768px) {
+            .error-title {
+                font-size: 4rem;
+            }
+            
+            .error-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .error-content {
+                padding: 2rem;
+                margin: 0 1rem;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-home,
+            .btn-search {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .child-character {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            .child-character,
+            .web-line,
+            .particle,
+            .error-title {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Spider Web Background -->
+    <div class="spider-web">
+        <!-- Radial lines -->
+        <div class="web-line radial-1"></div>
+        <div class="web-line radial-2"></div>
+        <div class="web-line radial-3"></div>
+        <div class="web-line radial-4"></div>
+        <div class="web-line radial-5"></div>
+        <div class="web-line radial-6"></div>
+        
+        <!-- Circular lines -->
+        <div class="web-line circle-1"></div>
+        <div class="web-line circle-2"></div>
+        <div class="web-line circle-3"></div>
+    </div>
+
+    <!-- Floating Particles -->
+    <div class="floating-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Child Character Searching -->
+    <div class="child-character">
+        <i class="fas fa-search"></i>
+    </div>
+
+    <!-- Error Content -->
+    <div class="error-container">
+        <div class="error-content">
+            <h1 class="error-title">404</h1>
+            <h2 class="error-subtitle">Oops! Lost in the Web</h2>
+            <p class="error-message">
+                Our little explorer is searching through the digital web, but the page you're looking for seems to have wandered off into cyberspace. Don't worry though - we'll help you find your way back to the good stuff!
+            </p>
+            <div class="error-actions">
+                <a href="/" class="btn-home">
+                    <i class="fas fa-home"></i>
+                    Back to Home
+                </a>
+                <a href="/products/" class="btn-search">
+                    <i class="fas fa-store"></i>
+                    Browse Products
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create additional floating particles on mouse move
+            let mouseTimeout;
+            document.addEventListener('mousemove', function(e) {
+                clearTimeout(mouseTimeout);
+                mouseTimeout = setTimeout(() => {
+                    createParticle(e.clientX, e.clientY);
+                }, 100);
+            });
+
+            function createParticle(x, y) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.width = '6px';
+                particle.style.height = '6px';
+                particle.style.background = 'var(--shortcut-neon-green)';
+                particle.style.borderRadius = '50%';
+                particle.style.pointerEvents = 'none';
+                particle.style.zIndex = '3';
+                particle.style.animation = 'fadeOut 2s ease-out forwards';
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 2000);
+            }
+            
+            // Add fadeOut animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeOut {
+                    0% {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: scale(0) translateY(-50px);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

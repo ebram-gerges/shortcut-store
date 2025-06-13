@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - Shortcut Store{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <!-- Header -->
+            <div class="auth-header">
+                <h1 class="auth-title">Login</h1>
+                <p class="auth-subtitle">Sign in to your Shortcut Store account</p>
+            </div>
+
+            <!-- Login Form -->
+            <form method="post" class="auth-form" id="loginForm">
+                {% csrf_token %}
+                <!-- Display form errors -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">
+                        Email Address
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="field-error">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">
+                        Password
+                    </label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="field-error">{{ form.password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember_me" id="remember_me">
+                        <span class="checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="{% url 'accounts:password_reset' %}" class="forgot-password">Forgot password?</a>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary auth-submit" id="submitBtn">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Signing In...
+                    </span>
+                </button>
+
+                <!-- OAuth Section -->
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+
+                {% load socialaccount %}
+                {% if 'google' in SOCIALACCOUNT_PROVIDERS %}
+                    <a href="{% provider_login_url 'google' %}" class="btn btn-google">
+                        <i class="fab fa-google"></i>
+                        Sign in with Google
+                    </a>
+                {% else %}
+                    <button type="button" class="btn btn-google" id="googleSignIn">
+                        <i class="fab fa-google"></i>
+                        Sign in with Google
+                    </button>
+                {% endif %}
+            </form>
+
+            <!-- Footer -->
+            <div class="auth-footer">
+                <p>Don't have an account?
+                    <a href="{% url 'accounts:register' %}" class="auth-link">Register now</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/auth.js' %}"></script>
+{% endblock %}

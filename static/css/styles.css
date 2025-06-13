@@ -1,0 +1,95 @@
+:root {
+  --color-peach: #ffbb94;
+  --color-coral: #fb9590;
+  --color-rose: #dc586d;
+  --color-plum: #a33757;
+  --color-burgundy: #852e4e;
+  --color-grape: #4c1d3d;
+}
+
+@keyframes popup {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-peach);
+  color: var(--color-grape);
+}
+
+.hero-section {
+  background: linear-gradient(135deg, var(--color-rose), var(--color-burgundy));
+  color: white;
+}
+
+.btn-primary {
+  background-color: var(--color-coral);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-rose);
+}
+
+.section-title {
+  color: var(--color-plum);
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+
+.card,
+.hero-card {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              border-radius 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.card:hover,
+.hero-card:hover,
+.card.card-hover,
+.hero-card.card-hover {
+  transform: scale(1.07) translateY(-8px);
+  z-index: 2;
+  box-shadow: 0 16px 32px rgba(76, 29, 61, 0.18), 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  border-color: #4c1d3d;
+}
+
+footer {
+  background-color: var(--color-grape);
+  color: white;
+}
+
+/* Custom backdrop for offcanvas */
+.custom-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s linear, visibility 0.15s linear;
+}
+
+.custom-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Ensure body doesn't retain modal-open class */
+body:not(.modal-open) {
+  overflow: auto !important;
+  padding-right: 0 !important;
+}

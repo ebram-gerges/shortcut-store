@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- DXLR Clone - Main Page -->
+
+<!-- Top Banner -->
+<div class="top-banner">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12 text-center">
+                <span class="banner-text">WELCOME TO SHORTCUT STORE</span>
+                <a href="#" class="banner-link ms-3">BUY 3 & GET FREE SHIPPING!</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+    <div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand" href="/">
+            <span class="fw-bold fs-4" style="color: var(--dxlr-text-primary);">Shortcut Store</span>
+        </a>
+        
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Navigation Links -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Summer Collection</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Top Selling</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        T-Shirts
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Embroidered Oversized</a></li>
+                        <li><a class="dropdown-item" href="#">Printed Oversized</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        Bottoms
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Sweatpants</a></li>
+                        <li><a class="dropdown-item" href="#">Shorts</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Customer Reviews</a>
+                </li>
+            </ul>
+            
+            <!-- Right Side Icons -->
+            <div class="navbar-icons d-flex align-items-center">
+                <a href="#" class="nav-icon me-3">
+                    <i class="fas fa-search"></i>
+                </a>
+
+                <!-- User Authentication -->
+                {% if user.is_authenticated %}
+                    <div class="nav-item dropdown me-3">
+                        <a class="nav-icon dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar me-2">
+                                {% if user.fullName %}
+                                    {{ user.fullName|first|upper }}
+                                {% else %}
+                                    {{ user.email|first|upper }}
+                                {% endif %}
+                            </div>
+                            <span class="user-name d-none d-md-inline">
+                                {% if user.fullName %}
+                                    {{ user.fullName|truncatechars:15 }}
+                                {% else %}
+                                    {{ user.email|truncatechars:15 }}
+                                {% endif %}
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">
+                                {% if user.fullName %}
+                                    {{ user.fullName }}
+                                {% else %}
+                                    {{ user.email }}
+                                {% endif %}
+                            </h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-box me-2"></i>Orders
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="auth-buttons me-3">
+                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm me-2">Login</a>
+                        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Register</a>
+                    </div>
+                {% endif %}
+
+                <a href="#" class="nav-icon me-3 position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWishlist" onclick="checkAuthForWishlist(event)">
+                    <i class="fas fa-heart"></i>
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="wishlistCount">0</span>
+                </a>
+                <a href="#" class="nav-icon position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" onclick="checkAuthForCart(event)">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="cartCount">0</span>
+                </a>
+                <div class="currency-selector ms-3">
+                    <img src="{% static 'images/eg-flag.svg' %}" alt="EGP" class="flag-icon">
+                    <span>EGP</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-image-container">
+        {% if newest_product and newest_product.image %}
+            <img src="{{ newest_product.image.url }}" alt="Hero Image" class="hero-image">
+        {% else %}
+            <img src="{% static 'images/hero-image.jpg' %}" alt="Hero Image" class="hero-image">
+        {% endif %}
+        <div class="hero-overlay">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-6 text-center">
+                        {% if newest_product %}
+                            <h1 class="hero-title">{{ newest_product.name }}</h1>
+                            <p class="hero-subtitle text-white mb-4">Latest Arrival! Be the first to grab it.</p>
+                            <a href="/products/{{ newest_product.id }}/" class="btn btn-primary hero-btn">Shop Now</a>
+                        {% else %}
+                            <h1 class="hero-title">Simplify Your Style</h1>
+                            <a href="/products/" class="btn btn-primary hero-btn">Shop Now</a>
+                        {% endif %}
+                        <a href="/products/?sale={{ max_sale_percent }}" class="sale-badge clickable-sale-badge" title="Shop {{ max_sale_percent }}% off items">
+                            <span class="sale-text">SALE UP TO {{ max_sale_percent }}%</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="categories-section py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-5">Shop by Categories</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="category-card">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'images/tshirts-category.jpg' %}" alt="T-Shirts" class="category-image">
+                        <div class="category-overlay">
+                            <h3 class="category-title">T-Shirts</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="category-card">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'images/bottoms-category.jpg' %}" alt="Bottoms" class="category-image">
+                        <div class="category-overlay">
+                            <h3 class="category-title">BOTTOMS</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="category-card">
+                    <div class="category-image-wrapper">
+                        <img src="{% static 'images/sets-category.jpg' %}" alt="Sets" class="category-image">
+                        <div class="category-overlay">
+                            <h3 class="category-title">SETS</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Summer Collection Section -->
+<section class="summer-collection py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">Summer Collection</h2>
+                <p class="section-subtitle">Discover the summer collection from <strong>Shortcut Store</strong></p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for product in all_products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="product-card fade-in" data-product-id="{{ product.id }}">
+                    <div class="product-image-wrapper">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                        {% else %}
+                            <img src="{% static 'images/placeholder-product.jpg' %}" alt="{{ product.name }}" class="product-image">
+                        {% endif %}
+
+                        {% if product.sale_percent %}
+                            <div class="product-badge">-{{ product.sale_percent }}%</div>
+                        {% endif %}
+
+                        <div class="product-actions">
+                            <button class="product-action-btn" data-action="wishlist" title="Add to Wishlist">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                            <button class="product-action-btn" data-action="quickview" title="Quick View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">{{ product.name }}</h3>
+                        <div class="product-price">
+                            {% if product.sale_percent %}
+                                <span class="price-current">{{ product.discounted_price|floatformat:2 }} EGP</span>
+                                <span class="price-original">{{ product.price }} EGP</span>
+                            {% else %}
+                                <span class="price-current">{{ product.price }} EGP</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-sizes">
+                            <span class="size-option" data-size="S">S</span>
+                            <span class="size-option" data-size="M">M</span>
+                            <span class="size-option" data-size="L">L</span>
+                            <span class="size-option" data-size="XL">XL</span>
+                        </div>
+                        <a href="/products/{{ product.id }}/" class="quick-add-btn">
+                            View Product
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No products available at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="about-section py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h3 class="about-title">ABOUT SHORTCUT STORE</h3>
+                <p class="about-text">
+                    We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
+                    Our products blend comfort with minimalist design, offering a style that celebrates
+                    individuality in the digital age.
+                </p>
+                <a href="/products/" class="btn btn-outline-primary">Discover Products</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer bg-dark text-white py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">ABOUT SHORTCUT STORE</h5>
+                <p class="footer-text">
+                    We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
+                </p>
+                <div class="social-links">
+                    <a href="#" class="social-link me-3"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="social-link me-3"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link me-3"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">Quick Links</h5>
+                <ul class="footer-links">
+                    <li><a href="#">About us</a></li>
+                    <li><a href="#">Contact us</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Shipping & Delivery</a></li>
+                    <li><a href="#">Return & Exchange</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5 class="footer-title">Join For Exclusive Email Offers!</h5>
+                <p class="footer-text">Enter your email to receive the latest offers and new products.</p>
+                <form class="newsletter-form">
+                    <div class="input-group">
+                        <input type="email" class="form-control" placeholder="Your email">
+                        <button class="btn btn-primary" type="submit">Subscribe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="copyright mb-0">© 2025 RIGHTS RESERVED TO <strong>SHORTCUT STORE</strong></p>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="payment-icons">
+                    <img src="{% static 'images/visa.svg' %}" alt="Visa" class="payment-icon">
+                    <img src="{% static 'images/mastercard.svg' %}" alt="Mastercard" class="payment-icon">
+                    <img src="{% static 'images/meeza.svg' %}" alt="Meeza" class="payment-icon">
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Wishlist Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasWishlist" aria-labelledby="offcanvasWishlistLabel" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasWishlistLabel">Wishlist</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="wishlist-content">
+            <div class="empty-wishlist text-center" id="emptyWishlist">
+                <i class="fas fa-heart-broken mb-3" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <h6>Your wishlist is empty</h6>
+                <p class="text-muted">You may check out all the available products and add some to your wishlist.</p>
+                <a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+            </div>
+
+            <div class="wishlist-items" id="wishlistItems" style="display: none;">
+                <!-- Wishlist items will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasCartLabel">Shopping cart</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="cart-content">
+            <div class="empty-cart text-center" id="emptyCart">
+                <i class="fas fa-shopping-cart mb-3" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <h6>Your cart is empty</h6>
+                <p class="text-muted">You may check out all the available products and buy some in the shop.</p>
+                <a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+            </div>
+
+            <div class="cart-items" id="cartItems" style="display: none;">
+                <!-- Cart items will be populated here -->
+                <div class="cart-footer mt-4">
+                    <div class="cart-total mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Subtotal:</span>
+                            <span class="fw-bold" id="cartSubtotal">LE 0.00</span>
+                        </div>
+                    </div>
+                    <div class="cart-actions">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="viewCart()">View cart</button>
+                        <button class="btn btn-primary w-100" onclick="checkout()">Check out</button>
+                    </div>
+                    <div class="shipping-info mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-truck me-1"></i>
+                            Free shipping on orders over LE 1000
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Backdrop for Offcanvas -->
+<div id="customBackdrop" class="custom-backdrop"></div>
+
+<!-- Include FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- Custom JavaScript -->
+<script src="{% static 'js/dxlr-clone.js' %}"></script>
+
+{% endblock %}

@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Custom Backdrop for Offcanvas -->
+<div id="customBackdrop" class="custom-backdrop"></div>
+
+<!-- Bootstrap Offcanvas Sidebar for Filters -->
+<div class="offcanvas offcanvas-start custom-offcanvas-filters" tabindex="-1" id="offcanvasFilters" aria-labelledby="offcanvasFiltersLabel" style="background: var(--color-peach); color: var(--color-grape);" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasFiltersLabel">Filters</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="mb-4">
+            <div class="fw-bold mb-2">Price</div>
+            <select class="form-select form-select-sm mb-2">
+                <option value="asc">Lowest to Highest</option>
+                <option value="desc">Highest to Lowest</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <div class="fw-bold mb-2">Color</div>
+            <select class="form-select form-select-sm mb-2">
+                <option value="">All</option>
+                <option>Black</option>
+                <option>White</option>
+                <option>Red</option>
+                <option>Blue</option>
+                <option>Green</option>
+                <option>Yellow</option>
+                <option>Other</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <div class="fw-bold mb-2">Size</div>
+            <select class="form-select form-select-sm mb-2">
+                <option value="">All</option>
+                <option>XS</option>
+                <option>S</option>
+                <option>M</option>
+                <option>L</option>
+                <option>XL</option>
+                <option>XXL</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Wishlist Offcanvas Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasWishlist" aria-labelledby="offcanvasWishlistLabel" style="background: var(--color-peach); color: var(--color-grape);" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasWishlistLabel">Wishlist</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        {% if wishlist_items %}
+            <ul class="list-group list-group-flush">
+                {% for item in wishlist_items %}
+                <li class="list-group-item d-flex justify-content-between align-items-center" style="background: var(--color-peach); color: var(--color-grape);">
+                    <span>{{ item.name }}</span>
+                    <span class="fw-bold">{{ item.price }} EGP</span>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="text-center text-muted">Your wishlist is empty.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cart Offcanvas Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel" style="background: var(--color-peach); color: var(--color-grape);" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasCartLabel">Cart</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        {% if cart_items %}
+            <ul class="list-group list-group-flush mb-3">
+                {% for item in cart_items %}
+                <li class="list-group-item" style="background: var(--color-peach); color: var(--color-grape);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">{{ item.name }}</div>
+                            <div class="small text-muted">Size: {{ item.size }} | Color: {{ item.color }}</div>
+                            <div class="small">Qty: {{ item.quantity }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">{{ item.price }} EGP</div>
+                            <div class="small text-muted">Total: {{ item.total }} EGP</div>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="text-end fw-bold fs-5">Total: {{ cart_total }} EGP</div>
+        {% else %}
+            <div class="text-center text-muted">Your cart is empty.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Middle-Low Section for Info Links -->
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 120px; margin-top: 48px; margin-bottom: 32px;">
+    <ul class="list-inline mb-0 text-center">
+        <li class="list-inline-item mx-3"><a href="#faq" class="text-decoration-none fw-bold" style="color: var(--color6);">FAQ</a></li>
+        <li class="list-inline-item mx-3"><a href="#contact" class="text-decoration-none fw-bold" style="color: var(--color6);">Contact Us</a></li>
+        <li class="list-inline-item mx-3"><a href="#about" class="text-decoration-none fw-bold" style="color: var(--color6);">About Us</a></li>
+    </ul>
+</div>
+
+<!-- Main Content with margin to avoid navbar overlap -->
+<div id="main-content" class="mt-5">
+    <!-- Hero Section for Newest Product -->
+    {% if newest_product %}
+    <section class="hero-product-section py-5">
+        <div class="container d-flex justify-content-center">
+            <div class="hero-card card shadow-lg p-4 rounded-4 overflow-hidden position-relative" style="max-width: 700px; width: 100%; background: rgba(255,255,255,0.95); transition: background 0.3s;">
+                <div class="row g-4 align-items-center text-center">
+                    <div class="col-12 col-md-5 d-flex justify-content-center align-items-center">
+                        <div class="hero-img-wrapper overflow-hidden rounded-4 w-100 position-relative" style="height:320px;">
+                            {% if newest_product.image %}
+                                <img src="{{ newest_product.image.url }}" alt="{{ newest_product.name }}" class="hero-img img-fluid w-100 h-100 position-relative" style="object-fit:cover; background:#f8f9fa;" onerror="this.onerror=null;this.src='{% static 'images/placeholder-1920x1080.png' %}'">
+                            {% else %}
+                                <img src="{% static 'images/placeholder-1920x1080.png' %}" alt="{{ newest_product.name }}" class="hero-img img-fluid w-100 h-100 position-relative" style="object-fit:cover; background:#f8f9fa;">
+                            {% endif %}
+                            {% if newest_product.sale_percent %}
+                                <span class="badge bg-danger position-absolute top-0 start-0 m-2 sale-badge" style="z-index:3; font-size:1.2rem; transform: rotate(-18deg); box-shadow:0 2px 8px rgba(76,29,61,0.12);">-{{ newest_product.sale_percent }}%</span>
+                            {% endif %}
+                            <div class="hero-img-overlay position-absolute top-0 start-0 w-100 h-100" style="pointer-events:none;"></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-7 d-flex flex-column justify-content-center align-items-center">
+                        <h2 class="mb-2 w-100">{{ newest_product.name }}</h2>
+                        <div class="mb-2">
+                            {% if newest_product.sale_percent %}
+                                <span class="text-decoration-line-through text-muted">{{ newest_product.price }} EGP</span>
+                                <span class="ms-2 fw-bold text-success">{{ newest_product.discounted_price|floatformat:2 }} EGP</span>
+                                <span class="badge bg-danger ms-2">-{{ newest_product.sale_percent }}%</span>
+                            {% else %}
+                                <span class="fw-bold">{{ newest_product.price }} EGP</span>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">Latest Arrival! Be the first to grab it.</div>
+                        <a href="/products/{{ newest_product.id }}/" class="btn btn-primary">View Product</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Sale Products Section -->
+    <section class="products-section py-5" id="products">
+        <div class="container">
+            <h2 class="text-center mb-4">On Sale</h2>
+            <div class="row g-4 justify-content-center">
+                {% for product in sale_products %}
+                <div class="col-12 col-sm-6 col-lg-4 d-flex">
+                    <div class="card h-100 shadow-sm position-relative flex-fill">
+<div class="product-img-wrapper overflow-hidden rounded-4 w-100 position-relative" style="height:220px;">
+    {% if product.image %}
+        <img src="{{ product.image.url }}" class="product-img img-fluid w-100 h-100 position-relative" alt="{{ product.name }}" style="object-fit:contain; background:#f8f9fa;" onerror="this.onerror=null;this.src='{% static 'images/placeholder-1920x1080.png' %}'">
+    {% else %}
+        <img src="{% static 'images/placeholder-1920x1080.png' %}" class="product-img img-fluid w-100 h-100 position-relative" alt="{{ product.name }}" style="object-fit:contain; background:#f8f9fa;">
+    {% endif %}
+    {% if product.sale_percent %}
+        <span class="badge bg-danger position-absolute top-0 start-0 m-2 sale-badge" style="z-index:3; font-size:1rem;">-{{ product.sale_percent }}%</span>
+    {% endif %}
+    <div class="product-img-overlay position-absolute top-0 start-0 w-100 h-100" style="pointer-events:none;"></div>
+</div>
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ product.name }}</h5>
+                                <p class="card-text mb-1">
+                                    {% if product.sale_percent %}
+                                        <span class="text-decoration-line-through text-dark" style="font-weight:500;">${{ product.price }}</span>
+                                        <span class="ms-2 fw-bold text-success">${{ product.discounted_price|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="fw-bold text-dark">{{ product.price }} EGP</span>
+                                    {% endif %}
+                                </p>
+                                <a href="/products/{{ product.id }}/" class="btn btn-sm btn-outline-primary">Quick Add</a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted">No products on sale right now.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Category Sections -->
+    <section class="category-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">Shop by Category</h2>
+            <div class="row justify-content-center align-items-center g-4 text-center">
+                <div class="col-12 col-sm-6 col-lg-4 d-flex justify-content-center">
+                    <div class="category-glass card h-100 shadow-sm text-center transition-transform mx-auto" style="backdrop-filter: blur(12px); background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.25);">
+                        <img src="{% static 'images/tshirts.jpg' %}" class="card-img-top" alt="T-Shirts" style="width:100%;height:auto;aspect-ratio:16/9;min-width:320px;min-height:180px;object-fit:cover;background:#f8f9fa;" onerror="this.onerror=null;this.src='{% static 'images/tshirt.jpg' %}'">
+                        <div class="card-body">
+                            <h5 class="card-title">T-Shirts</h5>
+                            <a href="/products/?category=tshirts" class="btn btn-outline-primary mt-2">Shop T-Shirts</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4 d-flex justify-content-center">
+                    <div class="category-glass card h-100 shadow-sm text-center transition-transform mx-auto" style="backdrop-filter: blur(12px); background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.25);">
+                        <img src="{% static 'images/basictop.jpg' %}" class="card-img-top" alt="Basic Top" style="width:100%;height:auto;aspect-ratio:16/9;min-width:320px;min-height:180px;object-fit:cover;background:#f8f9fa;" onerror="this.onerror=null;this.src='{% static 'images/tshirt.jpg' %}'">
+                        <div class="card-body">
+                            <h5 class="card-title">Basic Top</h5>
+                            <a href="/products/?category=basictop" class="btn btn-outline-primary mt-2">Shop Basic Tops</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4 d-flex justify-content-center">
+                    <div class="category-glass card h-100 shadow-sm text-center transition-transform mx-auto" style="backdrop-filter: blur(12px); background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.25);">
+                        <img src="{% static 'images/shoes.jpg' %}" class="card-img-top" alt="Shoes" style="width:100%;height:auto;aspect-ratio:16/9;min-width:320px;min-height:180px;object-fit:cover;background:#f8f9fa;" onerror="this.onerror=null;this.src='{% static 'images/tshirt.jpg' %}'">
+                        <div class="card-body">
+                            <h5 class="card-title">Shoes</h5>
+                            <a href="/products/?category=shoes" class="btn btn-outline-primary mt-2">Shop Shoes</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Bootstrap JS and your custom JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/landing.js' %}"></script>
+{% endblock %}

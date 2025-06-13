@@ -1,0 +1,66 @@
+{% load static %}
+
+<!-- Wishlist Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasWishlist" aria-labelledby="offcanvasWishlistLabel" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasWishlistLabel">Wishlist</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="wishlist-content">
+            <div class="empty-wishlist text-center" id="emptyWishlist">
+                <i class="fas fa-heart-broken mb-3" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <h6>Your wishlist is empty</h6>
+                <p class="text-muted">You may check out all the available products and add some to your wishlist.</p>
+                <a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+            </div>
+
+            <div class="wishlist-items" id="wishlistItems" style="display: none;">
+                <!-- Wishlist items will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel" data-bs-backdrop="false">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasCartLabel">Shopping cart</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="cart-content">
+            <div class="empty-cart text-center" id="emptyCart">
+                <i class="fas fa-shopping-cart mb-3" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <h6>Your cart is empty</h6>
+                <p class="text-muted">You may check out all the available products and buy some in the shop.</p>
+                <a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+            </div>
+
+            <div class="cart-items" id="cartItems" style="display: none;">
+                <!-- Cart items will be populated here -->
+                <div class="cart-footer mt-4">
+                    <div class="cart-total mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Subtotal:</span>
+                            <span class="fw-bold" id="cartSubtotal">LE 0.00</span>
+                        </div>
+                    </div>
+                    <div class="cart-actions">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="viewCart()">View cart</button>
+                        <button class="btn btn-primary w-100" onclick="checkout()">Check out</button>
+                    </div>
+                    <div class="shipping-info mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-truck me-1"></i>
+                            Free shipping on orders over LE 1000
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Backdrop for Offcanvas -->
+<div id="customBackdrop" class="custom-backdrop"></div>
