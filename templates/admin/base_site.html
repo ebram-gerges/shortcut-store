@@ -4,144 +4,28 @@
 {% block title %}{{ title }} | Shortcut Store Admin{% endblock %}
 
 {% block branding %}
-<h1 id="site-name">
-    <a href="{% url 'admin:index' %}">
-        <i class="fas fa-store"></i>
-        Shortcut Store Admin
-    </a>
-</h1>
+<div class="custom-admin-topbar">
+  <span class="custom-admin-brand">Shortcut Store Admin</span>
+</div>
 {% endblock %}
 
 {% block extrahead %}
-    {{ block.super }}
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
-    <!-- Custom Admin Styles -->
-    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin-custom.css' %}">
-    
-    <!-- Theme Toggle Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check for saved theme preference or default to light mode
-            const savedTheme = localStorage.getItem('admin-theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            document.body.setAttribute('data-theme', savedTheme);
-            
-            // Create theme toggle button
-            const toggleButton = document.createElement('button');
-            toggleButton.className = 'admin-theme-toggle';
-            toggleButton.innerHTML = savedTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-            toggleButton.title = 'Toggle Dark Mode';
-            
-            toggleButton.addEventListener('click', function() {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                document.body.setAttribute('data-theme', newTheme);
-                localStorage.setItem('admin-theme', newTheme);
-                
-                // Update button icon
-                this.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-                
-                // Add animation
-                this.style.transform = 'rotate(360deg)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 300);
-            });
-            
-            document.body.appendChild(toggleButton);
-            
-            // Add icons to navigation items
-            setTimeout(() => {
-                addNavigationIcons();
-            }, 100);
-        });
-        
-        function addNavigationIcons() {
-            // Add icons to sidebar navigation
-            const navLinks = document.querySelectorAll('#nav-sidebar a');
-            navLinks.forEach(link => {
-                const href = link.getAttribute('href') || '';
-                const text = link.textContent.toLowerCase();
-                
-                let icon = '';
-                if (href.includes('product') || text.includes('product')) {
-                    icon = '<i class="fas fa-shopping-bag"></i> ';
-                } else if (href.includes('user') || text.includes('user')) {
-                    icon = '<i class="fas fa-users"></i> ';
-                } else if (href.includes('order') || text.includes('order')) {
-                    icon = '<i class="fas fa-shopping-cart"></i> ';
-                } else if (href.includes('category') || text.includes('categor')) {
-                    icon = '<i class="fas fa-folder"></i> ';
-                } else if (href.includes('review') || text.includes('review')) {
-                    icon = '<i class="fas fa-star"></i> ';
-                } else if (href.includes('voucher') || text.includes('voucher')) {
-                    icon = '<i class="fas fa-ticket-alt"></i> ';
-                } else if (href.includes('cart') || text.includes('cart')) {
-                    icon = '<i class="fas fa-shopping-cart"></i> ';
-                } else if (href.includes('wishlist') || text.includes('wishlist')) {
-                    icon = '<i class="fas fa-heart"></i> ';
-                } else if (href.includes('group') || text.includes('group')) {
-                    icon = '<i class="fas fa-users-cog"></i> ';
-                } else if (href.includes('site') || text.includes('site')) {
-                    icon = '<i class="fas fa-cog"></i> ';
-                }
-                
-                if (icon && !link.innerHTML.includes('<i class="fas')) {
-                    link.innerHTML = icon + link.textContent;
-                }
-            });
-            
-            // Add icons to dashboard modules
-            const moduleHeaders = document.querySelectorAll('.module h2');
-            moduleHeaders.forEach(header => {
-                const text = header.textContent.toLowerCase();
-                let icon = '';
-                
-                if (text.includes('product')) {
-                    icon = '<i class="fas fa-shopping-bag"></i> ';
-                } else if (text.includes('user') || text.includes('authentication')) {
-                    icon = '<i class="fas fa-users"></i> ';
-                } else if (text.includes('order')) {
-                    icon = '<i class="fas fa-shopping-cart"></i> ';
-                } else if (text.includes('recent')) {
-                    icon = '<i class="fas fa-clock"></i> ';
-                }
-                
-                if (icon && !header.innerHTML.includes('<i class="fas')) {
-                    header.innerHTML = icon + header.textContent;
-                }
-            });
-        }
-    </script>
-    
-    <style>
-        /* Additional inline styles for immediate effect */
-        body {
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        
-        [data-theme="dark"] body {
-            background-color: #1a1a1a !important;
-            color: #ffffff !important;
-        }
-        
-        [data-theme="dark"] #nav-sidebar {
-            background-color: #2d2d2d !important;
-        }
-        
-        [data-theme="dark"] .breadcrumbs {
-            background-color: #3a3a3a !important;
-            color: #ffffff !important;
-        }
-        
-        [data-theme="dark"] .breadcrumbs a {
-            color: #10b981 !important;
-        }
-    </style>
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin-custom.css' %}">
 {% endblock %}
 
-{% block nav-global %}{% endblock %}
+{% block content_title %}
+  <h1 class="custom-admin-title">{{ title }}</h1>
+{% endblock %}
+
+{% block content %}
+  {% if request.path == '/admin/' %}
+    <div class="custom-admin-dashboard">
+      <h2>Admin Action History</h2>
+      <div id="admin-action-history">
+        {% include "admin/action_history.html" %}
+      </div>
+    </div>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

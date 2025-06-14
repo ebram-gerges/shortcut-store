@@ -3,6 +3,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from products.api import ProductViewSet
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'api/products', ProductViewSet, basename='api-products')
 
 def checkout_redirect(request):
     """Redirect /checkout/ to /orders/checkout/"""
@@ -10,6 +19,9 @@ def checkout_redirect(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('', include(router.urls)),
     path('accounts/', include('accounts.urls')),
     path('auth/', include('allauth.urls')),  # Google OAuth URLs
     path('products/', include('products.urls')),

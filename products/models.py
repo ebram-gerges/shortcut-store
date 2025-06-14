@@ -44,6 +44,7 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0, help_text="Number of products in stock")
     image = models.ImageField(upload_to='products/', blank=True, null=True, help_text="Main product image")
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True, help_text="Set to False to hide this product from the store")
     CATEGORY_CHOICES = [
         ('tshirts', 'T-Shirts'),
         ('basictop', 'Basic Top'),
@@ -234,3 +235,26 @@ class ProductStock(models.Model):
             self.save()
             return True
         return False
+
+class ProductImage(models.Model):
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='products/images/')
+    alt_text = models.CharField(max_length=200, blank=True)
+    is_primary = models.BooleanField(default=False, help_text="Primary image for this product")
+    order = models.PositiveIntegerField(default=0, help_text="Display order")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+
+    def __str__(self):
+        return f"{self.product.name} - Image {self.order}"
+
+    def save(self, *args, **kwargs):
+        # If this is set as primary, unset other primary images for this product
+        if self.is_primary:
+            ProductImage.objects.filter(
+                product=self.product,
+                is_primary=True
+            ).exclude(pk=self.pk).update(is_primary=False)
+        super().save(*args, **kwargs)

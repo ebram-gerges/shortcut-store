@@ -12,53 +12,45 @@
 				<div class="product-images">
 					<!-- Main Image -->
 					<div class="main-image-container mb-3">
-						{% if current_color_variant.images.all %} {% with
-						current_color_variant.images.all|first as main_image %}
-						<img
-							src="{{ main_image.image.url }}"
-							alt="{{ product.name }}"
-							class="main-product-image"
-							id="mainProductImage"
-						/>
-						{% endwith %} {% elif product.image %}
-						<img
-							src="{{ product.image.url }}"
-							alt="{{ product.name }}"
-							class="main-product-image"
-							id="mainProductImage"
-						/>
+						{% if current_color_variant.images.all %}
+							{% with first_image=current_color_variant.images.all|first %}
+								<img src="{{ first_image.image.url }}"
+									 alt="{{ product.name }}"
+									 class="main-product-image"
+									 id="mainProductImage" />
+							{% endwith %}
+						{% elif product.image %}
+							<img src="{{ product.image.url }}"
+								 alt="{{ product.name }}"
+								 class="main-product-image"
+								 id="mainProductImage" />
 						{% else %}
-						<img
-							src="{% static 'images/placeholder-product.jpg' %}"
-							alt="{{ product.name }}"
-							class="main-product-image"
-							id="mainProductImage"
-						/>
+							<img src="{% static 'images/placeholder-product.jpg' %}"
+								 alt="{{ product.name }}"
+								 class="main-product-image"
+								 id="mainProductImage" />
 						{% endif %}
 					</div>
 
 					<!-- Thumbnail Images -->
 					<div class="thumbnail-images">
 						<div class="row g-2" id="thumbnailContainer">
-							{% if current_color_variant.images.all %} {% for image in
-							current_color_variant.images.all %}
-							<div class="col-3">
-								<img
-									src="{{ image.image.url }}"
-									alt="{{ product.name }}"
-									class="thumbnail-image {% if forloop.first %}active{% endif %}"
-									data-main-src="{{ image.image.url }}"
-								/>
-							</div>
-							{% endfor %} {% elif product.image %}
-							<div class="col-3">
-								<img
-									src="{{ product.image.url }}"
-									alt="{{ product.name }}"
-									class="thumbnail-image active"
-									data-main-src="{{ product.image.url }}"
-								/>
-							</div>
+							{% if current_color_variant.images.all %}
+								{% for image in current_color_variant.images.all %}
+									<div class="col-3">
+										<img src="{{ image.image.url }}"
+											 alt="{{ product.name }}"
+											 class="thumbnail-image {% if forloop.first %}active{% endif %}"
+											 data-main-src="{{ image.image.url }}" />
+									</div>
+								{% endfor %}
+							{% elif product.image %}
+								<div class="col-3">
+									<img src="{{ product.image.url }}"
+										 alt="{{ product.name }}"
+										 class="thumbnail-image active"
+										 data-main-src="{{ product.image.url }}" />
+								</div>
 							{% endif %}
 						</div>
 					</div>
