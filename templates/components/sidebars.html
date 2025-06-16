@@ -13,6 +13,9 @@
                 <h6>Your wishlist is empty</h6>
                 <p class="text-muted">You may check out all the available products and add some to your wishlist.</p>
                 <a href="/products/" class="btn btn-outline-primary">Return to shop</a>
+                <button class="btn btn-sm btn-outline-secondary mt-2" onclick="cleanWishlist()">
+                    <i class="fas fa-broom me-1"></i>Clean Wishlist
+                </button>
             </div>
 
             <div class="wishlist-items" id="wishlistItems" style="display: none;">
@@ -39,16 +42,37 @@
 
             <div class="cart-items" id="cartItems" style="display: none;">
                 <!-- Cart items will be populated here -->
+                <div id="cartItemsList" class="cart-items-list mb-3">
+                    <!-- Dynamic cart items will be inserted here -->
+                </div>
+
                 <div class="cart-footer mt-4">
-                    <div class="cart-total mb-3">
+                    <div class="cart-pricing-summary">
+                        <div class="d-flex justify-content-between" id="originalSubtotalRow">
+                            <span>Original Subtotal:</span>
+                            <span class="fw-bold" id="cartOriginalSubtotal">LE 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-success" id="discountRow" style="display: none;">
+                            <span>Total Discounts:</span>
+                            <span class="fw-bold" id="cartTotalDiscounts">-LE 0.00</span>
+                        </div>
+                        <hr>
                         <div class="d-flex justify-content-between">
-                            <span>Subtotal:</span>
-                            <span class="fw-bold" id="cartSubtotal">LE 0.00</span>
+                            <span class="fw-bold">Final Total:</span>
+                            <span class="fw-bold text-primary" id="cartFinalTotal">LE 0.00</span>
                         </div>
                     </div>
-                    <div class="cart-actions">
+
+                    <div class="cart-actions mt-3">
                         <button class="btn btn-outline-primary w-100 mb-2" onclick="viewCart()">View cart</button>
                         <button class="btn btn-primary w-100" onclick="checkout()">Check out</button>
+                    </div>
+
+                    <div class="shipping-info mt-3" id="freeShippingIndicator" style="display: none;">
+                        <small class="text-success">
+                            <i class="fas fa-truck me-1"></i>
+                            Free shipping applied!
+                        </small>
                     </div>
                     <div class="shipping-info mt-3">
                         <small class="text-muted">

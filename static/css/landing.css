@@ -2,66 +2,195 @@
 
 /* ... (existing CSS) ... */
 
-:root {
-  --color-peach: #ffbb94;
-  --color-coral: #fb9590;
-  --color-rose: #dc586d;
-  --color-plum: #a33757;
-  --color-burgundy: #852e4e;
-  --color-grape: #4c1d3d;
+/* Custom Product Card Styles */
+.card.product-custom {
+    display: flex;
+    align-items: center;
+    background: #252831 url(https://www.dropbox.com/s/fuadz3vmw2nsylm/bg.png?raw=1) no-repeat;
+    height: 600px;
+    width: 800px;
+    margin: 0 auto;
+    box-shadow: 0px 15px 50px 10px rgba(0, 0, 0, 0.4);
+    margin-top: 2%;
+    position: relative;
+    font-family: 'Muli', Arial, sans-serif;
 }
-
-@keyframes popup {
-  0% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  
+.card.product-custom .left {
+    height: 395px;
+    width: 330px;
+    display: flex;
+    align-items: center;
+    background-color: #ff6d39;
+    margin-left: 93px;
+    border-radius: 0% 50% 50% 0%;
+    position: absolute;
+    z-index: 5;
 }
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--color-peach);
-  color: var(--color-grape);
+.card.product-custom .left img {
+    margin-left: -88px;
+    margin-top: 60px;
+    width: 250px;
+    height: auto;
 }
-
-.hero-section {
-  background: linear-gradient(135deg, var(--color-rose), var(--color-burgundy));
-  color: white;
-  
+.card.product-custom .right {
+    height: 395px;
+    width: 550px;
+    background-color: #2a2f40;
+    z-index: 3;
+    margin-left: 200px;
+    position: relative;
 }
-
-.btn-primary {
-  background-color: var(--color-coral);
-  color: white;
+.card.product-custom .product-info {
+    position: absolute;
+    margin-left: 245px;
+    height: 394px;
+    width: 305px;
+    z-index: 10;
 }
-
-.btn-primary:hover {
-  background-color: var(--color-rose);
+.card.product-custom h1 {
+    color: #ff6d39;
+    font-family: "muli";
+    font-weight: bold;
+    font-size: 22px;
+    margin-top: 21px;
+    display: inline-block;
 }
-
-.section-title {
-  color: var(--color-plum);
-  font-weight: bold;
-  margin-bottom: 1.5rem;
+.card.product-custom .product-name i {
+    color: #ffffff;
+    transition: 0.3s all ease;
+    margin: 0px 12px;
 }
-
-.card {
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+.card.product-custom .product-name i:hover {
+    color: #ff6d39;
+    cursor: pointer;
 }
-
-.card:hover {
-  transform: scale(1.07) translateY(-8px);
-  z-index: 2;
-  box-shadow: 0 16px 32px rgba(76, 29, 61, 0.18), 0 2px 8px rgba(0,0,0,0.08);
-  border-radius: 12px;
-  border-color: #4c1d3d;
+.card.product-custom h3 {
+    color: #ffffff;
+    font-family: "muli";
+    margin-top: 84px;
+    font-size: 20px;
+    font-weight: 500;
 }
-
-footer {
-  background-color: var(--color-grape);
-  color: white;
+.card.product-custom h2 {
+    color: #ffffff;
+    font-family: "muli";
+    margin-top: 10px;
+    font-weight: 800;
+    font-size: 29px;
+}
+.card.product-custom h4 {
+    display: inline-block;
+    color: #ffffff;
+    font-family: "muli";
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 20px;
+}
+.card.product-custom h4.dis {
+    display: inline-block;
+    color: #ffffff;
+    font-family: "muli";
+    font-weight: 400;
+    font-size: 17px;
+    margin-left: 30px;
+    text-decoration: line-through #ea3201;
+}
+.card.product-custom h4.dis span {
+    text-decoration: line-through #ea3201;
+}
+.card.product-custom ul {
+    list-style-type: none;
+}
+.card.product-custom li {
+    display: inline-block;
+    margin-right: 25px;
+}
+.card.product-custom ul li {
+    color: #ffffff;
+    font-family: "muli";
+    margin-top: 20px;
+    font-weight: 500;
+    font-size: 11px;
+}
+.card.product-custom .bg {
+    width: 15px;
+    height: 15px;
+    text-align: center;
+    padding: 2px;
+    margin-right: 20px;
+    transition: 0.3s all ease;
+    border-radius: 50%;
+}
+.card.product-custom .bg:hover {
+    background-color: #ff6d39;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+.card.product-custom .yellow {
+    width: 13px;
+    height: 13px;
+    background-color: #fec60f;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0);
+    transition: 0.3s all ease;
+}
+.card.product-custom .black {
+    width: 13px;
+    height: 13px;
+    background-color: #000000;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0);
+    transition: 0.3s all ease;
+}
+.card.product-custom .blue {
+    width: 13px;
+    height: 13px;
+    background-color: #02a2ca;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0);
+    transition: 0.3s all ease;
+}
+.card.product-custom .yellow:hover,
+.card.product-custom .black:hover,
+.card.product-custom .blue:hover {
+    border: 2px solid #f76b39;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.card.product-custom .foot {
+    color: #ffffff;
+    font-family: "muli";
+    margin-top: 20px;
+    margin-right: 50px;
+    font-weight: 500;
+    font-size: 11px;
+    float: left;
+    transition: 0.3s all ease;
+}
+.card.product-custom .foot i:nth-child(1) {
+    margin-left: 0;
+    margin-right: 15px;
+}
+.card.product-custom .foot:hover {
+    color: #f76b39;
+    cursor: pointer;
+}
+.card.product-custom .left i {
+    color: #ffd5c6;
+    margin-top: 260px;
+    transition: 0.3s all ease;
+}
+.card.product-custom .fa-long-arrow-left {
+    margin-left: -275px;
+}
+.card.product-custom .fa-long-arrow-right {
+    margin-left: 15px;
+}
+.card.product-custom .left i:hover {
+    cursor: pointer;
+    color: #2a2f40;
 }

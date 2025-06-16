@@ -5,26 +5,53 @@
 <!-- Shortcut Store - Main Page -->
 
 
-<!-- Hero Section -->
+<!-- Hero Section with Collection Images -->
 <section class="hero-section">
     <div class="hero-image-container">
-        {% if newest_product and newest_product.image %}
+        {% if collection_images %}
+            <!-- Collection Images Carousel -->
+            <div class="collection-carousel" id="collectionCarousel">
+                {% for image in collection_images %}
+                    <div class="collection-slide {% if forloop.first %}active{% endif %}" data-slide="{{ forloop.counter0 }}">
+                        <img src="{{ image.image.url }}"
+                             alt="{{ image.title|default:'Collection Image' }}"
+                             class="hero-image collection-image">
+                    </div>
+                {% endfor %}
+
+                <!-- Carousel Indicators (only show if multiple images) -->
+                {% if collection_images|length > 1 %}
+                    <div class="carousel-indicators" id="carouselIndicators">
+                        {% for image in collection_images %}
+                            <div class="carousel-indicator {% if forloop.first %}active{% endif %}"
+                                 data-slide="{{ forloop.counter0 }}"
+                                 onclick="goToSlide({{ forloop.counter0 }})"></div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% elif newest_product and newest_product.image %}
+            <!-- Fallback to newest product -->
             <img src="{{ newest_product.image.url }}" alt="Hero Image" class="hero-image">
         {% else %}
+            <!-- Default fallback -->
             <img src="{% static 'images/hero-image.jpg' %}" alt="Hero Image" class="hero-image">
         {% endif %}
+
         <div class="hero-overlay">
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-lg-6 text-center">
-                        {% if newest_product %}
+                        {% if collection_images %}
+                            <h1 class="hero-title">Discover Our Collection</h1>
+                            <p class="hero-subtitle text-white mb-4">Explore our latest styles and trends</p>
+                        {% elif newest_product %}
                             <h1 class="hero-title">{{ newest_product.name }}</h1>
                             <p class="hero-subtitle text-white mb-4">Latest Arrival! Be the first to grab it.</p>
-                            <a href="/products/{{ newest_product.id }}/" class="btn btn-primary hero-btn">Shop Now</a>
                         {% else %}
                             <h1 class="hero-title">Simplify Your Style</h1>
-                            <a href="/products/" class="btn btn-primary hero-btn">Shop Now</a>
                         {% endif %}
+                        <a href="/products/" class="btn btn-primary hero-btn">Shop Now</a>
                         <a href="/products/?sale={{ max_sale_percent }}" class="sale-badge clickable-sale-badge" title="Shop {{ max_sale_percent }}% off items">
                             <span class="sale-text">SALE UP TO {{ max_sale_percent }}%</span>
                         </a>
@@ -110,7 +137,15 @@
                             </div>
                         </div>
                         <div class="product-info">
-                            <h3 class="product-title">{{ product.name }}</h3>
+                            <h3 class="product-title">
+                                {% if product.color_variants.all %}
+                                    {% with product.color_variants.all|first as first_variant %}
+                                        {{ product.name }} ({{ first_variant.color }})
+                                    {% endwith %}
+                                {% else %}
+                                    {{ product.name }}
+                                {% endif %}
+                            </h3>
                             <div class="product-price">
                                 {% if product.sale_percent %}
                                     <span class="price-current">{{ product.discounted_price|floatformat:2 }} EGP</span>

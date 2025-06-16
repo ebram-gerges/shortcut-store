@@ -224,31 +224,45 @@ function debounce(func, wait) {
     };
 }
 
-// Show notification (reuse from main dxlr-clone.js)
+// Show notification with cart-specific styling
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
-    
+
+    // Check if this is a cart-related notification
+    const isCartNotification = message.toLowerCase().includes('cart') ||
+                              message.toLowerCase().includes('added') ||
+                              message.toLowerCase().includes('removed');
+
+    let backgroundColor;
+    if (isCartNotification && (type === 'success' || type === 'info')) {
+        backgroundColor = 'var(--shortcut-greeny-black)';
+    } else {
+        backgroundColor = `var(--accent-${type === 'success' ? 'green' : type === 'warning' ? 'red' : 'blue'})`;
+    }
+
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
         padding: 1rem 1.5rem;
-        background: var(--accent-${type === 'success' ? 'green' : type === 'warning' ? 'red' : 'blue'});
+        background: ${backgroundColor};
         color: white;
         border-radius: 6px;
         z-index: 150000;
         transform: translateX(100%);
         transition: transform 0.3s ease;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.style.transform = 'translateX(0)';
     }, 100);
-    
+
     setTimeout(() => {
         notification.style.transform = 'translateX(100%)';
         setTimeout(() => {

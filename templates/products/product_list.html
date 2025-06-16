@@ -104,7 +104,7 @@
                 <div class="row g-4" id="productsGrid">
                     {% for product in products %}
                     <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
-                        <div class="product-card fade-in clickable-card" data-product-id="{{ product.id }}" data-product-url="/products/{{ product.id }}/" style="cursor: pointer;">
+                        <div class="product-card fade-in" data-product-id="{{ product.id }}">
                             <div class="product-image-wrapper">
                                 {% if product.image %}
                                     <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
@@ -126,7 +126,15 @@
                                 </div>
                             </div>
                             <div class="product-info">
-                                <h3 class="product-title">{{ product.name }}</h3>
+                                <h3 class="product-title">
+                                    {% if product.color_variants.all %}
+                                        {% with product.color_variants.all|first as first_variant %}
+                                            {{ product.name }} ({{ first_variant.color }})
+                                        {% endwith %}
+                                    {% else %}
+                                        {{ product.name }}
+                                    {% endif %}
+                                </h3>
                                 <div class="product-price">
                                     {% if product.sale_percent %}
                                         <span class="price-current">{{ product.discounted_price|floatformat:2 }} EGP</span>
@@ -146,6 +154,9 @@
                                         {% endif %}
                                     {% endfor %}
                                 </div>
+                                <a href="/products/{{ product.id }}/" class="quick-add-btn">
+                                    Quick add
+                                </a>
                             </div>
                         </div>
                     </div>

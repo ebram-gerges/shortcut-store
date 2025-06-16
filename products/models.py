@@ -4,6 +4,24 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+
+class CollectionImage(models.Model):
+    """Model for storing hero section collection images"""
+    image = models.ImageField(upload_to='collections/', help_text="Hero section image")
+    title = models.CharField(max_length=200, blank=True, null=True, help_text="Descriptive title for the image")
+    is_active = models.BooleanField(default=True, help_text="Enable/disable this image")
+    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Collection Image"
+        verbose_name_plural = "Collection Images"
+
+    def __str__(self):
+        return f"{self.title or 'Collection Image'} (Order: {self.order})"
+
+
 class SizeChoices(models.TextChoices):
     XS = 'XS', _('Extra Small')
     S = 'S', _('Small')
@@ -71,41 +89,6 @@ class Product(models.Model):
     def available_sizes(self):
         """Get all available sizes for this product"""
         return self.variants.values_list('size', flat=True).distinct()
-
-    @property
-    def get_first_image(self):
-        """Get the first available image for this product"""
-        # Try to get primary image from first color variant
-        first_variant = self.color_variants.filter(is_active=True).first()
-        if first_variant:
-            primary_image = first_variant.images.filter(is_primary=True).first()
-            if primary_image:
-                return primary_image
-            # If no primary image, get first image from variant
-            first_variant_image = first_variant.images.first()
-            if first_variant_image:
-                return first_variant_image
-
-        # Fallback to main product image if no variant images
-        if self.image:
-            return type('obj', (object,), {'image': self.image, 'alt_text': self.name})()
-
-        return None
-
-    @property
-    def is_on_sale(self):
-        """Check if product is on sale"""
-        return self.sale_percent is not None and self.sale_percent > 0
-
-    @property
-    def discount_percentage(self):
-        """Get discount percentage"""
-        return self.sale_percent if self.sale_percent else 0
-
-    @property
-    def total_stock(self):
-        """Get total available stock across all variants"""
-        return sum(item.available_quantity for item in self.stock_items.all())
 
     def __str__(self):
         return self.name

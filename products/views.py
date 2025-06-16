@@ -41,20 +41,15 @@ def product_detail(request, product_id):
     selected_color = request.GET.get('color')
     if selected_color:
         current_color_variant = color_variants.filter(color=selected_color).first()
-        # If the requested color doesn't exist, fall back to first available
-        if not current_color_variant:
-            current_color_variant = color_variants.first()
-            selected_color = current_color_variant.color if current_color_variant else None
     else:
         current_color_variant = color_variants.first()
-        selected_color = current_color_variant.color if current_color_variant else None
 
     context = {
         'product': product,
         'color_variants': color_variants,
         'size_variants': size_variants,
         'current_color_variant': current_color_variant,
-        'selected_color': selected_color,
+        'selected_color': selected_color or (current_color_variant.color if current_color_variant else None),
     }
 
     return render(request, 'products/product_detail.html', context)
@@ -217,9 +212,12 @@ def add_to_cart(request):
             total=Sum('quantity')
         )['total'] or 0
 
+        # Create descriptive message with product name and color
+        message = f'Added {product.name} ({color_variant.color}) to cart'
+
         return JsonResponse({
             'success': True,
-            'message': f'Added {quantity} item(s) to cart',
+            'message': message,
             'cart_count': cart_total,
             'item_total': total_requested
         })
@@ -315,6 +313,55 @@ def add_to_wishlist(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+def get_wishlist(request):
+    """AJAX endpoint to get wishlist data"""
+    # Restrict to authenticated users only
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': True,
+            'wishlist_items': [],
+            'wishlist_count': 0,
+            'message': 'Please log in to view your wishlist.'
+        })
+
+    # Get or create session if it doesn't exist
+    if not request.session.session_key:
+        request.session.create()
+
+    # Get user or session identifier
+    user = request.user if request.user.is_authenticated else None
+    session_key = request.session.session_key if not user else None
+
+    # Get wishlist items
+    wishlist_filter = {'user': user} if user else {'session_key': session_key}
+    wishlist_items = WishlistItem.objects.filter(**wishlist_filter).select_related('product')
+
+    # Build wishlist data
+    wishlist_data = []
+    for item in wishlist_items:
+        # Get primary image for product
+        image_url = ''
+        if item.product.image:
+            image_url = item.product.image.url
+
+        item_data = {
+            'id': item.product.id,
+            'product_id': item.product.id,
+            'name': item.product.name,
+            'price': float(item.product.discounted_price),
+            'original_price': float(item.product.price),
+            'image': image_url,
+            'sale_percent': item.product.sale_percent,
+        }
+        wishlist_data.append(item_data)
+
+    return JsonResponse({
+        'success': True,
+        'wishlist_items': wishlist_data,
+        'wishlist_count': len(wishlist_data)
+    })
 
 
 def get_cart(request):
@@ -522,78 +569,3 @@ def update_cart_quantity(request):
         return JsonResponse({'error': 'Invalid quantity value'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-
-@csrf_exempt
-def quick_view(request, product_id):
-    """AJAX endpoint for quick view modal data"""
-    try:
-        product = get_object_or_404(Product, id=product_id)
-
-        # Get product images from color variants
-        product_images = []
-        first_variant = product.color_variants.filter(is_active=True).first()
-        if first_variant:
-            for image in first_variant.images.all():
-                product_images.append({
-                    'url': image.image.url,
-                    'alt': image.alt_text or product.name
-                })
-        elif product.image:
-            # Fallback to main product image
-            product_images.append({
-                'url': product.image.url,
-                'alt': product.name
-            })
-
-        # Get color variants
-        color_variants = []
-        for variant in product.color_variants.filter(is_active=True):
-            color_variants.append({
-                'id': variant.id,
-                'color': variant.color,
-                'color_code': variant.color_hex if hasattr(variant, 'color_hex') else variant.color,
-                'images': [{'url': img.image.url, 'alt': img.alt_text or product.name}
-                          for img in variant.images.all()]
-            })
-
-        # Get available sizes
-        available_sizes = []
-        if product.stock_items.exists():
-            sizes = product.stock_items.values_list('size', flat=True).distinct()
-            available_sizes = [size for size in sizes if size]
-
-        # Calculate stock status
-        total_stock = sum(item.available_quantity for item in product.stock_items.all())
-
-        response_data = {
-            'success': True,
-            'product': {
-                'id': product.id,
-                'name': product.name,
-                'description': product.description,
-                'price': float(product.price),
-                'discounted_price': float(product.discounted_price),
-                'is_on_sale': product.is_on_sale,
-                'discount_percentage': product.discount_percentage,
-                'images': product_images,
-                'color_variants': color_variants,
-                'available_sizes': available_sizes,
-                'total_stock': total_stock,
-                'in_stock': total_stock > 0,
-                'product_url': f'/products/{product.id}/'
-            }
-        }
-
-        return JsonResponse(response_data)
-
-    except Product.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Product not found'
-        }, status=404)
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': f'Error loading product: {str(e)}'
-        }, status=500)

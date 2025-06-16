@@ -1,6 +1,6 @@
 # products/admin.py
 from django.contrib import admin
-from .models import Product, ProductVariant, ProductColorVariant, ProductColorVariantImage, ProductStock
+from .models import Product, ProductVariant, ProductColorVariant, ProductColorVariantImage, ProductStock, CollectionImage
 
 class ProductColorVariantImageInline(admin.TabularInline):
     model = ProductColorVariantImage
@@ -95,6 +95,22 @@ class ProductStockAdmin(admin.ModelAdmin):
         return f'<span style="color: {colors.get(status, "black")};">{status.replace("_", " ").title()}</span>'
     stock_status.short_description = 'Status'
     stock_status.allow_tags = True
+
+
+@admin.register(CollectionImage)
+class CollectionImageAdmin(admin.ModelAdmin):
+    list_display = ('title', 'is_active', 'order', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('title',)
+    list_editable = ('is_active', 'order')
+    ordering = ['order', 'created_at']
+
+    fieldsets = (
+        (None, {
+            'fields': ('image', 'title', 'is_active', 'order')
+        }),
+    )
+
 
 # Register models
 admin.site.register(Product, ProductAdmin)

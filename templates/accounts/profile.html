@@ -36,10 +36,12 @@
 }
 
 .profile-info {
-    background: white;
+    background: var(--shortcut-bg-primary);
     border-radius: 12px;
     padding: 2rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--shortcut-border-light);
+    transition: all var(--transition-normal);
 }
 
 .info-grid {
@@ -50,9 +52,11 @@
 
 .info-item {
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--shortcut-bg-secondary);
     border-radius: 8px;
     border-left: 4px solid var(--shortcut-neon-green);
+    border: 1px solid var(--shortcut-border-light);
+    transition: all var(--transition-normal);
 }
 
 .info-label {
@@ -65,7 +69,7 @@
 }
 
 .info-value {
-    color: var(--auth-text);
+    color: var(--shortcut-text-primary);
     font-size: 1rem;
 }
 
@@ -97,23 +101,53 @@
     flex-wrap: wrap;
 }
 
+/* Dark mode styles */
+[data-theme="dark"] .profile-info {
+    background: var(--shortcut-bg-secondary);
+    border-color: var(--shortcut-border-dark);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .info-item {
+    background: var(--shortcut-bg-tertiary);
+    border-color: var(--shortcut-border-dark);
+}
+
+[data-theme="dark"] .info-value {
+    color: var(--shortcut-text-primary);
+}
+
+[data-theme="dark"] .info-label {
+    color: var(--shortcut-army-green);
+}
+
+[data-theme="dark"] .verification-badge.verified {
+    background: rgba(40, 167, 69, 0.2);
+    color: var(--shortcut-neon-green);
+}
+
+[data-theme="dark"] .verification-badge.unverified {
+    background: rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+}
+
 @media (max-width: 768px) {
     .profile-container {
         margin: 1rem auto;
     }
-    
+
     .profile-header {
         padding: 1.5rem;
     }
-    
+
     .profile-info {
         padding: 1.5rem;
     }
-    
+
     .info-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .profile-actions {
         flex-direction: column;
     }
@@ -144,7 +178,7 @@
 
     <!-- Profile Information -->
     <div class="profile-info">
-        <h2 style="margin-bottom: 1.5rem; color: var(--shortcut-army-green);">Account Information</h2>
+        <h2 style="margin-bottom: 1.5rem; color: var(--shortcut-army-green); transition: color var(--transition-normal);">Account Information</h2>
         
         <div class="info-grid">
             <div class="info-item">

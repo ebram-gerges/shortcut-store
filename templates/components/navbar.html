@@ -127,11 +127,9 @@
 
                 <a href="#" class="nav-icon me-3 position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWishlist" onclick="checkAuthForWishlist(event)">
                     <i class="fas fa-heart"></i>
-                    <span class="cart-indicator-dot" id="wishlistIndicator" style="display: none;"></span>
                 </a>
-                <a href="#" class="nav-icon position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" onclick="checkAuthForCart(event)">
+                <a href="#" class="nav-icon position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" onclick="checkAuthForCart(event); refreshCartOnOpen();">
                     <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-indicator-dot" id="cartIndicator" style="display: none;"></span>
                 </a>
                 <div class="currency-selector ms-3">
                     <img src="{% static 'images/eg-flag.svg' %}" alt="EGP" class="flag-icon">
