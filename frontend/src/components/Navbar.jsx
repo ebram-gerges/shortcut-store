@@ -23,35 +23,35 @@ const Navbar = () => {
                 src="/logo.png"
                 alt="Shortcut Store"
               />
-              <span className="ml-2 text-xl font-bold text-shortcut-text-primary dark:text-shortcut-dark-text-primary">
+              <span className="ml-2 text-xl font-bold text-[#047857] dark:text-white font-montserrat">
                 Shortcut Store
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center gap-8">
             <Link
               to="/"
-              className="nav-link main-transition"
+              className="nav-link main-transition text-[#047857] dark:text-white font-montserrat"
             >
               Home
             </Link>
             <Link
               to="/products"
-              className="nav-link main-transition"
+              className="nav-link main-transition text-[#047857] dark:text-white font-montserrat"
             >
               Products
             </Link>
             <Link
               to="/cart"
-              className="nav-link main-transition"
+              className="nav-link main-transition text-[#047857] dark:text-white font-montserrat"
             >
               Cart
             </Link>
             <Link
               to="/wishlist"
-              className="nav-link main-transition"
+              className="nav-link main-transition text-[#047857] dark:text-white font-montserrat"
             >
               Wishlist
             </Link>
@@ -67,7 +67,7 @@ const Navbar = () => {
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50">
                     <Link
                       to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-montserrat"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       Profile
@@ -92,20 +92,20 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <>
+              <div className="flex items-center gap-7 px-6 py-2 border border-shortcut-emerald rounded-full">
                 <Link
                   to="/login"
-                  className="nav-link main-transition"
+                  className="nav-link main-transition text-[#047857] dark:text-white font-montserrat"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="nav-link main-transition"
+                  className="nav-link main-transition text-[#047857] dark:text-white font-montserrat"
                 >
                   Register
                 </Link>
-              </>
+              </div>
             )}
             <button
               onClick={toggleTheme}
@@ -254,7 +254,7 @@ const Navbar = () => {
             )}
             <button
               onClick={toggleTheme}
-              className="w-full text-left px-3 py-2 nav-link main-transition"
+              className="w-full text-left px-3 py-2 nav-link main-transition theme-toggle"
             >
               {isDarkMode ? 'Light Mode' : 'Dark Mode'}
             </button>

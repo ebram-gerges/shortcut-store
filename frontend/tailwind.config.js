@@ -97,7 +97,8 @@ export default {
         },
       },
       fontFamily: {
-        'inter': ['Inter', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
       },
       boxShadow: {
         'sm': '0 0.125rem 0.25rem rgba(26, 26, 26, 0.075)',

@@ -68,23 +68,23 @@ const Home = () => {
           />
           <div className="absolute inset-0 bg-black bg-opacity-40" />
         </div>
-        <div className="relative h-full flex items-center justify-center text-center px-4">
+        <div className="relative h-full text-center px-4 flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-3xl bg-shortcut-glass-strong p-8 rounded-2xl shadow-glass"
+            className="max-w-3xl h-[270px] p-8 rounded-2xl shadow-glass flex flex-col items-center justify-center bg-[#047857A0] backdrop-blur-md"
           >
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 font-montserrat">
               Discover Your Style
             </h1>
-            <p className="text-xl text-white mb-8">
+            <p className="text-[18px] text-white mb-8 font-montserrat">
               Shop the latest trends in fashion and accessories
             </p>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-white text-shortcut-black px-8 py-3 rounded-full text-lg font-semibold hover:bg-opacity-90 transition-all duration-300"
+              className="bg-white text-shortcut-black px-8 py-3 rounded-full text-lg font-semibold hover:bg-opacity-90 transition-all transition ease-out duration-200 font-montserrat"
             >
               Shop Now
             </motion.button>
@@ -95,7 +95,7 @@ const Home = () => {
       {/* Featured Product */}
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-shortcut-text-primary mb-8 text-center">
+          <h2 className="text-3xl font-bold text-shortcut-text-primary mb-8 text-center text-white font-montserrat">
             Featured Product
           </h2>
           {loading ? (
@@ -115,7 +115,7 @@ const Home = () => {
       {/* Categories */}
       <section className="py-16 px-4 bg-transparent">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-shortcut-text-primary mb-8 text-center">
+          <h2 className="text-3xl font-bold text-shortcut-text-primary mb-8 text-center font-montserrat text-white">
             Shop by Category
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
