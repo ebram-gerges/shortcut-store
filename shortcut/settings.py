@@ -47,8 +47,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-
-    # Third party apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -195,7 +193,7 @@ AUTH_USER_MODEL = 'accounts.User'
 # ===================================
 
 # Email backend configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # SMTP Configuration (Gmail example - replace with your preferred provider)
 EMAIL_HOST = 'smtp.gmail.com'
@@ -218,7 +216,11 @@ AUTHENTICATION_BACKENDS = [
 
 # Allauth settings
 # Minimal working configuration
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_RATE_LIMITS = {'login_failed': '5/m'}
 ACCOUNT_SESSION_REMEMBER = True
@@ -249,9 +251,6 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-
-# For development, you can use console backend to see emails in terminal
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # ===================================
 # AUTHENTICATION SETTINGS
@@ -301,3 +300,14 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Rate limiting (for future implementation)
 # You can add django-ratelimit or similar packages for rate limiting
+
+# Custom admin creation command
+ADMIN_CREATION_COMMAND = """
+from accounts.models import User
+if not User.objects.filter(email='admin@example.com').exists():
+    User.objects.create_superuser(
+        email='admin@example.com',
+        password='adminpassword',
+        is_active=True  # Ensure admin is active
+    )
+"""

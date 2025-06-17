@@ -55,12 +55,13 @@ def login_view(request):
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            if not user.is_active:
+                messages.error(request, 'Account not verified. Please check your email.')
+                return redirect('login')
             login(request, user)
-
-            # Redirect to next page or landing page
-            next_url = request.GET.get('next', 'landing')
-            messages.success(request, f'Welcome back, {user.fullName or user.email}!')
-            return redirect(next_url)
+            return redirect('landing')
+        else:
+            messages.error(request, 'Invalid email or password')
     else:
         form = CustomAuthenticationForm()
 
