@@ -23,10 +23,23 @@ def register_view(request):
         form = CustomUserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Send verification email
-            send_verification_email(user)
-            messages.success(request, 'Registration successful! Please check your email for verification code.')
-            return redirect('accounts:verify_email', user_id=user.id)
+            
+            # Proper login implementation
+            from django.contrib.auth import login
+            from django.contrib.auth import authenticate
+            
+            # Authenticate and login
+            user = authenticate(
+                username=user.email,
+                password=form.cleaned_data['password1']
+            )
+            if user is not None:
+                login(request, user)
+                messages.success(request, 'Registration successful!')
+                return redirect('/')
+            else:
+                messages.error(request, 'Auto-login failed. Please login manually.')
+                return redirect('login')
     else:
         form = CustomUserRegistrationForm()
 

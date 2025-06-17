@@ -361,7 +361,7 @@ function showNotification(message, type = 'info') {
     } else {
         backgroundColor = `var(--accent-${type === 'success' ? 'green' : type === 'warning' ? 'red' : 'blue'})`;
     }
-
+    
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -376,18 +376,18 @@ function showNotification(message, type = 'info') {
         font-weight: 500;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     `;
-
+    
     document.body.appendChild(notification);
-
+    
     setTimeout(() => {
         notification.style.transform = 'translateX(0)';
     }, 100);
-
+    
     setTimeout(() => {
         notification.style.transform = 'translateX(100%)';
         setTimeout(() => {
             if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
+            document.body.removeChild(notification);
             }
         }, 300);
     }, 3000);
@@ -675,11 +675,11 @@ function addToWishlist(productId, productName, productPrice, productImage) {
     };
 
     fetch('/products/add-to-wishlist/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-        },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
         body: JSON.stringify(data)
     })
     .then(response => response.json())
@@ -742,11 +742,11 @@ function removeFromWishlist(productId) {
     };
 
     fetch('/products/add-to-wishlist/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-        },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
         body: JSON.stringify(data)
     })
     .then(response => response.json())
@@ -1094,20 +1094,20 @@ function updateWishlistDisplay() {
                          alt="${item.name || 'Product'}"
                          class="wishlist-item-image"
                          onerror="this.src='/static/images/placeholder-product.jpg'">
-                    <div class="wishlist-item-info">
+                <div class="wishlist-item-info">
                         <div class="wishlist-item-title">${item.name || 'Unknown Product'}</div>
                         <div class="wishlist-item-price">LE ${(item.price || 0).toFixed(2)}</div>
-                        <div class="wishlist-item-actions">
-                            <button class="wishlist-item-btn" onclick="addToCartFromWishlist('${item.id}', '${item.name}', ${item.price}, '${item.image}')">
-                                Add to cart
-                            </button>
-                        </div>
+                    <div class="wishlist-item-actions">
+                        <button class="wishlist-item-btn" onclick="addToCartFromWishlist('${item.id}', '${item.name}', ${item.price}, '${item.image}')">
+                            Add to cart
+                        </button>
                     </div>
-                    <button class="wishlist-item-remove" onclick="removeFromWishlist('${item.id}')">
-                        <i class="fas fa-times"></i>
-                    </button>
                 </div>
-            `).join('');
+                <button class="wishlist-item-remove" onclick="removeFromWishlist('${item.id}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
         }
     }
 }

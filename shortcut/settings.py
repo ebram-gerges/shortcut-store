@@ -34,9 +34,9 @@ INSTALLED_APPS = [
     'jazzmin',
     'landing',
     'accounts',
+    'products',
     'cart',
     'orders',
-    'products',
     'reviews',
     'vouchers',
     'wishlist',
@@ -217,15 +217,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Allauth settings
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+# Minimal working configuration
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_LOGOUT_ON_GET = True
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+ACCOUNT_RATE_LIMITS = {'login_failed': '5/m'}
 ACCOUNT_SESSION_REMEMBER = True
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 # Social account settings
 SOCIALACCOUNT_LOGIN_ON_GET = True
@@ -261,7 +259,6 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Login/Logout URLs
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Session settings
