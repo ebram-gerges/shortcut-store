@@ -13,7 +13,7 @@
 </div>
 
 <!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white">
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
     <div class="container">
         <!-- Logo -->
         <a class="navbar-brand" href="/">
@@ -64,7 +64,7 @@
             </ul>
             
             <!-- Right Side Icons -->
-            <div class="navbar-icons d-flex align-items-center">
+            <div class="navbar-icons d-flex align-items-center ">
                 <!-- Dark Mode Toggle -->
                 <button class="theme-toggle me-3" id="themeToggle" aria-label="Toggle dark mode">
                     <i class="fas fa-moon" id="themeIcon"></i>
@@ -78,7 +78,7 @@
                 {% if user.is_authenticated %}
                     <div class="nav-item dropdown me-3">
                         <a class="nav-icon dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="user-avatar me-2">
+                            <div class="user-avatar me-2 bg-success rounded-circle px-3 py-1">
                                 {% if user.fullName %}
                                     {{ user.fullName|first|upper }}
                                 {% else %}
@@ -139,3 +139,6 @@
         </div>
     </div>
 </nav>
+
+<!-- Bootstrap JS (v5+) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -188,8 +188,6 @@ function updateCartButtonPrice() {
     }
 }
 
-
-
 // Initialize add to cart functionality
 function initializeAddToCart() {
     const addToCartBtn = document.getElementById('addToCartBtn');
@@ -397,7 +395,7 @@ function checkStockStatus() {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                updateStockDisplay('Error checking stock', 'out-of-stock', false);
+                updateStockDisplay('Error checking stock', 'out_of_stock', false);
                 return;
             }
 
@@ -406,7 +404,7 @@ function checkStockStatus() {
         })
         .catch(error => {
             console.error('Error checking stock:', error);
-            updateStockDisplay('Error checking stock', 'out-of-stock', false);
+            updateStockDisplay('Error checking stock', 'out_of_stock', false);
         });
 }
 
@@ -473,11 +471,10 @@ function initializeWishlistButton() {
     const wishlistBtn = document.getElementById('addToWishlistBtn');
 
     if (wishlistBtn) {
-        // Check if product is already in wishlist
         const productId = getProductIdFromUrl();
         checkWishlistStatus(productId);
-
-        wishlistBtn.addEventListener('click', function() {
+        wishlistBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             toggleWishlist(productId);
         });
     }
@@ -500,9 +497,11 @@ function updateWishlistButton(isInWishlist) {
         if (isInWishlist) {
             wishlistIcon.className = 'fas fa-heart me-2';
             wishlistBtn.classList.add('in-wishlist');
+            wishlistBtn.innerHTML = '<i class="fas fa-heart me-2" id="wishlistIcon"></i>Added to Wishlist';
         } else {
             wishlistIcon.className = 'far fa-heart me-2';
             wishlistBtn.classList.remove('in-wishlist');
+            wishlistBtn.innerHTML = '<i class="far fa-heart me-2" id="wishlistIcon"></i>Add to Wishlist';
         }
     }
 }
@@ -527,6 +526,7 @@ function toggleWishlist(productId) {
         if (data.success) {
             updateWishlistButton(data.in_wishlist);
             showNotification(data.message, 'success');
+            fetchAndRenderWishlistSidebar();
         } else {
             showNotification(data.error || 'Error updating wishlist', 'error');
         }
@@ -585,22 +585,16 @@ function addToCartProductDetail(productId, size, quantity) {
 
         if (data.success) {
             addToCartText.textContent = 'Added!';
-            addToCartBtn.style.backgroundColor = 'var(--shortcut-army-green)';
-
+            addToCartBtn.classList.add('added');
             setTimeout(() => {
-                addToCartText.textContent = originalText;
-                addToCartBtn.style.backgroundColor = '';
+                updateCartButtonPrice();
+                addToCartBtn.classList.remove('added');
                 addToCartBtn.disabled = false;
             }, 1500);
-
             showNotification(data.message || 'Item added to cart successfully!', 'success');
-
-            // Sync cart data if syncCartFromDatabase function exists
             if (typeof syncCartFromDatabase === 'function') {
                 syncCartFromDatabase();
             }
-
-            // Refresh stock status
             checkStockStatus();
         } else {
             addToCartText.textContent = originalText;
@@ -869,4 +863,159 @@ function showNotification(message, type = 'info') {
             }
         }, 300);
     }, 3000);
+}
+
+// Fetch and render wishlist sidebar
+function fetchAndRenderWishlistSidebar() {
+    const wishlistItemsContainer = document.getElementById('wishlistItems');
+    const emptyWishlist = document.getElementById('emptyWishlist');
+    if (!wishlistItemsContainer) return;
+
+    fetch('/products/get-wishlist/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.items && data.items.length > 0) {
+            wishlistItemsContainer.innerHTML = '';
+            data.items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'wishlist-item d-flex align-items-center mb-3';
+                itemDiv.innerHTML = `
+                    <img src="${item.image_url}" alt="${item.name}" class="wishlist-thumb me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${item.name}</div>
+                        <div class="text-muted mb-2">LE ${parseFloat(item.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        <button class="btn btn-sm btn-dark me-2" onclick="addToCartFromWishlist(${item.id}, '${item.color}', '${item.size}')">Add to Cart</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist(${item.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                wishlistItemsContainer.appendChild(itemDiv);
+            });
+            wishlistItemsContainer.style.display = '';
+            if (emptyWishlist) emptyWishlist.style.display = 'none';
+        } else {
+            wishlistItemsContainer.innerHTML = '';
+            wishlistItemsContainer.style.display = 'none';
+            if (emptyWishlist) emptyWishlist.style.display = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching wishlist:', error);
+    });
+}
+
+// Add to cart from wishlist
+function addToCartFromWishlist(productId, color, size) {
+    // You may want to prompt for size/color if not available
+    const data = { product_id: productId, color: color, size: size, quantity: 1 };
+    fetch('/products/add-to-cart/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Added to cart!', 'success');
+            if (typeof syncCartFromDatabase === 'function') syncCartFromDatabase();
+        } else {
+            showNotification(data.error || 'Error adding to cart', 'error');
+        }
+    })
+    .catch(() => showNotification('Error adding to cart', 'error'));
+}
+
+// Remove from wishlist
+function removeFromWishlist(productId) {
+    const data = { product_id: productId, action: 'remove' };
+    fetch('/products/add-to-wishlist/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Removed from wishlist', 'success');
+            fetchAndRenderWishlistSidebar();
+            // Optionally update wishlist button state
+            updateWishlistButton(false);
+        } else {
+            showNotification(data.error || 'Error removing from wishlist', 'error');
+        }
+    })
+    .catch(() => showNotification('Error removing from wishlist', 'error'));
+}
+
+// Custom offcanvas backdrop logic for wishlist
+const wishlistOffcanvas = document.getElementById('offcanvasWishlist');
+const wishlistBackdrop = document.getElementById('wishlistBackdrop');
+if (wishlistOffcanvas && wishlistBackdrop) {
+    wishlistOffcanvas.addEventListener('show.bs.offcanvas', function () {
+        wishlistBackdrop.classList.add('active');
+    });
+    wishlistOffcanvas.addEventListener('hidden.bs.offcanvas', function () {
+        wishlistBackdrop.classList.remove('active');
+    });
+    wishlistBackdrop.addEventListener('click', function () {
+        const bsOffcanvas = bootstrap.Offcanvas.getInstance(wishlistOffcanvas);
+        if (bsOffcanvas) bsOffcanvas.hide();
+    });
+}
+// Custom offcanvas backdrop logic for cart
+const cartOffcanvas = document.getElementById('offcanvasCart');
+const cartBackdrop = document.getElementById('cartBackdrop');
+if (cartOffcanvas && cartBackdrop) {
+    cartOffcanvas.addEventListener('show.bs.offcanvas', function () {
+        cartBackdrop.classList.add('active');
+    });
+    cartOffcanvas.addEventListener('hidden.bs.offcanvas', function () {
+        cartBackdrop.classList.remove('active');
+    });
+    cartBackdrop.addEventListener('click', function () {
+        const bsOffcanvas = bootstrap.Offcanvas.getInstance(cartOffcanvas);
+        if (bsOffcanvas) bsOffcanvas.hide();
+    });
+}
+
+// Open wishlist sidebar overlay
+function openWishlistSidebar() {
+    let overlay = document.getElementById('wishlistOverlay');
+    if (!overlay) {
+        // If overlay is not present, create it from template (copy from HTML)
+        const sidebarHTML = `
+        <div id=\"wishlistOverlay\" class=\"wishlist-overlay\" onclick=\"closeWishlistSidebar(event)\">
+            <div class=\"wishlist-sidebar\" onclick=\"event.stopPropagation();\">
+                <button type=\"button\" class=\"close-wishlist-btn\" onclick=\"closeWishlistSidebar(event)\">
+                    <i class=\"fas fa-times\"></i>
+                </button>
+                <div class=\"offcanvas-body\">${document.querySelector('.offcanvas-body').innerHTML}</div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', sidebarHTML);
+    } else {
+        overlay.style.display = 'flex';
+    }
+}
+
+// Close wishlist sidebar overlay
+function closeWishlistSidebar(event) {
+    // Only close if clicking overlay or close button
+    if (!event || event.target.id === 'wishlistOverlay' || event.target.classList.contains('close-wishlist-btn') || event.target.closest('.close-wishlist-btn')) {
+        const overlay = document.getElementById('wishlistOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
 }
