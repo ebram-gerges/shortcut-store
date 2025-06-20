@@ -8,6 +8,8 @@ import CartSidebar from './CartSidebar';
 import WishlistSidebar from './WishlistSidebar';
 import { navLinks } from '../constants/constants';
 import { CurrencyContext, useCurrency, Currency } from '../context/CurrencyContext';
+import ProfilePage from '../pages/ProfilePage';
+import OrdersPage from '../pages/OrdersPage';
 
 const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<string | null>(null);
@@ -42,30 +44,40 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
         </div>
 
         {/* Main navigation */}
-        <div className="px-4 lg:px-8">
+        <div className="px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="text-xl font-bold text-black dark:text-white hover:text-[#059669] transition-colors">
+            <Link to="/" className="whitespace-nowrap text-xl font-bold text-black dark:text-white hover:text-[#059669] transition-colors">
               Shortcut Store
             </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => (
-                <Link to={link.href} className="text-black dark:text-white hover:text-[#059669] transition-colors">
-                  {link.name}
-                </Link>
+                <div key={link.href} className="relative inline-block group align-middle">
+                  <Link
+                    to={link.href}
+                    className="whitespace-nowrap text-black dark:text-white hover:text-[#059669] transition-colors px-1"
+                  >
+                    {link.name}
+                    <span
+                      className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
+                    ></span>
+                  </Link>
+                </div>
               ))}
-              
-              <div className="relative">
+              <div className="relative inline-block group align-middle">
                 <button
                   onClick={() => toggleDropdown('tshirts')}
-                  className="flex items-center text-black dark:text-white hover:text-[#059669] transition-colors"
+                  className="whitespace-nowrap flex items-center text-black dark:text-white hover:text-[#059669] transition-colors px-1"
                 >
                   T-Shirts <ChevronDown className="ml-1 h-4 w-4" />
+                  <span
+                    className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
+                  ></span>
                 </button>
                 {isDropdownOpen === 'tshirts' && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 z-10">
                     <Link to="/products?category=tshirts" className="block px-4 py-2 text-white hover:bg-gray-700">
                       All T-Shirts
                     </Link>
@@ -78,16 +90,18 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   </div>
                 )}
               </div>
-
-              <div className="relative">
+              <div className="relative inline-block group align-middle">
                 <button
                   onClick={() => toggleDropdown('bottoms')}
-                  className="flex items-center text-black dark:text-white hover:text-[#059669] transition-colors"
+                  className="whitespace-nowrap flex items-center text-black dark:text-white hover:text-[#059669] transition-colors px-1"
                 >
                   Bottoms <ChevronDown className="ml-1 h-4 w-4" />
+                  <span
+                    className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
+                  ></span>
                 </button>
                 {isDropdownOpen === 'bottoms' && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 z-10">
                     <Link to="/products?category=pants" className="block px-4 py-2 text-white hover:bg-gray-700">
                       Pants
                     </Link>
@@ -100,10 +114,14 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   </div>
                 )}
               </div>
-
-              <Link to="/" className="text-black dark:text-white hover:text-[#059669] transition-colors">
-                Customer Service
-              </Link>
+              <div className="relative inline-block group align-middle">
+                <Link to="/" className="whitespace-nowrap block text-black dark:text-white hover:text-[#059669] transition-colors px-1">
+                  Customer Service
+                  <span
+                    className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
+                  ></span>
+                </Link>
+              </div>
             </nav>
 
             {/* Right side icons */}
@@ -203,119 +221,120 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
       <WishlistSidebar isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
 
       {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-60 lg:hidden">
-          <div className="fixed right-0 top-0 h-full w-4/5 max-w-xs bg-white dark:bg-zinc-800 shadow-xl p-6 flex flex-col">
-            <button
-              className="absolute top-4 right-4 text-black dark:text-white hover:text-[#059669]"
-              onClick={() => setIsMobileMenuOpen(false)}
-              aria-label="Close menu"
-            >
-              <Close className="h-7 w-7" />
-            </button>
-            <nav className="flex flex-col space-y-4 mt-10">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              {/* Dropdowns for T-Shirts and Bottoms */}
-              <div>
-                <button
-                  onClick={() => toggleDropdown('tshirts')}
-                  className="flex items-center w-full text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
-                >
-                  T-Shirts <ChevronDown className="ml-1 h-4 w-4" />
-                </button>
-                {isDropdownOpen === 'tshirts' && (
-                  <div className="ml-4 mt-2 flex flex-col space-y-2">
-                    <Link to="/products?category=tshirts" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                      All T-Shirts
-                    </Link>
-                    <Link to="/products?category=graphic" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                      Graphic Tees
-                    </Link>
-                    <Link to="/products?category=basic" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                      Basic Tees
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <div>
-                <button
-                  onClick={() => toggleDropdown('bottoms')}
-                  className="flex items-center w-full text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
-                >
-                  Bottoms <ChevronDown className="ml-1 h-4 w-4" />
-                </button>
-                {isDropdownOpen === 'bottoms' && (
-                  <div className="ml-4 mt-2 flex flex-col space-y-2">
-                    <Link to="/products?category=pants" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                      Pants
-                    </Link>
-                    <Link to="/products?category=shorts" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                      Shorts
-                    </Link>
-                    <Link to="/products?category=jeans" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                      Jeans
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <Link to="/" className="text-lg text-black dark:text-white hover:text-[#059669] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                Customer Service
+      <div className={`fixed inset-0 z-50 bg-black bg-opacity-60 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div
+          className={`fixed right-0 top-0 h-full w-4/5 max-w-xs bg-white dark:bg-zinc-800 shadow-xl p-6 flex flex-col transition-transform duration-500 transform ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          style={{ transitionTimingFunction: 'cubic-bezier(0,0,0,0.99)' }}
+        >
+          <button
+            className="absolute top-4 right-4 text-black dark:text-white hover:text-[#059669]"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <Close className="h-7 w-7" />
+          </button>
+          <nav className="flex flex-col space-y-4 mt-10">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {link.name}
               </Link>
-              {/* Divider */}
-              <hr className="my-4 border-gray-300 dark:border-gray-700" />
-              {/* Right side actions in mobile menu */}
-              <button className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
-                <Search className="h-6 w-6" /> <span>Search</span>
-              </button>
-              <button onClick={() => { setIsWishlistOpen(true); setIsMobileMenuOpen(false); }} className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2">
-                <Heart className="h-6 w-6" /> <span>Wishlist</span>
-              </button>
-              <button onClick={() => { setIsCartOpen(true); setIsMobileMenuOpen(false); }} className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2">
-                <ShoppingCart className="h-6 w-6" /> <span>Cart</span>
-              </button>
-              <select
-                className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white px-2 py-1 rounded border border-gray-300 dark:border-gray-700 focus:ring-[#059669] mt-2"
-                value={currency}
-                onChange={e => setCurrency(e.target.value as Currency)}
-              >
-                <option value="EGP">EGP</option>
-                <option value="USD">USD</option>
-              </select>
-              {user ? (
-                <button onClick={handleLogout} className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2 mt-2">
-                  <LogOut className="h-5 w-5" /> <span>Logout</span>
-                </button>
-              ) : (
-                <Link
-                  to="/login"
-                  className="bg-[#059669] text-white px-4 py-2 rounded-lg hover:bg-[#059669]/90 transition-colors dark:bg-[#059669] dark:text-white dark:hover:bg-[#059669]/80 mt-2 text-center"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
-              )}
+            ))}
+            {/* Dropdowns for T-Shirts and Bottoms */}
+            <div>
               <button
-                onClick={toggleTheme}
-                className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2 mt-2"
-                aria-label="Toggle theme"
+                onClick={() => toggleDropdown('tshirts')}
+                className="flex items-center w-full text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
               >
-                {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />} <span>Theme ({theme === 'dark' ? 'Dark' : 'Light'})</span>
+                T-Shirts <ChevronDown className="ml-1 h-4 w-4" />
               </button>
-            </nav>
-          </div>
-          {/* Click outside to close */}
-          <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
+              {isDropdownOpen === 'tshirts' && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  <Link to="/products?category=tshirts" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                    All T-Shirts
+                  </Link>
+                  <Link to="/products?category=graphic" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                    Graphic Tees
+                  </Link>
+                  <Link to="/products?category=basic" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                    Basic Tees
+                  </Link>
+                </div>
+              )}
+            </div>
+            <div>
+              <button
+                onClick={() => toggleDropdown('bottoms')}
+                className="flex items-center w-full text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
+              >
+                Bottoms <ChevronDown className="ml-1 h-4 w-4" />
+              </button>
+              {isDropdownOpen === 'bottoms' && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  <Link to="/products?category=pants" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                    Pants
+                  </Link>
+                  <Link to="/products?category=shorts" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                    Shorts
+                  </Link>
+                  <Link to="/products?category=jeans" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                    Jeans
+                  </Link>
+                </div>
+              )}
+            </div>
+            <Link to="/" className="text-lg text-black dark:text-white hover:text-[#059669] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              Customer Service
+            </Link>
+            {/* Divider */}
+            <hr className="my-4 border-gray-300 dark:border-gray-700" />
+            {/* Right side actions in mobile menu */}
+            <button className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+              <Search className="h-6 w-6" /> <span>Search</span>
+            </button>
+            <button onClick={() => { setIsWishlistOpen(true); setIsMobileMenuOpen(false); }} className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2">
+              <Heart className="h-6 w-6" /> <span>Wishlist</span>
+            </button>
+            <button onClick={() => { setIsCartOpen(true); setIsMobileMenuOpen(false); }} className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2">
+              <ShoppingCart className="h-6 w-6" /> <span>Cart</span>
+            </button>
+            <select
+              className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white px-2 py-1 rounded border border-gray-300 dark:border-gray-700 focus:ring-[#059669] mt-2"
+              value={currency}
+              onChange={e => setCurrency(e.target.value as Currency)}
+            >
+              <option value="EGP">EGP</option>
+              <option value="USD">USD</option>
+            </select>
+            {user ? (
+              <button onClick={handleLogout} className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2 mt-2">
+                <LogOut className="h-5 w-5" /> <span>Logout</span>
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-[#059669] text-white px-4 py-2 rounded-lg hover:bg-[#059669]/90 transition-colors dark:bg-[#059669] dark:text-white dark:hover:bg-[#059669]/80 mt-2 text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+            )}
+            <button
+              onClick={toggleTheme}
+              className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2 mt-2"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />} <span>Theme ({theme === 'dark' ? 'Dark' : 'Light'})</span>
+            </button>
+          </nav>
         </div>
-      )}
+        {/* Click outside to close */}
+        <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
+      </div>
     </>
   );
 };

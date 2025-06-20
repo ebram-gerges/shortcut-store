@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Shirt, Package, Star } from 'lucide-react';
 
@@ -32,8 +32,65 @@ import { Shirt, Package, Star } from 'lucide-react';
   */}
 
 const HomePage = () => {
+  // Animation for 'Shop by Categories' section
+  const categoriesRef = useRef<HTMLDivElement | null>(null);
+  const [categoriesInView, setCategoriesInView] = useState(false);
 
+  // Animation for 'Summer Collection' section
+  const summerRef = useRef<HTMLDivElement | null>(null);
+  const [summerInView, setSummerInView] = useState(false);
 
+  // Animation for 'About' section
+  const aboutRef = useRef<HTMLDivElement | null>(null);
+  const [aboutInView, setAboutInView] = useState(false);
+
+  useEffect(() => {
+    const refCurrent = categoriesRef.current;
+    if (!refCurrent) return;
+    const observer = new window.IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCategoriesInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(refCurrent);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const refCurrent = summerRef.current;
+    if (!refCurrent) return;
+    const observer = new window.IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setSummerInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(refCurrent);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const refCurrent = aboutRef.current;
+    if (!refCurrent) return;
+    const observer = new window.IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setAboutInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(refCurrent);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className='relative z-20'>
@@ -61,25 +118,27 @@ const HomePage = () => {
       <hr className="border-gray-700 dark:border-gray-400 border-3 w-[90%] mx-auto mt-10" />
       <div className='relative'>
         {/* Shop by Categories */}
-        <section className="py-20 ">
+        <section
+          ref={categoriesRef}
+          className={`py-20 transition-all duration-1000 ease-out transform
+            ${categoriesInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}
+          `}
+        >
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <h2 className="text-3xl font-bold text-center dark:text-red-400 text-red-700 mb-12">
               Shop by Categories
             </h2>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="group cursor-pointer">
                 <div className="bg-gray-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-gray-700 transition-colors">
                   <h3 className="text-xl font-semibold text-white dark:text-white">Shirts</h3>
                 </div>
               </div>
-
               <div className="group cursor-pointer">
                 <div className="bg-gray-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-gray-700 transition-colors">
                   <h3 className="text-xl font-semibold text-white dark:text-white">Bottoms</h3>
                 </div>
               </div>
-
               <div className="group cursor-pointer">
                 <div className="bg-gray-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-gray-700 transition-colors">
                   <h3 className="text-xl font-semibold text-white dark:text-white">Sets</h3>
@@ -91,13 +150,17 @@ const HomePage = () => {
         <hr className="border-gray-700 dark:border-gray-400 border-3 w-[90%] mx-auto my-10" />
 
         {/* Summer Collection */}
-        <section className="py-20">
+        <section
+          ref={summerRef}
+          className={`py-20 transition-all duration-1000 ease-out transform
+            ${summerInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}
+          `}
+        >
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <h2 className="text-3xl font-bold dark:text-red-400 text-red-700 mb-8">Summer Collection</h2>
             <p className="text-gray-800 dark:text-white mb-8">
               Discover the summer collection from <span className="text-black dark:text-white font-semibold">Shortcut Store</span>
             </p>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((item) => (
                 <div key={item} className="backdrop-blur-xl border-2 border-gray-300/50 dark:border-gray-700/70 bg-gray-200/50 dark:bg-gray-700/50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
@@ -117,7 +180,12 @@ const HomePage = () => {
         <hr className="border-gray-700 dark:border-gray-400 border-3 w-[90%] mx-auto my-10" />
 
         {/* About Section */}
-        <section className='max-w-3xl mx-auto px-4 lg:px-8 py-20 text-center'>
+        <section
+          ref={aboutRef}
+          className={`max-w-3xl mx-auto px-4 lg:px-8 py-20 text-center transition-all duration-1000 ease-out transform
+            ${aboutInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}
+          `}
+        >
             <h3 className="text-3xl font-bold mb-8 text-black dark:text-white">ABOUT SHORTCUT STORE</h3>
             <p className="text-gray-700 dark:text-gray-400  mb-8 text-lg">
               We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.

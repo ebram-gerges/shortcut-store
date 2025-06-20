@@ -11,12 +11,14 @@ const ProductsPage = () => {
     priceMin: '',
     priceMax: '',
     sizes: [] as string[],
+    categories: [] as string[],
   });
   const [sortBy, setSortBy] = useState('featured');
   const [collapsed, setCollapsed] = useState({
     availability: true,
     price: true,
     size: true,
+    category: true,
   });
 
   const { currency } = useCurrency();
@@ -30,7 +32,7 @@ const ProductsPage = () => {
     return `LE ${price}`;
   };
 
-  const handleFilterChange = (type: 'availability' | 'sizes', value: string) => {
+  const handleFilterChange = (type: 'availability' | 'sizes' | 'categories', value: string) => {
     setFilters(prev => ({
       ...prev,
       [type]: prev[type].includes(value)
@@ -39,13 +41,15 @@ const ProductsPage = () => {
     }));
   };
 
-  const toggleCollapse = (section: 'availability' | 'price' | 'size') => {
+  const toggleCollapse = (section: 'availability' | 'price' | 'size' | 'category') => {
     setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   // Helper to filter products
   const filteredProducts = mockProducts
     .filter(product => {
+      // Category filter
+      if (filters.categories.length > 0 && !filters.categories.includes(product.category)) return false;
       // Availability filter
       if (filters.availability.length > 0) {
         if (filters.availability.includes('in-stock') && !product.inStock) return false;
@@ -82,9 +86,88 @@ const ProductsPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
-            <div className=" backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 border border-gray-400/50 dark:border-gray-700/50">
+            <div className=" backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 pb-4 border border-gray-400/50 dark:border-gray-700/50">
               <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Filter</h2>
               
+              {/* Category */}
+              <div className="mb-8">
+                <button
+                  type="button"
+                  className="flex items-center justify-between w-full mb-4"
+                  onClick={() => toggleCollapse('category' as any)}
+                >
+                  <h3 className="text-black dark:text-white font-semibold">Category</h3>
+                  <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.category ? 'rotate-180' : ''}`} />
+                </button>
+                {!collapsed.category && (
+                  <div className="space-y-2">
+                    <div>
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">T-Shirts</span>
+                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-gray-700 border-gray-600"
+                          checked={filters.categories.includes('tshirts-graphic')}
+                          onChange={() => handleFilterChange('categories', 'tshirts-graphic')}
+                        />
+                        Graphic Tees
+                      </label>
+                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-gray-700 border-gray-600"
+                          checked={filters.categories.includes('tshirts-basic')}
+                          onChange={() => handleFilterChange('categories', 'tshirts-basic')}
+                        />
+                        Basic Tees
+                      </label>
+                    </div>
+                    <div className="mt-2">
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">Bottoms</span>
+                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-gray-700 border-gray-600"
+                          checked={filters.categories.includes('bottoms-pants')}
+                          onChange={() => handleFilterChange('categories', 'bottoms-pants')}
+                        />
+                        Pants
+                      </label>
+                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-gray-700 border-gray-600"
+                          checked={filters.categories.includes('bottoms-shorts')}
+                          onChange={() => handleFilterChange('categories', 'bottoms-shorts')}
+                        />
+                        Shorts
+                      </label>
+                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-gray-700 border-gray-600"
+                          checked={filters.categories.includes('bottoms-jeans')}
+                          onChange={() => handleFilterChange('categories', 'bottoms-jeans')}
+                        />
+                        Jeans
+                      </label>
+                    </div>
+                    <div className="mt-2">
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">Sets</span>
+                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-gray-700 border-gray-600"
+                          checked={filters.categories.includes('sets')}
+                          onChange={() => handleFilterChange('categories', 'sets')}
+                        />
+                        Sets
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Availability */}
               <div className="mb-8">
                 <button
@@ -148,7 +231,7 @@ const ProductsPage = () => {
               </div>
 
               {/* Size */}
-              <div className="md:mb-8">
+              <div>
                 <button
                   type="button"
                   className="flex items-center justify-between w-full mb-4"

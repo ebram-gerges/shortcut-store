@@ -64,9 +64,8 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen relative z-20 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-[35px] max-md:mt-[70px]">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full p-5 backdrop-blur-lg dark:bg-gray-800/30 bg-white/50 border border-gray-700 rounded-xl space-y-8">
         <div className="text-center">
-          
           <p className="mt-6 text-3xl font-bold dark:text-white text-black">
             Sign in to your account
           </p>
