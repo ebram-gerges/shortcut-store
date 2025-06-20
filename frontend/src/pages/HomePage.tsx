@@ -44,12 +44,12 @@ const HomePage = () => {
           <p className="text-xl text-gray-300  mb-8" style={{ textShadow: '0px 0px 10px rgba(0, 0, 0)' }}>
             Latest Arrival! Be the first to grab it.
           </p>
-          <a
-            href="/products"
+          <Link
+            to="/products"
             className="bg-[#059669] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#059669]/90 transition-colors inline-block shadow-[0px_0px_10px_rgba(0,0,0,0.5)]"
           >
             SHOP NOW
-          </a>
+          </Link>
         </div>
 
         {/* product image */}
@@ -124,9 +124,9 @@ const HomePage = () => {
               Our products blend comfort with minimalist design, offering a style that celebrates
               individuality in the digital age.
             </p>
-            <a href="/products" className="border border-[#059669] text-[#059669] px-6 py-2 rounded hover:bg-[#059669] hover:text-white transition-colors">
+            <Link to="/products" className="border border-[#059669] text-[#059669] px-6 py-2 rounded hover:bg-[#059669] hover:text-white transition-colors">
               Discover Products
-            </a>
+            </Link>
         </section>
       </div>
     </div>

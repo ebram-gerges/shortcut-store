@@ -13,15 +13,15 @@ const Footer = () => {
               Your one-stop destination for modern fashion and accessories.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white">
+              <Link to="#" className="text-gray-400 hover:text-white">
                 <i className="fab fa-facebook"></i>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              </Link>
+              <Link to="#" className="text-gray-400 hover:text-white">
                 <i className="fab fa-twitter"></i>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              </Link>
+              <Link to="#" className="text-gray-400 hover:text-white">
                 <i className="fab fa-instagram"></i>
-              </a>
+              </Link>
             </div>
           </div>
 

@@ -45,16 +45,16 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
         <div className="px-4 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <a href="/" className="text-xl font-bold text-black dark:text-white hover:text-[#059669] transition-colors">
+            <Link to="/" className="text-xl font-bold text-black dark:text-white hover:text-[#059669] transition-colors">
               Shortcut Store
-            </a>
+            </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => (
-                <a href={link.href} className="text-black dark:text-white hover:text-[#059669] transition-colors">
+                <Link to={link.href} className="text-black dark:text-white hover:text-[#059669] transition-colors">
                   {link.name}
-                </a>
+                </Link>
               ))}
               
               <div className="relative">
@@ -149,12 +149,12 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   )}
                 </div>
               ) : (
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="bg-[#059669] text-white px-4 py-2 rounded-lg hover:bg-[#059669]/90 transition-colors dark:bg-[#059669] dark:text-white dark:hover:bg-[#059669]/80"
                 >
                   Login
-                </a>
+                </Link>
               )}
               
               <button
@@ -215,14 +215,14 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
             </button>
             <nav className="flex flex-col space-y-4 mt-10">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   className="text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.name}
-                </a>
+                </Link>
               ))}
               {/* Dropdowns for T-Shirts and Bottoms */}
               <div>
@@ -295,13 +295,13 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   <LogOut className="h-5 w-5" /> <span>Logout</span>
                 </button>
               ) : (
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="bg-[#059669] text-white px-4 py-2 rounded-lg hover:bg-[#059669]/90 transition-colors dark:bg-[#059669] dark:text-white dark:hover:bg-[#059669]/80 mt-2 text-center"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
-                </a>
+                </Link>
               )}
               <button
                 onClick={toggleTheme}

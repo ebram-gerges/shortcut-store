@@ -13,18 +13,18 @@ const Footer = () => {
             <p className="text-gray-700 dark:text-gray-400  mb-8">
               We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
             </p>
-            <a href="/products" className="border border-[#059669] text-[#059669] px-6 py-2 rounded hover:bg-[#059669] hover:text-white transition-colors">
+            <Link to="/products" className="border border-[#059669] text-[#059669] px-6 py-2 rounded hover:bg-[#059669] hover:text-white transition-colors">
               Discover Products
-            </a>
+            </Link>
             <div className="flex gap-4 mt-8">
-              <a href="" target="_blank" rel="noopener noreferrer"> <img src="https://www.citypng.com/public/uploads/preview/round-black-facebook-fb-logo-icon-sign-701751695134781upkxjlqwck.png" alt="Facebook" className="h-12 p-2 bg-white rounded-full" title='Facebook'/>
-              </a>
-              <a href="" target="_blank" rel="noopener noreferrer"> <img src="https://upload.wikimedia.org/wikipedia/commons/2/27/CIS-A2K_Instagram_Icon_%28Black%29.svg" alt="Instagram" className="h-12 p-2 bg-white rounded-full" title='Instagram'/>
-              </a>
-                <a href="" target="_blank" rel="noopener noreferrer"> <img src="https://www.citypng.com/public/uploads/preview/hd-black-round-circle-outline-youtube-yt-logo-icon-png-701751695120640nmh2ehgx1v.png" alt="Youtube" className="h-12 p-2 bg-white rounded-full" title='Youtube'/>
-              </a>
-              <a href="" target="_blank" rel="noopener noreferrer"> <img src="https://vnpa.org.au/wp-content/uploads/2024/05/tiktok-icon-1080.png" alt="Tiktok" className="h-12 p-2 bg-white rounded-full" title='Tiktok'/>
-              </a>
+              <Link to="" target="_blank" rel="noopener noreferrer"> <img src="https://www.citypng.com/public/uploads/preview/round-black-facebook-fb-logo-icon-sign-701751695134781upkxjlqwck.png" alt="Facebook" className="h-12 p-2 bg-white rounded-full" title='Facebook'/>
+              </Link>
+              <Link to="" target="_blank" rel="noopener noreferrer"> <img src="https://upload.wikimedia.org/wikipedia/commons/2/27/CIS-A2K_Instagram_Icon_%28Black%29.svg" alt="Instagram" className="h-12 p-2 bg-white rounded-full" title='Instagram'/>
+              </Link>
+                <Link to="" target="_blank" rel="noopener noreferrer"> <img src="https://www.citypng.com/public/uploads/preview/hd-black-round-circle-outline-youtube-yt-logo-icon-png-701751695120640nmh2ehgx1v.png" alt="Youtube" className="h-12 p-2 bg-white rounded-full" title='Youtube'/>
+              </Link>
+              <Link to="" target="_blank" rel="noopener noreferrer"> <img src="https://vnpa.org.au/wp-content/uploads/2024/05/tiktok-icon-1080.png" alt="Tiktok" className="h-12 p-2 bg-white rounded-full" title='Tiktok'/>
+              </Link>
             </div>
           </div>
 
