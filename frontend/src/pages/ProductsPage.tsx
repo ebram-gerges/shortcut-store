@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ChevronDown } from 'lucide-react';
-// import { mockProducts } from '../data/mockData'; // Remove mockData
+import { mockProducts } from '../data/mockData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useCart } from '../context/CartContext';
 
 const ProductsPage = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     availability: [] as string[],
     priceMin: '',
@@ -26,17 +24,6 @@ const ProductsPage = () => {
   const { currency } = useCurrency();
   const conversionRate = 50; // 1 USD = 50 EGP
   const { addItem } = useCart();
-
-  useEffect(() => {
-    setLoading(true);
-    fetch('http://127.0.0.1:8000/api/products/')
-      .then(res => res.json())
-      .then(data => {
-        setProducts(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   const getDisplayPrice = (price: number) => {
     if (currency === 'USD') {
@@ -59,8 +46,8 @@ const ProductsPage = () => {
   };
 
   // Helper to filter products
-  const filteredProducts = products
-    .filter((product: any) => {
+  const filteredProducts = mockProducts
+    .filter(product => {
       // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(product.category)) return false;
       // Availability filter
@@ -75,14 +62,14 @@ const ProductsPage = () => {
       if (filters.sizes.length > 0 && !filters.sizes.some(size => product.sizes?.includes(size))) return false;
       return true;
     })
-    .sort((a: any, b: any) => {
+    .sort((a, b) => {
       if (sortBy === 'price-low') return a.price - b.price;
       if (sortBy === 'price-high') return b.price - a.price;
       if (sortBy === 'newest') return b.id - a.id;
       return 0; // featured or default
     });
 
-  const handleQuickAdd = (product: any) => {
+  const handleQuickAdd = (product: typeof mockProducts[0]) => {
     addItem({
       id: product.id,
       name: product.name,
@@ -96,11 +83,6 @@ const ProductsPage = () => {
     <div className="relative z-20 min-h-screen mt-[95px] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <h1 className="text-3xl font-bold text-black dark:text-white mb-8">Products</h1>
-        {loading ? (
-          <div className="flex justify-center items-center h-40">
-            <span className="text-lg text-gray-600 dark:text-gray-300">Loading products...</span>
-          </div>
-        ) : (
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
@@ -117,7 +99,9 @@ const ProductsPage = () => {
                   <h3 className="text-black dark:text-white font-semibold">Category</h3>
                   <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.category ? 'rotate-180' : ''}`} />
                 </button>
-                {!collapsed.category && (
+                <div
+                  className={`transition-all duration-500 ease overflow-hidden ${collapsed.category ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[500px] opacity-100 pointer-events-auto'}`}
+                >
                   <div className="space-y-2">
                     <div>
                       <span className="font-semibold text-gray-800 dark:text-gray-200">T-Shirts</span>
@@ -183,7 +167,7 @@ const ProductsPage = () => {
                       </label>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Availability */}
@@ -196,7 +180,9 @@ const ProductsPage = () => {
                   <h3 className="text-black dark:text-white font-semibold">Availability</h3>
                   <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.availability ? 'rotate-180' : ''}`} />
                 </button>
-                {!collapsed.availability && (
+                <div
+                  className={`transition-all duration-500 ease overflow-hidden ${collapsed.availability ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[200px] opacity-100 pointer-events-auto'}`}
+                >
                   <div className="space-y-2">
                     <label className="flex items-center text-gray-900 dark:text-gray-300">
                       <input 
@@ -215,7 +201,7 @@ const ProductsPage = () => {
                       Out of stock
                     </label>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Price */}
@@ -228,7 +214,9 @@ const ProductsPage = () => {
                   <h3 className="text-black dark:text-white font-semibold">Price</h3>
                   <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.price ? 'rotate-180' : ''}`} />
                 </button>
-                {!collapsed.price && (
+                <div
+                  className={`transition-all duration-500 ease overflow-hidden ${collapsed.price ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[100px] opacity-100 pointer-events-auto'}`}
+                >
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -245,7 +233,7 @@ const ProductsPage = () => {
                       onChange={(e) => setFilters(prev => ({ ...prev, priceMax: e.target.value }))}
                     />
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Size */}
@@ -258,7 +246,9 @@ const ProductsPage = () => {
                   <h3 className="text-black dark:text-white font-semibold">Size</h3>
                   <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.size ? 'rotate-180' : ''}`} />
                 </button>
-                {!collapsed.size && (
+                <div
+                  className={`transition-all duration-500 ease overflow-hidden ${collapsed.size ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[200px] opacity-100 pointer-events-auto'}`}
+                >
                   <div className="space-y-2">
                     {['Small (S)', 'Medium (M)', 'Large (L)', 'Extra large (XL)'].map((size) => (
                       <label key={size} className="flex items-center text-gray-900 dark:text-gray-300">
@@ -271,7 +261,7 @@ const ProductsPage = () => {
                       </label>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
@@ -293,7 +283,7 @@ const ProductsPage = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 md:gap-6 gap-4">
-              {filteredProducts.map((product: any) => (
+              {filteredProducts.map((product) => (
                 <div key={product.id} className="backdrop-blur-xl bg-white/50 dark:bg-black/20 border-2 border-gray-300/30 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
                   <Link to={`/products/${product.id}`}>
                     <div className="h-64 bg-gray-600 flex items-center justify-center">
@@ -339,7 +329,7 @@ const ProductsPage = () => {
                     
                     {/* Color variants */}
                     <div className="flex space-x-2 mt-10">
-                      {product.colors.map((color: string, index: number) => (
+                      {product.colors.map((color, index) => (
                         <div
                           key={index}
                           className={`w-6 h-6 rounded-full border-2 border-gray-600`}
@@ -353,7 +343,6 @@ const ProductsPage = () => {
             </div>
           </div>
         </div>
-        )}
       </div>
     </div>
   );
