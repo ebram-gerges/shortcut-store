@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ChevronDown } from 'lucide-react';
-import { mockProducts } from '../data/mockData';
+// import { mockProducts } from '../data/mockData'; // Remove mockData
 import { useCurrency } from '../context/CurrencyContext';
 import { useCart } from '../context/CartContext';
 
 const ProductsPage = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     availability: [] as string[],
     priceMin: '',
@@ -24,6 +26,17 @@ const ProductsPage = () => {
   const { currency } = useCurrency();
   const conversionRate = 50; // 1 USD = 50 EGP
   const { addItem } = useCart();
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('http://127.0.0.1:8000/api/products/')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const getDisplayPrice = (price: number) => {
     if (currency === 'USD') {
@@ -46,8 +59,8 @@ const ProductsPage = () => {
   };
 
   // Helper to filter products
-  const filteredProducts = mockProducts
-    .filter(product => {
+  const filteredProducts = products
+    .filter((product: any) => {
       // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(product.category)) return false;
       // Availability filter
@@ -62,14 +75,14 @@ const ProductsPage = () => {
       if (filters.sizes.length > 0 && !filters.sizes.some(size => product.sizes?.includes(size))) return false;
       return true;
     })
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       if (sortBy === 'price-low') return a.price - b.price;
       if (sortBy === 'price-high') return b.price - a.price;
       if (sortBy === 'newest') return b.id - a.id;
       return 0; // featured or default
     });
 
-  const handleQuickAdd = (product: typeof mockProducts[0]) => {
+  const handleQuickAdd = (product: any) => {
     addItem({
       id: product.id,
       name: product.name,
@@ -83,6 +96,11 @@ const ProductsPage = () => {
     <div className="relative z-20 min-h-screen mt-[95px] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <h1 className="text-3xl font-bold text-black dark:text-white mb-8">Products</h1>
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <span className="text-lg text-gray-600 dark:text-gray-300">Loading products...</span>
+          </div>
+        ) : (
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
@@ -275,7 +293,7 @@ const ProductsPage = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 md:gap-6 gap-4">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product: any) => (
                 <div key={product.id} className="backdrop-blur-xl bg-white/50 dark:bg-black/20 border-2 border-gray-300/30 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
                   <Link to={`/products/${product.id}`}>
                     <div className="h-64 bg-gray-600 flex items-center justify-center">
@@ -321,7 +339,7 @@ const ProductsPage = () => {
                     
                     {/* Color variants */}
                     <div className="flex space-x-2 mt-10">
-                      {product.colors.map((color, index) => (
+                      {product.colors.map((color: string, index: number) => (
                         <div
                           key={index}
                           className={`w-6 h-6 rounded-full border-2 border-gray-600`}
@@ -335,6 +353,7 @@ const ProductsPage = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
