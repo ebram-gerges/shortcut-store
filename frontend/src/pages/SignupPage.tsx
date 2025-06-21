@@ -132,7 +132,7 @@ const SignupPage = () => {
 
   return (
     <div className="min-h-screen z-20 relative flex items-center justify-center py-6 px-2 sm:px-4 md:px-8 lg:px-16 pt-[140px]">
-      <div className="border border-zinc-200 dark:border-zinc-700 space-y-8 w-[70%] bg-white/50 dark:bg-zinc-900/50 rounded-2xl shadow-xl py-8 md:px-10 px-6">
+      <div className="border border-zinc-200 dark:border-zinc-700 space-y-8 w-[60%] max-md:w-[70%] max-sm:w-[90%] bg-white/50 dark:bg-zinc-800/30 backdrop-blur-lg rounded-2xl shadow-xl py-8 md:px-16 px-6">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-black dark:text-white">
             Create your account
@@ -150,7 +150,7 @@ const SignupPage = () => {
           )}
 
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-4">
               <div className='flex flex-col gap-6 w-full' >
                 <div className="w-full">
                   <label htmlFor="first_name" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
