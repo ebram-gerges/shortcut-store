@@ -22,14 +22,19 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const success = await login(formData.email, formData.password);
-      if (success) {
-        navigate('/');
-      } else {
-        setError('Invalid email or password');
-      }
+      await login({
+        username: formData.email,
+        password: formData.password,
+      });
+      navigate('/');
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      // Axios wraps errors, so we can inspect the response
+      const error = err as any;
+      if (error.response && error.response.status === 401) {
+        setError('Invalid credentials. Please try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -37,22 +42,8 @@ const LoginPage = () => {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    setError('');
-
-    try {
-      // Simulate Google sign-in process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful Google sign-in
-      const success = await login('google.user@gmail.com', 'google-auth');
-      if (success) {
-        navigate('/');
-      }
-    } catch (err) {
-      setError('Google sign-in failed. Please try again.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    setError('Google sign-in is not yet implemented.');
+    setIsGoogleLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

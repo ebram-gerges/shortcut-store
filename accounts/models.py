@@ -13,6 +13,7 @@ class User(AbstractUser):
     height = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     address = models.TextField(blank=True, null=True)
+    avatar_color = models.CharField(max_length=7, blank=True, help_text="Hex color code for the user's avatar background, e.g., #RRGGBB.")
 
     # Email verification fields
     email_verified = models.BooleanField(default=False)

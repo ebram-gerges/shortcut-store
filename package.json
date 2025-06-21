@@ -11,5 +11,9 @@
   "description": "",
   "devDependencies": {
     "tailwindcss": "^4.1.8"
+  },
+  "dependencies": {
+    "lucide": "^0.522.0",
+    "lucide-react": "^0.522.0"
   }
 }

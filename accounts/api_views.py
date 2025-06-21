@@ -6,6 +6,17 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.conf import settings
+import random
+
+AVATAR_COLOR_PALETTE = [
+    '#2F4F4F',  # Dark Slate Gray
+    '#A0522D',  # Sienna
+    '#DAA520',  # Goldenrod
+    '#4682B4',  # Steel Blue
+    '#800000',  # Maroon
+    '#6B8E23',  # Olive Drab
+]
+
 from .models import User
 from .serializers import (
     UserRegistrationSerializer,
@@ -13,8 +24,10 @@ from .serializers import (
     UserProfileSerializer,
     UserUpdateSerializer,
     PasswordChangeSerializer,
-    EmailVerificationSerializer
+    EmailVerificationSerializer,
+    MyTokenObtainPairSerializer,
 )
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 # -----------------------------------------------------------------------------
@@ -44,7 +57,11 @@ def register_view(request):
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        
+        user.is_active = False
+        # Assign a random avatar color
+        user.avatar_color = random.choice(AVATAR_COLOR_PALETTE)
+        user.save()
+
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
@@ -123,23 +140,26 @@ def change_password_view(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def verify_email_view(request):
-    """Verify user email with code"""
-    serializer = EmailVerificationSerializer(data=request.data, context={'request': request})
-    if serializer.is_valid():
-        user = request.user
-        user.email_verified = True
-        user.is_active = True
-        user.email_verification_code = None
-        user.email_verification_code_created = None
-        user.save()
-        
-        return Response({
-            'message': 'Email verified successfully'
-        }, status=status.HTTP_200_OK)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    print('VERIFY EMAIL ENDPOINT CALLED:', request.data, 'AUTH:', request.META.get('HTTP_AUTHORIZATION'))
+    email = request.data.get('email')
+    code = request.data.get('code')
+    if not email or not code:
+        return Response({'detail': 'Email and code are required.'}, status=400)
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({'detail': 'User not found.'}, status=404)
+    if not user.email_verification_code or user.email_verification_code != code:
+        return Response({'detail': 'Invalid verification code.'}, status=400)
+    # Optionally check for code expiry here
+    user.email_verified = True
+    user.is_active = True
+    user.email_verification_code = None
+    user.email_verification_code_created = None
+    user.save()
+    return Response({'message': 'Email verified successfully.'}, status=200)
 
 
 @api_view(['POST'])
@@ -170,3 +190,11 @@ def user_detail_view(request):
     """Get current user details"""
     serializer = UserProfileSerializer(request.user)
     return Response(serializer.data)
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    """
+    Takes a user's username/email and password and returns an access and refresh
+    JSON web token pair.
+    """
+    serializer_class = MyTokenObtainPairSerializer

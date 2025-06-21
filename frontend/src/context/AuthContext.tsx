@@ -1,19 +1,41 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { 
+  login as loginService,
+  register as registerService,
+  getCurrentUser,
+  logout as logoutService,
+  isAuthenticated,
+  AuthResponse,
+  LoginCredentials,
+  RegisterData
+} from '../services/authService';
 
 interface User {
-  id: string;
+  id: number;
   email: string;
-  name: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  avatar_color: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, name: string) => Promise<boolean>;
+  isAuthenticated: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (userData: RegisterData) => Promise<AuthResponse>;
+  signup: (
+    email: string,
+    password: string,
+    name: string,
+    height: string,
+    weight: string,
+    address: string,
+    phone: string,
+    secondaryPhone: string
+  ) => Promise<boolean>;
   logout: () => void;
-  verifyEmail: (code: string) => Promise<boolean>;
-  isVerified: boolean;
-  pendingEmail: string | null;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,65 +54,86 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [isAuth, setIsAuth] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock successful login
-    setUser({
-      id: '1',
-      email,
-      name: email.split('@')[0],
-    });
-    setIsVerified(true);
-    return true;
+  useEffect(() => {
+    const checkLoggedIn = async () => {
+      setIsLoading(true);
+      if (isAuthenticated()) {
+        try {
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+          setIsAuth(true);
+        } catch (error) {
+          console.error('Failed to fetch user on mount', error);
+          logoutService();
+          setUser(null);
+          setIsAuth(false);
+        }
+      }
+      setIsLoading(false);
+    };
+    checkLoggedIn();
+  }, []);
+
+  const login = async (credentials: LoginCredentials): Promise<void> => {
+    const response = await loginService(credentials);
+    setUser(response.user);
+    setIsAuth(true);
   };
 
-  const signup = async (email: string, password: string, name: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock successful signup - set pending email for verification
-    setPendingEmail(email);
-    setIsVerified(false);
-    return true;
+  const register = async (userData: RegisterData) => {
+    const response = await registerService(userData);
+    setUser(response.user);
+    setIsAuth(true);
+    return response;
   };
 
-  const verifyEmail = async (code: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock successful verification
-    if (code === '123456' && pendingEmail) {
-      setUser({
-        id: '1',
-        email: pendingEmail,
-        name: pendingEmail.split('@')[0],
-      });
-      setIsVerified(true);
-      setPendingEmail(null);
+  // New signup function for the signup page
+  const signup = async (
+    email: string,
+    password: string,
+    name: string,
+    height: string,
+    weight: string,
+    address: string,
+    phone: string,
+    secondaryPhone: string
+  ): Promise<boolean> => {
+    try {
+      await register({
+        username: email,
+        email,
+        password,
+        password_confirm: password,
+        first_name: name,
+        height,
+        weight,
+        address,
+        phone,
+        secondary_phone: secondaryPhone,
+      } as RegisterData & { password_confirm: string; height: string; weight: string; address: string; phone: string; secondary_phone: string });
       return true;
+    } catch {
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
+    logoutService();
     setUser(null);
-    setIsVerified(false);
-    setPendingEmail(null);
+    setIsAuth(false);
   };
 
   const value: AuthContextType = {
     user,
+    isAuthenticated: isAuth,
     login,
+    register,
     signup,
     logout,
-    verifyEmail,
-    isVerified,
-    pendingEmail,
+    isLoading,
   };
 
   return (

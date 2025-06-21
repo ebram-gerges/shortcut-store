@@ -2,6 +2,36 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import User
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        username_or_email = attrs.get(self.username_field)
+        password = attrs.get('password')
+
+        user = authenticate(username=username_or_email, password=password)
+
+        if not user and '@' in username_or_email:
+            try:
+                user_by_email = User.objects.get(email=username_or_email)
+                user = authenticate(username=user_by_email.username, password=password)
+            except User.DoesNotExist:
+                pass
+
+        if user and user.is_active:
+            self.user = user
+            data = super().validate(attrs)
+            refresh = self.get_token(self.user)
+            data['refresh'] = str(refresh)
+            data['access'] = str(refresh.access_token)
+            return data
+        
+        raise AuthenticationFailed(
+            self.error_messages['no_active_account'],
+            'no_active_account',
+        )
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -64,9 +94,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 
             'fullName', 'phone', 'secondary_phone', 'height', 'weight', 
-            'address', 'email_verified', 'date_joined'
+            'address', 'avatar_color', 'email_verified', 'date_joined'
         ]
-        read_only_fields = ['id', 'username', 'email_verified', 'date_joined']
+        read_only_fields = ['id', 'username', 'email', 'email_verified', 'date_joined']
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

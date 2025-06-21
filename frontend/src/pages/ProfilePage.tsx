@@ -6,15 +6,15 @@ const ProfilePage = () => {
 
   return (
     <div className="w-full h-screen relative z-20 flex flex-col items-start px-20 pt-[125px] justify-start">
-      <div className='flex items-start gap-4 w-full border border-gray-200 dark:border-gray-700 p-10 rounded-xl bg-white/50 dark:bg-zinc-900/30 backdrop-blur-lg'>
+      <div className='flex gap-4 items-start p-10 w-full rounded-xl border border-gray-200 backdrop-blur-lg dark:border-gray-700 bg-white/50 dark:bg-zinc-900/30'>
      <img
         src={'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name || 'User')}
         alt="Profile"
-        className="w-32 h-32 rounded-full shadow-lg object-cover"
+        className="object-cover w-32 h-32 rounded-full shadow-lg"
       />
       <div>
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{user?.name}</h2>
-      <p className="text-gray-600 dark:text-gray-300 mb-6">{user?.email}</p>
+      <h2 className="mb-2 text-2xl font-bold text-gray-800 dark:text-white">{user?.name}</h2>
+      <p className="mb-6 text-gray-600 dark:text-gray-300">{user?.email}</p>
       </div>
       <button
         onClick={logout}

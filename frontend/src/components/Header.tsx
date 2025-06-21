@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, Heart, ShoppingCart, ChevronDown, LogOut, Sun, Moon, Menu, X as Close } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Heart, ShoppingCart, ChevronDown, LogOut, Sun, Moon, Menu, X as Close } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
 import CartSidebar from './CartSidebar';
 import WishlistSidebar from './WishlistSidebar';
 import { navLinks } from '../constants/constants';
-import { CurrencyContext, useCurrency, Currency } from '../context/CurrencyContext';
-import ProfilePage from '../pages/ProfilePage';
-import OrdersPage from '../pages/OrdersPage';
+import { useCurrency, Currency } from '../context/CurrencyContext';
 import { mockProducts } from '../data/mockData';
+
+// Helper to get initials from a name
+const getInitials = (name: string) => {
+  if (!name) return '';
+  return name.substring(0, 2).toUpperCase();
+};
 
 const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<string | null>(null);
@@ -26,9 +30,8 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
   const { currency, setCurrency } = useCurrency();
   
   const { getTotalItems } = useCart();
-  const { getTotalItems: getWishlistItems } = useWishlist();
+  useWishlist();
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   const toggleDropdown = (dropdown: string) => {
     setIsDropdownOpen(isDropdownOpen === dropdown ? null : dropdown);
@@ -186,14 +189,19 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 bg-gray-200 dark:bg-gray-800 text-black dark:text-white px-3 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center space-x-2 text-black dark:text-white rounded-lg transition-colors"
                   >
-                    <User className="h-5 w-5" />
-                    <span className="hidden md:block">{user.name}</span>
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                      style={{ backgroundColor: user.avatar_color || '#059669' }}
+                    >
+                      {getInitials(user.username)}
+                    </div>
+                    <span className="hidden md:block">{user.username}</span>
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-20">
                       <Link to="/profile" className="block px-4 py-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                         Profile
                       </Link>
