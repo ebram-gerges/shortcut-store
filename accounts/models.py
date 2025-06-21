@@ -28,37 +28,34 @@ class User(AbstractUser):
     #             self.generate_verification_code()
     #     super().save(*args, **kwargs)
 
-    # def generate_verification_code(self):
-    #     """Generate a 6-digit verification code"""
-    #     self.email_verification_code = ''.join(random.choices(string.digits, k=6))
-    #     self.email_verification_code_created = timezone.now()
+    def generate_verification_code(self):
+        """Generate and store a fresh 6-digit verification code."""
+        self.email_verification_code = ''.join(random.choices(string.digits, k=6))
+        self.email_verification_code_created = timezone.now()
 
-    # def is_verification_code_valid(self, code):
-    #     """Check if the verification code is valid and not expired"""
-    #     if not self.email_verification_code or not self.email_verification_code_created:
-    #         return False
+    def is_verification_code_valid(self, code: str) -> bool:
+        """Return True if `code` matches and hasn't expired (15 min)."""
+        if not self.email_verification_code or not self.email_verification_code_created:
+            return False
 
-    #     # Check if code matches
-    #     if self.email_verification_code != code:
-    #         return False
+        if self.email_verification_code != code:
+            return False
 
-    #     # Check if code is not expired (15 minutes)
-    #     expiry_time = self.email_verification_code_created + timezone.timedelta(minutes=15)
-    #     if timezone.now() > expiry_time:
-    #         return False
+        expiry_time = self.email_verification_code_created + timezone.timedelta(minutes=15)
+        return timezone.now() <= expiry_time
 
-    #     return True
-
-    # def verify_email(self, code):
-    #     """Verify email with the provided code"""
-    #     if self.is_verification_code_valid(code):
-    #         self.email_verified = True
-    #         self.is_active = True
-    #         self.email_verification_code = None
-    #         self.email_verification_code_created = None
-    #         self.save()
-    #         return True
-    #     return False
+    def verify_email(self, code: str) -> bool:
+        """Set user as verified if code checks out."""
+        if self.is_verification_code_valid(code):
+            self.email_verified = True
+            self.is_active = True
+            self.email_verification_code = None
+            self.email_verification_code_created = None
+            self.save(update_fields=[
+                'email_verified', 'is_active', 'email_verification_code', 'email_verification_code_created'
+            ])
+            return True
+        return False
 
     def __str__(self):
         return self.email or self.username
