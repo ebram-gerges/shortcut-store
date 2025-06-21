@@ -36,13 +36,13 @@ const Products = () => {
         </div>
         {/* Filters */}
         <div className="mb-8 flex flex-wrap gap-4 justify-center items-center">
-          <select className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700">
+          <select className="px-4 py-2 rounded border border-zinc-300 bg-white text-zinc-700">
             <option>All Categories</option>
             <option>T-Shirts</option>
             <option>Basic Tops</option>
             <option>Shoes</option>
           </select>
-          <select className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700">
+          <select className="px-4 py-2 rounded border border-zinc-300 bg-white text-zinc-700">
             <option>All Colors</option>
             <option>White</option>
             <option>Black</option>
@@ -51,7 +51,7 @@ const Products = () => {
             <option>Green</option>
           </select>
           <input type="range" min="0" max="5000" className="w-40" />
-          <span className="ml-2 text-gray-600">Price</span>
+          <span className="ml-2 text-zinc-600">Price</span>
         </div>
         {/* Products Grid */}
         {loading ? (

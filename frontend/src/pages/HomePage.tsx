@@ -51,6 +51,9 @@ const HomePage = () => {
     .sort((a, b) => b.id - a.id)
     .slice(0, 4);
 
+  // Get the latest product (highest id)
+  const latestProduct = mockProducts.reduce((latest, p) => (p.id > (latest?.id || 0) ? p : latest), null as null | typeof mockProducts[0]);
+
   useEffect(() => {
     const refCurrent = categoriesRef.current;
     if (!refCurrent) return;
@@ -101,11 +104,16 @@ const HomePage = () => {
 
   return (
     <div className='relative z-20 overflow-hidden'>
+      <div
+        aria-hidden="true"
+        className="absolute left-0 top-0 w-full h-[100px] bg-white dark:bg-black pointer-events-none select-none z-30"
+        style={{ boxShadow: 'none' }}
+      />
       {/* Hero Section */}
       <section className="h-[100vh] flex justify-center items-center relative text-center bg-black">
         <div className="max-w-4xl mx-auto px-4 ">
-          <h1 className="text-6xl font-bold text-white mb-6 text-shadow-xl text-shadow-black" style={{ textShadow: '0px 0px 20px rgba(0, 0, 0)' }}>tshirt</h1>
-          <p className="text-xl text-gray-300  mb-8" style={{ textShadow: '0px 0px 10px rgba(0, 0, 0)' }}>
+          <h1 className="text-6xl font-bold text-white mb-6 text-shadow-xl text-shadow-black" style={{ textShadow: '0px 0px 20px rgba(0, 0, 0)' }}>{latestProduct ? latestProduct.name : 'Product'}</h1>
+          <p className="text-xl text-zinc-300  mb-8" style={{ textShadow: '0px 0px 10px rgba(0, 0, 0)' }}>
             Latest Arrival! Be the first to grab it.
           </p>
           <Link
@@ -122,7 +130,7 @@ const HomePage = () => {
         </div> */}
       </section>
 
-      <hr className="border-gray-700 dark:border-gray-400 border-3 w-[90%] mx-auto mt-10" />
+      <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto mt-10" />
       <div className='relative'>
         {/* Shop by Categories */}
         <section
@@ -137,24 +145,24 @@ const HomePage = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="group cursor-pointer">
-                <div className="bg-gray-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-gray-700 transition-colors">
+                <div className="bg-zinc-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-zinc-700 transition-colors">
                   <h3 className="text-xl font-semibold text-white dark:text-white">Shirts</h3>
                 </div>
               </div>
               <div className="group cursor-pointer">
-                <div className="bg-gray-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-gray-700 transition-colors">
+                <div className="bg-zinc-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-zinc-700 transition-colors">
                   <h3 className="text-xl font-semibold text-white dark:text-white">Bottoms</h3>
                 </div>
               </div>
               <div className="group cursor-pointer">
-                <div className="bg-gray-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-gray-700 transition-colors">
+                <div className="bg-zinc-600 rounded-lg w-full h-[200px] max-md:h-[100px] flex items-center justify-center text-center hover:bg-zinc-700 transition-colors">
                   <h3 className="text-xl font-semibold text-white dark:text-white">Sets</h3>
                 </div>
               </div>
             </div>
           </div>
         </section>
-        <hr className="border-gray-700 dark:border-gray-400 border-3 w-[90%] mx-auto my-10" />
+        <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto my-10" />
 
         {/* Summer Collection */}
         <section
@@ -165,18 +173,18 @@ const HomePage = () => {
         >
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <h2 className="text-3xl font-bold dark:text-red-400 text-red-700 mb-8">Summer Collection</h2>
-            <p className="text-gray-800 dark:text-white mb-8">
+            <p className="text-zinc-800 dark:text-white mb-8">
               Discover the summer collection from <span className="text-black dark:text-white font-semibold">Shortcut Store</span>
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {summerProducts.map((item) => (
-                <Link to={`/products/${item.id}`} key={item.id} className="backdrop-blur-xl border-2 border-gray-300/50 dark:border-gray-700/70 bg-gray-200/50 dark:bg-gray-700/50 rounded-lg overflow-hidden hover:transform duration-[2s] hover:scale-105 transition-transform">
-                  <div className="h-48 bg-gray-600 flex items-center justify-center">
-                    <span className="text-gray-400">Product Image</span>
+                <Link to={`/products/${item.id}`} key={item.id} className="backdrop-blur-xl border-2 border-zinc-500/50 dark:border-zinc-700/70 bg-zinc-200/50 dark:bg-zinc-700/50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
+                  <div className="h-48 bg-zinc-600 flex items-center justify-center">
+                    <span className="text-zinc-400">Product Image</span>
                   </div>
                   <div className="p-4 pt-12">
-                    <h3 className="text-gray-700 dark:text-white font-semibold text-lg mb-2">{item.name}</h3>
+                    <h3 className="text-black dark:text-white font-semibold text-lg mb-2">{item.name}</h3>
                     <p className="text-[#059669] font-bold">LE {item.price}</p>
                   </div>
                 </Link>
@@ -185,7 +193,7 @@ const HomePage = () => {
           </div>
         </section>
 
-        <hr className="border-gray-700 dark:border-gray-400 border-3 w-[90%] mx-auto my-10" />
+        <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto my-10" />
 
         {/* About Section */}
         <section
@@ -195,7 +203,7 @@ const HomePage = () => {
           `}
         >
             <h3 className="text-3xl font-bold mb-8 text-black dark:text-white">ABOUT SHORTCUT STORE</h3>
-            <p className="text-gray-700 dark:text-gray-400  mb-8 text-lg">
+            <p className="text-zinc-700 dark:text-zinc-400  mb-8 text-lg">
               We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
               Our products blend comfort with minimalist design, offering a style that celebrates
               individuality in the digital age.

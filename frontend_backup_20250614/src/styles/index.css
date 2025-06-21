@@ -22,14 +22,14 @@
 @layer utilities {
   /* Glassmorphism backgrounds */
   .bg-shortcut-glass {
-    @apply bg-emerald-100/60 dark:bg-gray-900/40 backdrop-blur-lg;
+    @apply bg-emerald-100/60 dark:bg-zinc-900/40 backdrop-blur-lg;
     /* Light: bright green glass, Dark: deep glass */
   }
   .bg-shortcut-glass-strong {
-    @apply bg-emerald-200/80 dark:bg-gray-900/60 backdrop-blur-xl;
+    @apply bg-emerald-200/80 dark:bg-zinc-900/60 backdrop-blur-xl;
   }
   .bg-shortcut-glass-card {
-    @apply bg-emerald-50/80 dark:bg-gray-800/60 backdrop-blur-md;
+    @apply bg-emerald-50/80 dark:bg-zinc-800/60 backdrop-blur-md;
   }
   .shadow-glass {
     box-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.18), 0 1.5px 4px 0 rgba(0,0,0,0.08);

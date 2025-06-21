@@ -67,11 +67,11 @@ const ProductDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Images */}
           <div>
-            <div className="bg-gray-700 rounded-lg h-96 lg:h-[500px] flex items-center justify-center mb-4">
-              <span className="text-gray-400 text-lg">Product picture</span>
+            <div className="bg-zinc-700 rounded-lg h-96 lg:h-[500px] flex items-center justify-center mb-4">
+              <span className="text-zinc-400 text-lg">Product picture</span>
             </div>
-            <div className="bg-gray-700 rounded-lg h-24 w-24 flex items-center justify-center">
-              <span className="text-gray-400 text-xs text-center">Mini Product picture preview</span>
+            <div className="bg-zinc-700 rounded-lg h-24 w-24 flex items-center justify-center">
+              <span className="text-zinc-400 text-xs text-center">Mini Product picture preview</span>
             </div>
           </div>
 
@@ -87,7 +87,7 @@ const ProductDetailPage = () => {
                   className={`w-5 h-5 ${
                     i < Math.floor(product.rating) 
                       ? 'text-yellow-400 fill-current' 
-                      : 'text-gray-600'
+                      : 'text-zinc-600'
                   }`}
                 />
               ))}
@@ -108,7 +108,7 @@ const ProductDetailPage = () => {
                     key={color}
                     onClick={() => setSelectedColor(color)}
                     className={`w-8 h-8 rounded-full border-2 ${
-                      selectedColor === color ? 'border-[#059669]' : 'border-gray-600'
+                      selectedColor === color ? 'border-[#059669]' : 'border-zinc-600'
                     }`}
                     style={{ backgroundColor: color }}
                   ></button>
@@ -127,7 +127,7 @@ const ProductDetailPage = () => {
                     className={`px-4 py-2 border rounded ${
                       selectedSize === size
                         ? 'border-[#059669] bg-[#059669] text-white'
-                        : 'border-gray-600 text-black dark:text-white hover:border-[#059669]'
+                        : 'border-zinc-600 text-black dark:text-white hover:border-[#059669]'
                     } transition-colors`}
                   >
                     {size}
@@ -143,7 +143,7 @@ const ProductDetailPage = () => {
                   <span className="bg-[#059669] text-white px-3 py-1 rounded text-sm">
                     IN STOCK
                   </span>
-                  <span className="dark:text-gray-400 text-gray-900 ml-2">
+                  <span className="dark:text-zinc-400 text-zinc-900 ml-2">
                     In Stock ({product.stock} available)
                   </span>
                 </>
@@ -160,16 +160,16 @@ const ProductDetailPage = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="bg-gray-700 border-2 border-gray-600/50 text-white p-2 rounded hover:bg-[#059669] transition-colors"
+                  className="bg-zinc-700 border-2 border-zinc-600/50 text-white p-2 rounded hover:bg-[#059669] transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="bg-gray-700 border-2 border-gray-600/50 text-white px-4 py-2 rounded min-w-[3rem] text-center">
+                <span className="bg-zinc-700 border-2 border-zinc-600/50 text-white px-4 py-2 rounded min-w-[3rem] text-center">
                   {quantity}
                 </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="bg-gray-700 border-2 border-gray-600/50 text-white p-2 rounded hover:bg-[#059669] transition-colors"
+                  className="bg-zinc-700 border-2 border-zinc-600/50 text-white p-2 rounded hover:bg-[#059669] transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -186,7 +186,7 @@ const ProductDetailPage = () => {
                     ? isAddedToCart
                       ? 'bg-green-600 text-white'
                       : 'bg-[#059669] text-white hover:bg-[#059669]/90'
-                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-zinc-600 text-zinc-400 cursor-not-allowed'
                 }`}
               >
                 {isAddedToCart 
@@ -215,7 +215,7 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Ask a Question */}
-            <button className="text-teal-500 dark:text-teal-400 hover:text-teal-300 underline">
+            <button className="text-[#059669] dark:text-[#1b8d69] hover:text-[#1b8d69] underline">
               Ask a question
             </button>
           </div>
@@ -223,7 +223,7 @@ const ProductDetailPage = () => {
 
         {/* Product Tabs */}
         <div className="mt-16">
-          <div className="border-b border-gray-700">
+          <div className="border-b border-zinc-700">
             <nav className="flex space-x-8">
               {['Description', 'Details', 'Reviews'].map((tab) => (
                 <button
@@ -231,8 +231,8 @@ const ProductDetailPage = () => {
                   onClick={() => setActiveTab(tab.toLowerCase())}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.toLowerCase()
-                      ? 'border-teal-500 text-teal-400'
-                      : 'border-transparent dark:text-gray-400 text-gray-900 hover:text-white'
+                      ? 'border-[#059669] text-[#1b8d69]'
+                      : 'border-transparent dark:text-zinc-400 text-zinc-900 hover:text-white'
                   } transition-colors`}
                 >
                   {tab}
@@ -243,7 +243,7 @@ const ProductDetailPage = () => {
 
           <div className="py-8">
             {activeTab === 'description' && (
-              <div className="text-gray-900 dark:text-gray-300 space-y-4">
+              <div className="text-zinc-900 dark:text-zinc-300 space-y-4">
                 <h4 className="text-black dark:text-white font-semibold text-lg mb-4">Product Description</h4>
                 <ul className="list-disc list-inside space-y-2">
                   <li>Embroidered Oversized Tees</li>
@@ -260,7 +260,7 @@ const ProductDetailPage = () => {
               </div>
             )}
             {activeTab === 'details' && (
-              <div className="text-gray-900 dark:text-gray-300 space-y-4">
+              <div className="text-zinc-900 dark:text-zinc-300 space-y-4">
                 <h4 className="text-black dark:text-white font-semibold text-lg mb-4">Product Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -285,10 +285,10 @@ const ProductDetailPage = () => {
               </div>
             )}
             {activeTab === 'reviews' && (
-              <div className="text-gray-900 dark:text-gray-300 space-y-6">
+              <div className="text-zinc-900 dark:text-zinc-300 space-y-6">
                 <h4 className="text-black dark:text-white font-semibold text-lg mb-4">Customer Reviews</h4>
                 <div className="space-y-4">
-                  <div className="bg-gray-200 dark:bg-gray-800 p-4 rounded-lg">
+                  <div className="bg-zinc-200 dark:bg-zinc-800 p-4 rounded-lg">
                     <div className="flex items-center mb-2">
                       <div className="flex">
                         {[...Array(5)].map((_, i) => (
@@ -297,19 +297,19 @@ const ProductDetailPage = () => {
                       </div>
                       <span className="text-black dark:text-white font-medium ml-2">Ahmed M.</span>
                     </div>
-                    <p className="text-gray-900 dark:text-gray-300">Great quality and comfortable fit. Exactly as described!</p>
+                    <p className="text-zinc-900 dark:text-zinc-300">Great quality and comfortable fit. Exactly as described!</p>
                   </div>
-                  <div className="bg-gray-200 dark:bg-gray-800 p-4 rounded-lg">
+                  <div className="bg-zinc-200 dark:bg-zinc-800 p-4 rounded-lg">
                     <div className="flex items-center mb-2">
                       <div className="flex">
                         {[...Array(4)].map((_, i) => (
                           <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                         ))}
-                        <Star className="w-4 h-4 text-gray-600" />
+                        <Star className="w-4 h-4 text-zinc-600" />
                       </div>
                       <span className="text-black dark:text-white font-medium ml-2">Sarah K.</span>
                     </div>
-                    <p className="text-gray-900 dark:text-gray-300">Love the design and material. Fast shipping too!</p>
+                    <p className="text-zinc-900 dark:text-zinc-300">Love the design and material. Fast shipping too!</p>
                   </div>
                 </div>
               </div>

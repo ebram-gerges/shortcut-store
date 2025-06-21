@@ -50,19 +50,19 @@ const VerifyEmailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-900">
+      <div className="w-full max-w-md bg-zinc-800 rounded-lg shadow-lg p-8">
         <div className="flex flex-col items-center mb-6">
-          <MailCheck className="h-12 w-12 text-teal-400 mb-2" />
+          <MailCheck className="h-12 w-12 text-[#1b8d69] mb-2" />
           <h2 className="text-2xl font-bold text-white mb-1">Verify Your Email</h2>
-          <p className="text-gray-400 text-center">
+          <p className="text-zinc-400 text-center">
             Enter the 6-digit code sent to your email address.<br />
             (Check the Django console for the code in development.)
           </p>
         </div>
         <form className="space-y-6" onSubmit={e => { e.preventDefault(); if (code.length === 6) handleVerify(code); }}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
               Email
             </label>
             <input
@@ -72,13 +72,13 @@ const VerifyEmailPage: React.FC = () => {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 mb-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+              className="w-full px-4 py-3 mb-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
               placeholder="Enter your email"
               disabled={isLoading}
             />
           </div>
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="code" className="block text-sm font-medium text-zinc-300 mb-2">
               Verification Code
             </label>
             <input
@@ -93,7 +93,7 @@ const VerifyEmailPage: React.FC = () => {
               required
               value={code}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-center tracking-widest text-2xl letter-spacing-widest"
+              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669] text-center tracking-widest text-2xl letter-spacing-widest"
               placeholder="------"
               disabled={isLoading}
             />
@@ -101,14 +101,14 @@ const VerifyEmailPage: React.FC = () => {
           {error && <div className="text-red-400 text-sm text-center">{error}</div>}
           <button
             type="submit"
-            className="w-full py-3 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-60"
+            className="w-full py-3 bg-[#059669] hover:bg-[#157557] text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-60"
             disabled={isLoading || code.length !== 6}
           >
             {isLoading ? 'Verifying...' : 'Verify'}
           </button>
           <button
             type="button"
-            className="w-full py-2 mt-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm"
+            className="w-full py-2 mt-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded-lg text-sm"
             onClick={() => { logout(); navigate('/login'); }}
             disabled={isLoading}
           >

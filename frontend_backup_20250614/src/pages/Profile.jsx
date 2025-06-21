@@ -9,8 +9,8 @@ const Profile = () => {
       <div className="bg-shortcut-glass-strong border border-emerald-400/30 dark:border-emerald-300/20 shadow-xl rounded-2xl p-8 w-full max-w-md">
         <h2 className="text-3xl font-bold text-emerald-700 dark:text-emerald-300 text-center mb-4">Profile</h2>
         <div className="mb-4">
-          <p className="text-gray-700 dark:text-gray-300"><strong>Name:</strong> {user?.name}</p>
-          <p className="text-gray-700 dark:text-gray-300"><strong>Email:</strong> {user?.email}</p>
+          <p className="text-zinc-700 dark:text-zinc-300"><strong>Name:</strong> {user?.name}</p>
+          <p className="text-zinc-700 dark:text-zinc-300"><strong>Email:</strong> {user?.email}</p>
         </div>
         <button
           onClick={logout}

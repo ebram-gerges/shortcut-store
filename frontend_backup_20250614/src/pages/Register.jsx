@@ -38,7 +38,7 @@ const Register = () => {
           value={name}
           onChange={e => setName(e.target.value)}
           required
-          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-gray-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-zinc-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
         />
         <input
           type="email"
@@ -46,7 +46,7 @@ const Register = () => {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
-          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-gray-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-zinc-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
         />
         <input
           type="password"
@@ -54,7 +54,7 @@ const Register = () => {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
-          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-gray-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-zinc-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
         />
         <button
           type="submit"
@@ -63,7 +63,7 @@ const Register = () => {
         >
           {loading ? 'Registering...' : 'Register'}
         </button>
-        <div className="text-center text-sm text-gray-700 dark:text-gray-300 mt-2">
+        <div className="text-center text-sm text-zinc-700 dark:text-zinc-300 mt-2">
           Already have an account? <a href="/login" className="text-emerald-600 dark:text-emerald-300 underline">Login</a>
         </div>
       </form>

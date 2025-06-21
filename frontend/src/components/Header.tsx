@@ -26,9 +26,9 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<typeof mockProducts>([]);
-  
+
   const { currency, setCurrency } = useCurrency();
-  
+
   const { getTotalItems } = useCart();
   useWishlist();
   const { user, logout } = useAuth();
@@ -59,10 +59,10 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
 
   return (
     <>
-      <div className="fixed w-full top-0 z-50 bg-white/50 backdrop-blur-lg border-b border-gray-200 dark:bg-zinc-800/30 dark:border-zinc-500">
+      <div className="fixed w-full top-0 z-50 bg-white/50 backdrop-blur-lg border-b border-zinc-200 dark:bg-zinc-800/30 dark:border-zinc-500">
         {/* Top bar */}
         {showTopBar && (
-          <div className="flex max-md:flex-col gap-2 max-md:gap-4 items-center justify-center dark:bg-black text-center py-2 text-sm bg-gray-200 relative">
+          <div className="flex max-md:flex-col gap-2 max-md:gap-1 items-center justify-center dark:bg-black text-center py-2 text-sm bg-zinc-200 relative">
             <span className="text-black dark:text-white">WELCOME TO SHORTCUT STORE</span>
             <span className="text-[#059669]">BUY 3 & GET FREE SHIPPING!</span>
             <button
@@ -95,7 +95,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   <div key={link.href} className="relative inline-block group align-middle">
                     <Link
                       to={to}
-                      className="whitespace-nowrap text-black dark:text-white hover:text-[#059669] transition-colors px-1"
+                      className="whitespace-nowrap text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
                     >
                       {link.name}
                       <span
@@ -108,7 +108,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               <div className="relative inline-block group align-middle">
                 <button
                   onClick={() => toggleDropdown('tshirts')}
-                  className="whitespace-nowrap flex items-center text-black dark:text-white hover:text-[#059669] transition-colors px-1"
+                  className="whitespace-nowrap flex items-center text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
                 >
                   T-Shirts <ChevronDown className="ml-1 h-4 w-4" />
                   <span
@@ -116,14 +116,14 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   ></span>
                 </button>
                 {isDropdownOpen === 'tshirts' && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 z-10">
-                    <Link to="/products?category=tshirts" className="block px-4 py-2 text-white hover:bg-gray-700">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-zinc-800 rounded-lg shadow-lg py-2 z-10">
+                    <Link to="/products?category=tshirts" className="block px-4 py-2 text-white hover:bg-zinc-700">
                       All T-Shirts
                     </Link>
-                    <Link to="/products?category=tshirts-graphic" className="block px-4 py-2 text-white hover:bg-gray-700">
+                    <Link to="/products?category=tshirts-graphic" className="block px-4 py-2 text-white hover:bg-zinc-700">
                       Graphic Tees
                     </Link>
-                    <Link to="/products?category=tshirts-basic" className="block px-4 py-2 text-white hover:bg-gray-700">
+                    <Link to="/products?category=tshirts-basic" className="block px-4 py-2 text-white hover:bg-zinc-700">
                       Basic Tees
                     </Link>
                   </div>
@@ -132,7 +132,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               <div className="relative inline-block group align-middle">
                 <button
                   onClick={() => toggleDropdown('bottoms')}
-                  className="whitespace-nowrap flex items-center text-black dark:text-white hover:text-[#059669] transition-colors px-1"
+                  className="whitespace-nowrap flex items-center text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
                 >
                   Bottoms <ChevronDown className="ml-1 h-4 w-4" />
                   <span
@@ -140,21 +140,21 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   ></span>
                 </button>
                 {isDropdownOpen === 'bottoms' && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 z-10">
-                    <Link to="/products?category=bottoms-pants" className="block px-4 py-2 text-white hover:bg-gray-700">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-zinc-800 rounded-lg shadow-lg py-2 z-10">
+                    <Link to="/products?category=bottoms-pants" className="block px-4 py-2 text-white hover:bg-zinc-700">
                       Pants
                     </Link>
-                    <Link to="/products?category=bottoms-shorts" className="block px-4 py-2 text-white hover:bg-gray-700">
+                    <Link to="/products?category=bottoms-shorts" className="block px-4 py-2 text-white hover:bg-zinc-700">
                       Shorts
                     </Link>
-                    <Link to="/products?category=bottoms-jeans" className="block px-4 py-2 text-white hover:bg-gray-700">
+                    <Link to="/products?category=bottoms-jeans" className="block px-4 py-2 text-white hover:bg-zinc-700">
                       Jeans
                     </Link>
                   </div>
                 )}
               </div>
               <div className="relative inline-block group align-middle">
-                <Link to="/products?category=shoes" className="whitespace-nowrap block text-black dark:text-white hover:text-[#059669] transition-colors px-1">
+                <Link to="/products?category=shoes" className="whitespace-nowrap block text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1">
                   Shoes
                   <span
                     className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
@@ -162,7 +162,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                 </Link>
               </div>
               <div className="relative inline-block group align-middle">
-                <Link to="/products" className="whitespace-nowrap block text-black dark:text-white hover:text-[#059669] transition-colors px-1">
+                <Link to="/products" className="whitespace-nowrap block text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1">
                   Customer Service
                   <span
                     className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
@@ -176,7 +176,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               <button className="text-black dark:text-white hover:text-[#059669] transition-colors" onClick={() => setShowSearch(true)}>
                 <Search className="h-6 w-6" />
               </button>
-              
+
               <button
                 onClick={toggleTheme}
                 className="text-black dark:text-white hover:text-[#059669] transition-colors"
@@ -184,7 +184,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               >
                 {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
               </button>
-              
+
               {user ? (
                 <div className="relative">
                   <button
@@ -201,16 +201,16 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-20">
-                      <Link to="/profile" className="block px-4 py-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg py-2 z-20">
+                      <Link to="/profile" className="block px-4 py-2 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
                         Profile
                       </Link>
-                      <Link to="/orders" className="block px-4 py-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <Link to="/orders" className="block px-4 py-2 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
                         Orders
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors"
+                        className="w-full text-left px-4 py-2 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center transition-colors"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
                         Logout
@@ -226,14 +226,14 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   Login
                 </Link>
               )}
-              
+
               <button
                 onClick={() => setIsWishlistOpen(true)}
                 className="text-black dark:text-white hover:text-[#059669] transition-colors relative"
               >
                 <Heart className="h-6 w-6" />
               </button>
-              
+
               <button
                 onClick={() => setIsCartOpen(true)}
                 className="text-black dark:text-white hover:text-[#059669] transition-colors relative"
@@ -245,9 +245,9 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   </span>
                 )}
               </button>
-              
+
               <select
-                className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white px-2 py-1 rounded border border-gray-300 dark:border-gray-700 focus:ring-[#059669]"
+                className="bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white px-2 py-1 rounded border border-zinc-300 dark:border-zinc-700 focus:ring-[#059669]"
                 value={currency}
                 onChange={e => setCurrency(e.target.value as Currency)}
               >
@@ -275,7 +275,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 z-50 bg-black bg-opacity-60 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div
-          className={`fixed right-0 top-0 h-full w-4/5 max-w-xs bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xl border-l-2 border-gray-300/50 dark:border-gray-700/50 shadow-xl p-6 flex flex-col transition-transform duration-500 transform ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`fixed right-0 top-0 h-full w-4/5 max-w-xs bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xl border-l-2 border-zinc-300/50 dark:border-zinc-700/50 shadow-xl p-6 flex flex-col transition-transform duration-500 transform ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0,0,0,0.99)' }}
         >
           <button
@@ -306,13 +306,13 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               </button>
               {isDropdownOpen === 'tshirts' && (
                 <div className="ml-4 mt-2 flex flex-col space-y-2">
-                  <Link to="/products?category=tshirts" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/products?category=tshirts" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
                     All T-Shirts
                   </Link>
-                  <Link to="/products?category=tshirts-graphic" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/products?category=tshirts-graphic" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
                     Graphic Tees
                   </Link>
-                  <Link to="/products?category=tshirts-basic" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/products?category=tshirts-basic" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
                     Basic Tees
                   </Link>
                 </div>
@@ -327,13 +327,13 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               </button>
               {isDropdownOpen === 'bottoms' && (
                 <div className="ml-4 mt-2 flex flex-col space-y-2">
-                  <Link to="/products?category=bottoms-pants" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/products?category=bottoms-pants" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
                     Pants
                   </Link>
-                  <Link to="/products?category=bottoms-shorts" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/products?category=bottoms-shorts" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
                     Shorts
                   </Link>
-                  <Link to="/products?category=bottoms-jeans" className="block px-2 py-1 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/products?category=bottoms-jeans" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
                     Jeans
                   </Link>
                 </div>
@@ -343,7 +343,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               Customer Service
             </Link>
             {/* Divider */}
-            <hr className="my-4 border-gray-300 dark:border-gray-700" />
+            <hr className="my-4 border-zinc-300 dark:border-zinc-700" />
             {/* Right side actions in mobile menu */}
             <button className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2" onClick={() => { setShowSearch(true); setIsMobileMenuOpen(false); }}>
               <Search className="h-6 w-6" /> <span>Search</span>
@@ -355,7 +355,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               <ShoppingCart className="h-6 w-6" /> <span>Cart</span>
             </button>
             <select
-              className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white px-2 py-1 rounded border border-gray-300 dark:border-gray-700 focus:ring-[#059669] mt-2"
+              className="bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white px-2 py-1 rounded border border-zinc-300 dark:border-zinc-700 focus:ring-[#059669] mt-2"
               value={currency}
               onChange={e => setCurrency(e.target.value as Currency)}
             >
@@ -391,14 +391,14 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
       {/* Search Overlay */}
       {showSearch && (
         <div className="fixed inset-0 z-[999] backdrop-blur-lg bg-black/50 flex flex-col">
-          <div className="relative w-full bg-white dark:bg-zinc-900 border-b border-gray-300 backdrop-blur-lg dark:border-zinc-700 pt-[70px] pb-6 px-4 flex items-center">
+          <div className="relative w-full bg-white dark:bg-zinc-900 border-b border-zinc-300 backdrop-blur-lg dark:border-zinc-700 pt-[70px] pb-6 px-4 flex items-center">
             <input
               autoFocus
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search products..."
-              className="w-full max-w-2xl mx-auto px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-800 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#059669]"
+              className="w-full max-w-2xl mx-auto px-4 py-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#059669]"
             />
             <button
               className="absolute right-6 top-1/2 -translate-y-1/2 text-black dark:text-white hover:text-[#059669] transition-colors"
@@ -410,12 +410,12 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
           </div>
           <div className="flex-1 w-full max-w-2xl mx-auto px-4 pt-4">
             {searchTerm && searchResults.length > 0 && (
-              <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700">
+              <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700">
                 {searchResults.map(product => (
                   <Link
                     key={product.id}
                     to={`/products/${product.id}`}
-                    className="block px-6 py-4 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+                    className="block px-6 py-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     onClick={() => setShowSearch(false)}
                   >
                     <span className="font-semibold text-black dark:text-white">{product.name}</span>

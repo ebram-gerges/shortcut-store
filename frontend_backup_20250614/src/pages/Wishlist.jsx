@@ -53,10 +53,10 @@ const Wishlist = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {wishlist.map((item) => (
-              <div key={item.id} className="bg-white dark:bg-gray-900/60 rounded-lg shadow-md p-4 flex flex-col items-center glassy">
+              <div key={item.id} className="bg-white dark:bg-zinc-900/60 rounded-lg shadow-md p-4 flex flex-col items-center glassy">
                 <img src={item.image} alt={item.name} className="w-32 h-32 object-cover rounded mb-4" />
                 <h3 className="text-lg font-semibold text-shortcut-text-primary dark:text-shortcut-dark-text-primary mb-2">{item.name}</h3>
-                <p className="text-shortcut-text-secondary dark:text-gray-300 mb-2">EGP {item.price}</p>
+                <p className="text-shortcut-text-secondary dark:text-zinc-300 mb-2">EGP {item.price}</p>
                 <div className="flex gap-2">
                   <Link
                     to={`/products/${item.product}`}

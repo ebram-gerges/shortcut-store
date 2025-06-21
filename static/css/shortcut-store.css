@@ -29,9 +29,9 @@
   --shortcut-black: #000000;
   --shortcut-white: #ffffff;
   --shortcut-cream: #fefefe;           /* Pure white with subtle warmth */
-  --shortcut-light-grey: #f8fafc;     /* Modern light gray with blue tint */
-  --shortcut-medium-grey: #64748b;    /* Contemporary medium gray */
-  --shortcut-dark-grey: #1e293b;      /* Modern dark gray */
+  --shortcut-light-grey: #f8fafc;     /* Modern light zinc with blue tint */
+  --shortcut-medium-grey: #64748b;    /* Contemporary medium zinc */
+  --shortcut-dark-grey: #1e293b;      /* Modern dark zinc */
 
   /* Sale Badge Red Colors */
   --shortcut-sale-red: #dc2626;        /* Modern red */
@@ -57,8 +57,8 @@
 
   /* Shortcut Store Background Colors - Modern Light Theme */
   --shortcut-bg-primary: var(--shortcut-white);      /* Pure white for main content */
-  --shortcut-bg-secondary: var(--shortcut-light-grey); /* Modern light gray for sections */
-  --shortcut-bg-tertiary: #f1f5f9;                   /* Slightly darker gray for cards */
+  --shortcut-bg-secondary: var(--shortcut-light-grey); /* Modern light zinc for sections */
+  --shortcut-bg-tertiary: #f1f5f9;                   /* Slightly darker zinc for cards */
   --shortcut-bg-dark: var(--shortcut-army-green);
   --shortcut-bg-accent: var(--shortcut-neon-green);
 

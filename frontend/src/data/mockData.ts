@@ -113,7 +113,7 @@ export const mockProducts: Product[] = [
     name: 'Winter Hoodie',
     price: 120.00,
     rating: 4.8,
-    colors: ['black', 'gray'],
+    colors: ['black', 'zinc'],
     sizes: ['M', 'L', 'XL'],
     category: 'tshirts-basic',
     inStock: true,

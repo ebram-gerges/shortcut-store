@@ -34,12 +34,12 @@ const useProducts = (initialFilters: ProductFilters = {}) => {
       
       if (response) {
         if (pageNum === 1) {
-          setProducts(response.results);
+          setProducts(response);
         } else {
-          setProducts(prev => [...prev, ...response.results]);
+          setProducts(prev => [...prev, ...response]);
         }
-        setTotalCount(response.count);
-        setHasMore(!!response.next);
+        setTotalCount(response.length); // Just the length of the array
+        setHasMore(response.length === 10); // If we got a full page, maybe there's more
       }
     } catch (err) {
       console.error('Error fetching products:', err);

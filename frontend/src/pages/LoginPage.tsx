@@ -55,7 +55,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen relative z-20 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 pt-[125px] max-md:mt-[70px]">
-      <div className="max-w-md w-full p-5 backdrop-blur-lg dark:bg-gray-800/30 bg-white/50 border border-gray-700 rounded-xl space-y-8">
+      <div className="max-w-md w-full p-5 backdrop-blur-lg dark:bg-zinc-800/30 bg-white/50 border border-zinc-700 rounded-xl space-y-8">
         <div className="text-center">
           <p className="mt-6 text-3xl font-bold dark:text-white text-black">
             Sign in to your account
@@ -74,11 +74,11 @@ const LoginPage = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium dark:text-gray-300 text-gray-900 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
                   Email address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-300  h-5 w-5" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-300  h-5 w-5" />
                   <input
                     id="email"
                     name="email"
@@ -86,18 +86,18 @@ const LoginPage = () => {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                    className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
                     placeholder="Enter your email"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium dark:text-gray-300 text-gray-900 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-5 w-5" />
                   <input
                     id="password"
                     name="password"
@@ -105,13 +105,13 @@ const LoginPage = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-12 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                    className="w-full pl-10 pr-12 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
                     placeholder="Enter your password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-400 hover:text-white"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -125,15 +125,15 @@ const LoginPage = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-teal-500 bg-gray-800 border-gray-600 rounded focus:ring-teal-500"
+                  className="h-4 w-4 text-[#059669] bg-zinc-800 border-zinc-600 rounded focus:ring-[#059669]"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm dark:text-gray-300 text-gray-900">
+                <label htmlFor="remember-me" className="ml-2 block text-sm dark:text-zinc-300 text-zinc-900">
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <Link to="/forgot-password" className="text-teal-400 hover:text-teal-300">
+                <Link to="/forgot-password" className="text-[#1b8d69] hover:text-[#1b8d69]">
                   Forgot your password?
                 </Link>
               </div>
@@ -142,31 +142,31 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading || isGoogleLoading}
-              className="w-full bg-teal-500 text-white py-3 px-4 rounded-lg font-semibold hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-[#059669] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#157557] focus:outline-none focus:ring-2 focus:ring-[#059669] focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
           <div className="text-center">
-            <span className="dark:text-gray-400 text-gray-900">Don't have an account? </span>
-            <Link to="/signup" className="text-teal-400 hover:text-teal-300 font-medium">
+            <span className="dark:text-zinc-400 text-zinc-900">Don't have an account? </span>
+            <Link to="/signup" className="text-[#059669] hover:text-[#1b8d69] font-medium">
               Sign up
             </Link>
           </div>
           <div className="flex items-center justify-center gap-2">
-            <div className="flex-1 border-t border-gray-600" />
-            <span className="px-2 flex-2 dark:text-gray-400 text-gray-900">Or try another way!</span>
-            <div className="flex-1 border-t border-gray-600" />
+            <div className="flex-1 border-t border-zinc-600" />
+            <span className="px-2 flex-2 dark:text-zinc-400 text-zinc-900">Or try another way!</span>
+            <div className="flex-1 border-t border-zinc-600" />
           </div>
            {/* Google Sign In Button */}
            <button
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading || isLoading}
-            className="w-full flex items-center justify-center px-4 py-3 border border-gray-600 rounded-lg bg-white text-gray-900 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full flex items-center justify-center px-4 py-3 border border-zinc-600 rounded-lg bg-white text-zinc-900 font-medium hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-[#059669] focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isGoogleLoading ? (
-              <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin mr-3"></div>
+              <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mr-3"></div>
             ) : (
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

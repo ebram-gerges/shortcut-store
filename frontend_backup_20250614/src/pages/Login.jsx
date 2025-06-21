@@ -37,7 +37,7 @@ const Login = () => {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
-          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-gray-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-zinc-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
         />
         <input
           type="password"
@@ -45,7 +45,7 @@ const Login = () => {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
-          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-gray-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+          className="px-4 py-3 rounded-lg bg-white/60 dark:bg-zinc-800/60 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
         />
         <button
           type="submit"
@@ -54,7 +54,7 @@ const Login = () => {
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
-        <div className="text-center text-sm text-gray-700 dark:text-gray-300 mt-2">
+        <div className="text-center text-sm text-zinc-700 dark:text-zinc-300 mt-2">
           Don&apos;t have an account? <a href="/register" className="text-emerald-600 dark:text-emerald-300 underline">Register</a>
         </div>
       </form>

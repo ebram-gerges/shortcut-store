@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Star, ChevronDown } from 'lucide-react';
+import { Star, ChevronDown, Heart } from 'lucide-react';
 import { mockProducts } from '../data/mockData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 function getQueryParams(search: string) {
   const params = new URLSearchParams(search);
@@ -38,6 +39,7 @@ const ProductsPage = () => {
   const { currency } = useCurrency();
   const conversionRate = 50; // 1 USD = 50 EGP
   const { addItem } = useCart();
+  const { items: wishlistItems, addItem: addWishlistItem } = useWishlist();
 
   // Set initial filters from query params
   useEffect(() => {
@@ -109,6 +111,21 @@ const ProductsPage = () => {
     });
   };
 
+  const handleQuickWishlist = (product: typeof mockProducts[0]) => {
+    addWishlistItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      color: product.colors[0],
+      size: product.sizes[0],
+    });
+  };
+
+  const isInWishlist = (product: typeof mockProducts[0]) =>
+    wishlistItems.some(
+      (item) => item.id === product.id && item.color === product.colors[0] && item.size === product.sizes[0]
+    );
+
   return (
     <div className="relative z-20 min-h-screen pt-[125px] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
@@ -116,8 +133,8 @@ const ProductsPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
-            <div className=" backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 pb-4 border border-gray-400/50 dark:border-gray-700/50">
-              <h2 className="text-xl font-semibold text-black dark:text-white mb-6">Filter</h2>
+            <div className=" backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 pb-4 border border-zinc-400/50 dark:border-zinc-700/50">
+              <h2 className="text-xl font-semibold text-black dark:text-white mb-8">Filter</h2>
               
               {/* Category */}
               <div className="mb-8">
@@ -127,27 +144,27 @@ const ProductsPage = () => {
                   onClick={() => toggleCollapse('category' as any)}
                 >
                   <h3 className="text-black dark:text-white font-semibold">Category</h3>
-                  <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.category ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.category ? 'rotate-180' : ''}`} />
                 </button>
                 <div
                   className={`transition-all duration-500 ease overflow-hidden ${collapsed.category ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[500px] opacity-100 pointer-events-auto'}`}
                 >
                   <div className="space-y-2">
                     <div>
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">T-Shirts</span>
-                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">T-Shirts</span>
+                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                         <input
                           type="checkbox"
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           checked={filters.categories.includes('tshirts-graphic')}
                           onChange={() => handleFilterChange('categories', 'tshirts-graphic')}
                         />
                         Graphic Tees
                       </label>
-                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                         <input
                           type="checkbox"
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           checked={filters.categories.includes('tshirts-basic')}
                           onChange={() => handleFilterChange('categories', 'tshirts-basic')}
                         />
@@ -155,29 +172,29 @@ const ProductsPage = () => {
                       </label>
                     </div>
                     <div className="mt-2">
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">Bottoms</span>
-                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">Bottoms</span>
+                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                         <input
                           type="checkbox"
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           checked={filters.categories.includes('bottoms-pants')}
                           onChange={() => handleFilterChange('categories', 'bottoms-pants')}
                         />
                         Pants
                       </label>
-                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                         <input
                           type="checkbox"
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           checked={filters.categories.includes('bottoms-shorts')}
                           onChange={() => handleFilterChange('categories', 'bottoms-shorts')}
                         />
                         Shorts
                       </label>
-                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                         <input
                           type="checkbox"
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           checked={filters.categories.includes('bottoms-jeans')}
                           onChange={() => handleFilterChange('categories', 'bottoms-jeans')}
                         />
@@ -185,11 +202,11 @@ const ProductsPage = () => {
                       </label>
                     </div>
                     <div className="mt-2">
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">Shoes</span>
-                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">Shoes</span>
+                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                         <input
                           type="checkbox"
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           checked={filters.categories.includes('shoes')}
                           onChange={() => handleFilterChange('categories', 'shoes')}
                         />
@@ -197,11 +214,11 @@ const ProductsPage = () => {
                       </label>
                     </div>
                     <div className="mt-2">
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">Sets</span>
-                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">Sets</span>
+                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                         <input
                           type="checkbox"
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           checked={filters.categories.includes('sets')}
                           onChange={() => handleFilterChange('categories', 'sets')}
                         />
@@ -220,24 +237,24 @@ const ProductsPage = () => {
                   onClick={() => toggleCollapse('availability')}
                 >
                   <h3 className="text-black dark:text-white font-semibold">Availability</h3>
-                  <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.availability ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.availability ? 'rotate-180' : ''}`} />
                 </button>
                 <div
                   className={`transition-all duration-500 ease overflow-hidden ${collapsed.availability ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[200px] opacity-100 pointer-events-auto'}`}
                 >
                   <div className="space-y-2">
-                    <label className="flex items-center text-gray-900 dark:text-gray-300">
+                    <label className="flex items-center text-zinc-900 dark:text-zinc-300">
                       <input 
                         type="checkbox" 
-                        className="mr-2 bg-gray-700 border-gray-600"
+                        className="mr-2 bg-zinc-700 border-zinc-600"
                         onChange={() => handleFilterChange('availability', 'in-stock')}
                       />
                       In stock
                     </label>
-                    <label className="flex items-center text-gray-900 dark:text-gray-300">
+                    <label className="flex items-center text-zinc-900 dark:text-zinc-300">
                       <input 
                         type="checkbox" 
-                        className="mr-2 bg-gray-700 border-gray-600"
+                        className="mr-2 bg-zinc-700 border-zinc-600"
                         onChange={() => handleFilterChange('availability', 'out-of-stock')}
                       />
                       Out of stock
@@ -254,7 +271,7 @@ const ProductsPage = () => {
                   onClick={() => toggleCollapse('price')}
                 >
                   <h3 className="text-black dark:text-white font-semibold">Price</h3>
-                  <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.price ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.price ? 'rotate-180' : ''}`} />
                 </button>
                 <div
                   className={`transition-all duration-500 ease overflow-hidden ${collapsed.price ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[100px] opacity-100 pointer-events-auto'}`}
@@ -263,14 +280,14 @@ const ProductsPage = () => {
                     <input
                       type="number"
                       placeholder="Min"
-                      className="bg-gray-100 dark:bg-gray-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white px-3 py-2 rounded border border-gray-600/50 dark:border-gray-500 w-20"
+                      className="bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white px-3 py-2 rounded border border-zinc-600/50 dark:border-zinc-500 w-20"
                       value={filters.priceMin}
                       onChange={(e) => setFilters(prev => ({ ...prev, priceMin: e.target.value }))}
                     />
                     <input
                       type="number"
                       placeholder="Max"
-                      className="bg-gray-100 dark:bg-gray-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white px-3 py-2 rounded border border-gray-600/50 dark:border-gray-500 w-20"
+                      className="bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white px-3 py-2 rounded border border-zinc-600/50 dark:border-zinc-500 w-20"
                       value={filters.priceMax}
                       onChange={(e) => setFilters(prev => ({ ...prev, priceMax: e.target.value }))}
                     />
@@ -279,24 +296,24 @@ const ProductsPage = () => {
               </div>
 
               {/* Size */}
-              <div>
+              <div className='mb-8'>
                 <button
                   type="button"
                   className="flex items-center justify-between w-full mb-4"
                   onClick={() => toggleCollapse('size')}
                 >
                   <h3 className="text-black dark:text-white font-semibold">Size</h3>
-                  <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.size ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.size ? 'rotate-180' : ''}`} />
                 </button>
                 <div
                   className={`transition-all duration-500 ease overflow-hidden ${collapsed.size ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[200px] opacity-100 pointer-events-auto'}`}
                 >
                   <div className="space-y-2">
                     {['Small (S)', 'Medium (M)', 'Large (L)', 'Extra large (XL)'].map((size) => (
-                      <label key={size} className="flex items-center text-gray-900 dark:text-gray-300">
+                      <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
                         <input 
                           type="checkbox" 
-                          className="mr-2 bg-gray-700 border-gray-600"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
                           onChange={() => handleFilterChange('sizes', size)}
                         />
                         {size}
@@ -307,32 +324,32 @@ const ProductsPage = () => {
               </div>
 
               {/* Season */}
-              <div className="mb-8">
+              <div className="">
                 <button
                   type="button"
                   className="flex items-center justify-between w-full mb-4"
                   onClick={() => toggleCollapse('season' as any)}
                 >
                   <h3 className="text-black dark:text-white font-semibold">Season</h3>
-                  <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.season ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.season ? 'rotate-180' : ''}`} />
                 </button>
                 <div
                   className={`transition-all duration-500 ease overflow-hidden ${collapsed.season ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[100px] opacity-100 pointer-events-auto'}`}
                 >
                   <div className="space-y-2">
-                    <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                    <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                       <input
                         type="checkbox"
-                        className="mr-2 bg-gray-700 border-gray-600"
+                        className="mr-2 bg-zinc-700 border-zinc-600"
                         checked={filters.seasons.includes('summer')}
                         onChange={() => handleFilterChange('seasons', 'summer')}
                       />
                       Summer
                     </label>
-                    <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                    <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
                       <input
                         type="checkbox"
-                        className="mr-2 bg-gray-700 border-gray-600"
+                        className="mr-2 bg-zinc-700 border-zinc-600"
                         checked={filters.seasons.includes('winter')}
                         onChange={() => handleFilterChange('seasons', 'winter')}
                       />
@@ -346,10 +363,10 @@ const ProductsPage = () => {
 
           {/* Products Grid */}
           <div className="lg:w-3/4">
-            <div className="flex justify-between items-center mb-6 backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 border border-gray-400/50 dark:border-gray-700/50">
-              <span className="text-gray-900 dark:text-gray-300">{filteredProducts.length} products</span>
+            <div className="flex justify-between items-center mb-6 backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 border border-zinc-400/50 dark:border-zinc-700/50">
+              <span className="text-zinc-900 dark:text-zinc-300">{filteredProducts.length} products</span>
               <select 
-                className="bg-gray-100 dark:bg-gray-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white pl-4 md:pr-6 max-md:w-28 py-2 rounded-md border border-gray-600/40"
+                className="bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white pl-4 md:pr-6 max-md:w-28 py-2 rounded-md border border-zinc-600/40"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
@@ -362,10 +379,10 @@ const ProductsPage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 md:gap-6 gap-4">
               {filteredProducts.map((product) => (
-                <div key={product.id} className="backdrop-blur-xl bg-white/50 dark:bg-black/20 border-2 border-gray-300/30 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
+                <div key={product.id} className="backdrop-blur-xl bg-white/50 dark:bg-black/20 border-2 border-zinc-500/50 dark:border-zinc-300/50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
                   <Link to={`/products/${product.id}`}>
-                    <div className="h-64 bg-gray-600 flex items-center justify-center">
-                      <span className="text-gray-400">Product Image</span>
+                    <div className="h-64 bg-zinc-600 flex items-center justify-center">
+                      <span className="text-zinc-400">Product Image</span>
                     </div>
                   </Link>
                   
@@ -383,22 +400,33 @@ const ProductsPage = () => {
                           className={`w-4 h-4 ${
                             i < Math.floor(product.rating) 
                               ? 'dark:text-yellow-400 text-yellow-500 fill-current' 
-                              : 'text-gray-600 dark:text-gray-400'
+                              : 'text-zinc-600 dark:text-zinc-400'
                           }`}
                         />
                       ))}
-                      <span className="text-gray-700 dark:text-gray-400 text-sm ml-2">({product.rating})</span>
+                      <span className="text-zinc-700 dark:text-zinc-400 text-sm ml-2">({product.rating})</span>
                     </div>
                     
                     <div className="flex flex-col md:flex-row gap-5 max-lg:my-4 justify-between items-center">
                       <span className="text-black dark:text-white font-bold">{getDisplayPrice(product.price)}</span>
-                      <button
-                        className="bg-[#059669] text-white px-4 py-2 rounded hover:bg-[#059669]/90 transition-colors disabled:opacity-50 max-md:w-full"
-                        onClick={() => handleQuickAdd(product)}
-                        disabled={!product.inStock}
-                      >
-                        Quick add
-                      </button>
+                      <div className="flex items-center gap-2 w-full md:w-auto">
+                        <button
+                          className="p-2 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                          title={isInWishlist(product) ? 'Already in wishlist' : 'Add to wishlist'}
+                          onClick={() => handleQuickWishlist(product)}
+                          disabled={isInWishlist(product)}
+                          type="button"
+                        >
+                          <Heart className={`w-4 h-4 ${isInWishlist(product) ? 'text-[#1fffb8] fill-[#1fffb8]' : 'text-zinc-500'}`} fill={isInWishlist(product) ? '#1fffb8' : 'none'} />
+                        </button>
+                        <button
+                          className="bg-[#059669] text-white px-4 py-2 rounded hover:bg-[#059669]/90 transition-colors disabled:opacity-50 max-md:w-full"
+                          onClick={() => handleQuickAdd(product)}
+                          disabled={!product.inStock}
+                        >
+                          Quick add
+                        </button>
+                      </div>
                     </div>
                     
                     {!product.inStock && (
@@ -410,7 +438,7 @@ const ProductsPage = () => {
                       {product.colors.map((color, index) => (
                         <div
                           key={index}
-                          className={`w-6 h-6 rounded-full border-2 border-gray-600`}
+                          className={`w-6 h-6 rounded-full border-2 border-zinc-600`}
                           style={{ backgroundColor: color }}
                         ></div>
                       ))}

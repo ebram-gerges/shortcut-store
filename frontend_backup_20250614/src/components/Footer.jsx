@@ -9,17 +9,17 @@ const Footer = () => {
           {/* Company Info */}
           <div>
             <h3 className="text-xl font-bold mb-4">Shortcut Store</h3>
-            <p className="text-gray-400 mb-4">
+            <p className="text-zinc-400 mb-4">
               Your one-stop destination for modern fashion and accessories.
             </p>
             <div className="flex space-x-4">
-              <Link to="#" className="text-gray-400 hover:text-white">
+              <Link to="#" className="text-zinc-400 hover:text-white">
                 <i className="fab fa-facebook"></i>
               </Link>
-              <Link to="#" className="text-gray-400 hover:text-white">
+              <Link to="#" className="text-zinc-400 hover:text-white">
                 <i className="fab fa-twitter"></i>
               </Link>
-              <Link to="#" className="text-gray-400 hover:text-white">
+              <Link to="#" className="text-zinc-400 hover:text-white">
                 <i className="fab fa-instagram"></i>
               </Link>
             </div>
@@ -30,22 +30,22 @@ const Footer = () => {
             <h3 className="text-xl font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-gray-400 hover:text-white">
+                <Link to="/" className="text-zinc-400 hover:text-white">
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/products" className="text-gray-400 hover:text-white">
+                <Link to="/products" className="text-zinc-400 hover:text-white">
                   Products
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-gray-400 hover:text-white">
+                <Link to="/about" className="text-zinc-400 hover:text-white">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-400 hover:text-white">
+                <Link to="/contact" className="text-zinc-400 hover:text-white">
                   Contact
                 </Link>
               </li>
@@ -57,22 +57,22 @@ const Footer = () => {
             <h3 className="text-xl font-bold mb-4">Customer Service</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/faq" className="text-gray-400 hover:text-white">
+                <Link to="/faq" className="text-zinc-400 hover:text-white">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link to="/shipping" className="text-gray-400 hover:text-white">
+                <Link to="/shipping" className="text-zinc-400 hover:text-white">
                   Shipping & Returns
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-gray-400 hover:text-white">
+                <Link to="/terms" className="text-zinc-400 hover:text-white">
                   Terms & Conditions
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-gray-400 hover:text-white">
+                <Link to="/privacy" className="text-zinc-400 hover:text-white">
                   Privacy Policy
                 </Link>
               </li>
@@ -82,14 +82,14 @@ const Footer = () => {
           {/* Newsletter */}
           <div>
             <h3 className="text-xl font-bold mb-4">Newsletter</h3>
-            <p className="text-gray-400 mb-4">
+            <p className="text-zinc-400 mb-4">
               Subscribe to receive updates on new arrivals and special offers.
             </p>
             <form className="space-y-2">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-shortcut-blue"
+                className="w-full px-4 py-2 rounded bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-shortcut-blue"
               />
               <button
                 type="submit"
@@ -102,7 +102,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+        <div className="border-t border-zinc-800 mt-8 pt-8 text-center text-zinc-400">
           <p>&copy; {new Date().getFullYear()} Shortcut Store. All rights reserved.</p>
         </div>
       </div>
