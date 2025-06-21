@@ -62,7 +62,7 @@ const ProductDetailPage = () => {
   const inWishlist = isInWishlist(product.id);
 
   return (
-    <div className="relative min-h-screen z-20 py-8 mt-[95px]">
+    <div className="relative min-h-screen z-20 py-8 pt-[125px]">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Images */}

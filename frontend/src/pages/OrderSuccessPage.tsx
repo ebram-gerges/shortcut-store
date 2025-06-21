@@ -17,7 +17,7 @@ const OrderSuccessPage = () => {
   const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString();
 
   return (
-    <div className="min-h-screen relative z-20 py-8 mt-[95px]">
+    <div className="min-h-screen relative z-20 py-8 pt-[125px]">
       <div className="max-w-3xl mx-auto px-4 lg:px-8">
         <div className="text-center mb-12">
           <div className="mx-auto w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">

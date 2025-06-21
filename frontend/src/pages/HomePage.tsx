@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Shirt, Package, Star } from 'lucide-react';
+import { mockProducts } from '../data/mockData';
 
 
 {/*
@@ -43,6 +44,12 @@ const HomePage = () => {
   // Animation for 'About' section
   const aboutRef = useRef<HTMLDivElement | null>(null);
   const [aboutInView, setAboutInView] = useState(false);
+
+  // Get newest 4 summer products that are in stock
+  const summerProducts = mockProducts
+    .filter(p => p.season === 'summer' && p.inStock)
+    .sort((a, b) => b.id - a.id)
+    .slice(0, 4);
 
   useEffect(() => {
     const refCurrent = categoriesRef.current;
@@ -93,7 +100,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className='relative z-20'>
+    <div className='relative z-20 overflow-hidden'>
       {/* Hero Section */}
       <section className="h-[100vh] flex justify-center items-center relative text-center bg-black">
         <div className="max-w-4xl mx-auto px-4 ">
@@ -161,17 +168,18 @@ const HomePage = () => {
             <p className="text-gray-800 dark:text-white mb-8">
               Discover the summer collection from <span className="text-black dark:text-white font-semibold">Shortcut Store</span>
             </p>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((item) => (
-                <div key={item} className="backdrop-blur-xl border-2 border-gray-300/50 dark:border-gray-700/70 bg-gray-200/50 dark:bg-gray-700/50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
+              {summerProducts.map((item) => (
+                <Link to={`/products/${item.id}`} key={item.id} className="backdrop-blur-xl border-2 border-gray-300/50 dark:border-gray-700/70 bg-gray-200/50 dark:bg-gray-700/50 rounded-lg overflow-hidden hover:transform duration-[2s] hover:scale-105 transition-transform">
                   <div className="h-48 bg-gray-600 flex items-center justify-center">
                     <span className="text-gray-400">Product Image</span>
                   </div>
                   <div className="p-4 pt-12">
-                    <h3 className="text-gray-700 dark:text-white font-semibold text-lg mb-2">Summer Item {item}</h3>
-                    <p className="text-[#059669] font-bold">LE 30.00</p>
+                    <h3 className="text-gray-700 dark:text-white font-semibold text-lg mb-2">{item.name}</h3>
+                    <p className="text-[#059669] font-bold">LE {item.price}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

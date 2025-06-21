@@ -66,7 +66,7 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen relative z-20 py-8 mt-[95px]">
+    <div className="min-h-screen relative z-20 py-8 pt-[125px]">
       <div className="max-w-6xl mx-auto px-4 lg:px-8">
         <div className="mb-8">
           <button

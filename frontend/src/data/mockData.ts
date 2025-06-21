@@ -8,6 +8,7 @@ export interface Product {
   category: string;
   inStock: boolean;
   stock: number;
+  season: 'summer' | 'winter';
 }
 
 export const mockProducts: Product[] = [
@@ -21,6 +22,7 @@ export const mockProducts: Product[] = [
     category: 'tshirts-graphic',
     inStock: true,
     stock: 10,
+    season: 'summer',
   },
   {
     id: 2,
@@ -32,6 +34,7 @@ export const mockProducts: Product[] = [
     category: 'bottoms-pants',
     inStock: true,
     stock: 27,
+    season: 'winter',
   },
   {
     id: 3,
@@ -43,6 +46,7 @@ export const mockProducts: Product[] = [
     category: 'tshirts-graphic',
     inStock: true,
     stock: 14,
+    season: 'summer',
   },
   {
     id: 4,
@@ -54,6 +58,7 @@ export const mockProducts: Product[] = [
     category: 'tshirts-basic',
     inStock: false,
     stock: 0,
+    season: 'summer',
   },
   {
     id: 5,
@@ -65,6 +70,7 @@ export const mockProducts: Product[] = [
     category: 'bottoms-shorts',
     inStock: true,
     stock: 30,
+    season: 'summer',
   },
   {
     id: 6,
@@ -76,6 +82,7 @@ export const mockProducts: Product[] = [
     category: 'sets',
     inStock: true,
     stock: 40,
+    season: 'winter',
   },
   {
     id: 7,
@@ -87,5 +94,54 @@ export const mockProducts: Product[] = [
     category: 'bottoms-jeans',
     inStock: true,
     stock: 18,
+    season: 'winter',
+  },
+  {
+    id: 8,
+    name: 'Summer Polo',
+    price: 55.00,
+    rating: 4.6,
+    colors: ['white', 'blue'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    category: 'tshirts-basic',
+    inStock: true,
+    stock: 22,
+    season: 'summer',
+  },
+  {
+    id: 9,
+    name: 'Winter Hoodie',
+    price: 120.00,
+    rating: 4.8,
+    colors: ['black', 'gray'],
+    sizes: ['M', 'L', 'XL'],
+    category: 'tshirts-basic',
+    inStock: true,
+    stock: 15,
+    season: 'winter',
+  },
+  {
+    id: 10,
+    name: 'Summer Sneakers',
+    price: 80.00,
+    rating: 4.5,
+    colors: ['white', 'blue'],
+    sizes: ['40', '41', '42', '43'],
+    category: 'shoes',
+    inStock: true,
+    stock: 25,
+    season: 'summer',
+  },
+  {
+    id: 11,
+    name: 'Winter Boots',
+    price: 150.00,
+    rating: 4.7,
+    colors: ['black', 'brown'],
+    sizes: ['41', '42', '43', '44'],
+    category: 'shoes',
+    inStock: true,
+    stock: 12,
+    season: 'winter',
   },
 ];

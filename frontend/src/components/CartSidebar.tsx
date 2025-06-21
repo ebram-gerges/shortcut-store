@@ -19,12 +19,12 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? '' : 'pointer-events-none'}`}>
-      <div className={`absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}></div>
+      <div className={`absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}></div>
       <div
-        className={`absolute right-0 top-0 h-full w-[80vw] max-w-xs sm:w-full sm:max-w-md bg-white dark:bg-zinc-900 shadow-xl transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`absolute right-0 top-0 h-full w-[80vw] max-w-xs sm:w-full sm:max-w-md bg-white/50 dark:bg-zinc-900/30 backdrop-blur-xl shadow-xl transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         style={{ transitionTimingFunction: 'cubic-bezier(0,0,0,0.99)' }}
       >
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col border-l border-gray-700/50 dark:border-gray-400/40">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
             <h2 className="text-lg font-semibold text-black dark:text-white">Shopping Cart</h2>
@@ -47,7 +47,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
             ) : (
               <div className="space-y-4">
                 {items.map((item) => (
-                  <div key={`${item.id}-${item.color}-${item.size}`} className="bg-gray-800 rounded-lg p-4">
+                  <div key={`${item.id}-${item.color}-${item.size}`} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
                     <div className="flex items-start space-x-4">
                       <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center">
                         <span className="text-gray-400 text-xs">IMG</span>
@@ -57,7 +57,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                         <p className="text-gray-400 text-sm">
                           {item.color} • {item.size}
                         </p>
-                        <p className="text-teal-400 font-semibold">LE {item.price}</p>
+                        <p className="text-[#059669] font-semibold">LE {item.price}</p>
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
@@ -70,16 +70,16 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="bg-gray-700 text-white p-1 rounded hover:bg-gray-600 transition-colors"
+                          className="bg-zinc-700 text-white p-1 rounded hover:bg-gray-600 transition-colors"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
-                        <span className="text-white px-3 py-1 bg-gray-700 rounded min-w-[2rem] text-center">
+                        <span className="text-white px-3 py-1 bg-zinc-700 rounded min-w-[2rem] text-center">
                           {item.quantity}
                         </span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="bg-gray-700 text-white p-1 rounded hover:bg-gray-600 transition-colors"
+                          className="bg-zinc-700 text-white p-1 rounded hover:bg-gray-600 transition-colors"
                         >
                           <Plus className="h-3 w-3" />
                         </button>

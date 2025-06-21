@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Star, ChevronDown } from 'lucide-react';
 import { mockProducts } from '../data/mockData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useCart } from '../context/CartContext';
 
+function getQueryParams(search: string) {
+  const params = new URLSearchParams(search);
+  return {
+    category: params.get('category'),
+    season: params.get('season'),
+    sort: params.get('sort'),
+  };
+}
+
 const ProductsPage = () => {
+  const location = useLocation();
+  const query = getQueryParams(location.search);
+
   const [filters, setFilters] = useState({
     availability: [] as string[],
     priceMin: '',
     priceMax: '',
     sizes: [] as string[],
     categories: [] as string[],
+    seasons: [] as string[],
   });
   const [sortBy, setSortBy] = useState('featured');
   const [collapsed, setCollapsed] = useState({
@@ -19,11 +32,26 @@ const ProductsPage = () => {
     price: true,
     size: true,
     category: true,
+    season: true,
   });
 
   const { currency } = useCurrency();
   const conversionRate = 50; // 1 USD = 50 EGP
   const { addItem } = useCart();
+
+  // Set initial filters from query params
+  useEffect(() => {
+    let newFilters = { ...filters };
+    if (query.category) {
+      newFilters.categories = [query.category];
+    }
+    if (query.season) {
+      newFilters.seasons = [query.season];
+    }
+    setFilters(newFilters);
+    if (query.sort) setSortBy(query.sort);
+    // eslint-disable-next-line
+  }, [location.search]);
 
   const getDisplayPrice = (price: number) => {
     if (currency === 'USD') {
@@ -32,7 +60,7 @@ const ProductsPage = () => {
     return `LE ${price}`;
   };
 
-  const handleFilterChange = (type: 'availability' | 'sizes' | 'categories', value: string) => {
+  const handleFilterChange = (type: 'availability' | 'sizes' | 'categories' | 'seasons', value: string) => {
     setFilters(prev => ({
       ...prev,
       [type]: prev[type].includes(value)
@@ -41,7 +69,7 @@ const ProductsPage = () => {
     }));
   };
 
-  const toggleCollapse = (section: 'availability' | 'price' | 'size' | 'category') => {
+  const toggleCollapse = (section: 'availability' | 'price' | 'size' | 'category' | 'season') => {
     setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
@@ -50,6 +78,8 @@ const ProductsPage = () => {
     .filter(product => {
       // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(product.category)) return false;
+      // Season filter
+      if (filters.seasons.length > 0 && !filters.seasons.includes(product.season)) return false;
       // Availability filter
       if (filters.availability.length > 0) {
         if (filters.availability.includes('in-stock') && !product.inStock) return false;
@@ -80,7 +110,7 @@ const ProductsPage = () => {
   };
 
   return (
-    <div className="relative z-20 min-h-screen mt-[95px] py-8">
+    <div className="relative z-20 min-h-screen pt-[125px] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <h1 className="text-3xl font-bold text-black dark:text-white mb-8">Products</h1>
         <div className="flex flex-col lg:flex-row gap-8">
@@ -152,6 +182,18 @@ const ProductsPage = () => {
                           onChange={() => handleFilterChange('categories', 'bottoms-jeans')}
                         />
                         Jeans
+                      </label>
+                    </div>
+                    <div className="mt-2">
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">Shoes</span>
+                      <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-gray-700 border-gray-600"
+                          checked={filters.categories.includes('shoes')}
+                          onChange={() => handleFilterChange('categories', 'shoes')}
+                        />
+                        Shoes
                       </label>
                     </div>
                     <div className="mt-2">
@@ -260,6 +302,42 @@ const ProductsPage = () => {
                         {size}
                       </label>
                     ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Season */}
+              <div className="mb-8">
+                <button
+                  type="button"
+                  className="flex items-center justify-between w-full mb-4"
+                  onClick={() => toggleCollapse('season' as any)}
+                >
+                  <h3 className="text-black dark:text-white font-semibold">Season</h3>
+                  <ChevronDown className={`h-5 w-5 text-gray-900 dark:text-gray-300 transition-transform ${collapsed.season ? 'rotate-180' : ''}`} />
+                </button>
+                <div
+                  className={`transition-all duration-500 ease overflow-hidden ${collapsed.season ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[100px] opacity-100 pointer-events-auto'}`}
+                >
+                  <div className="space-y-2">
+                    <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <input
+                        type="checkbox"
+                        className="mr-2 bg-gray-700 border-gray-600"
+                        checked={filters.seasons.includes('summer')}
+                        onChange={() => handleFilterChange('seasons', 'summer')}
+                      />
+                      Summer
+                    </label>
+                    <label className="flex items-center text-gray-900 dark:text-gray-300 ml-4">
+                      <input
+                        type="checkbox"
+                        className="mr-2 bg-gray-700 border-gray-600"
+                        checked={filters.seasons.includes('winter')}
+                        onChange={() => handleFilterChange('seasons', 'winter')}
+                      />
+                      Winter
+                    </label>
                   </div>
                 </div>
               </div>

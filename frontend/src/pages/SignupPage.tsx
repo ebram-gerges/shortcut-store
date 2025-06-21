@@ -78,7 +78,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen z-20 relative flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-[75px]">
+    <div className="min-h-screen z-20 relative flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 pt-[125px]">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
 
