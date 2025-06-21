@@ -1,33 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Star, Heart, Plus, Minus } from 'lucide-react';
-import { mockProducts } from '../data/mockData';
+// import { mockProducts } from '../data/mockData';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
+import { getProductById } from '../services/productService';
+import { Product as ProductType } from '../types/product';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
-  const product = mockProducts.find(p => p.id === parseInt(id || '1'));
+  const [product, setProduct] = useState<ProductType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { addItem } = useCart();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
   const { currency } = useCurrency();
   const conversionRate = 50;
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState('description');
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    getProductById(Number(id))
+      .then((data) => {
+        setProduct(data);
+        setSelectedColor(Array.isArray((data as any).colors) && (data as any).colors.length > 0 ? (data as any).colors[0] : '');
+        setSelectedSize(Array.isArray((data as any).sizes) && (data as any).sizes.length > 0 ? (data as any).sizes[0] : '');
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Product not found');
+        setLoading(false);
+      });
+  }, [id]);
+
   const getDisplayPrice = (price: number) => {
     if (currency === 'USD') {
       return `$${(price / conversionRate).toFixed(2)}`;
     }
     return `LE ${price}`;
   };
-  const [selectedColor, setSelectedColor] = useState('black');
-  const [selectedSize, setSelectedSize] = useState('L');
-  const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState('description');
-  const [isAddedToCart, setIsAddedToCart] = useState(false);
-  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
 
-  if (!product) {
-    return <div className="text-white text-center py-20">Product not found</div>;
+  if (loading) {
+    return <div className="text-white text-center py-20">Loading product...</div>;
+  }
+  if (error || !product) {
+    return <div className="text-white text-center py-20">{error || 'Product not found'}</div>;
   }
 
   const handleAddToCart = () => {
@@ -35,12 +60,11 @@ const ProductDetailPage = () => {
       addItem({
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: Number(product.price),
         color: selectedColor,
         size: selectedSize,
       });
     }
-    
     setIsAddedToCart(true);
     setTimeout(() => setIsAddedToCart(false), 2000);
   };
@@ -49,16 +73,15 @@ const ProductDetailPage = () => {
     addToWishlist({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: Number(product.price),
       color: selectedColor,
       size: selectedSize,
     });
-    
     setIsAddedToWishlist(true);
     setTimeout(() => setIsAddedToWishlist(false), 2000);
   };
 
-  const totalPrice = (product.price * quantity).toFixed(2);
+  const totalPrice = (Number(product.price) * quantity).toFixed(2);
   const inWishlist = isInWishlist(product.id);
 
   return (
@@ -78,73 +101,62 @@ const ProductDetailPage = () => {
           {/* Product Details */}
           <div>
             <h1 className="text-3xl font-bold text-black dark:text-white mb-4">{product.name}</h1>
-            
             {/* Rating */}
             <div className="flex items-center mb-4">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-5 h-5 ${
-                    i < Math.floor(product.rating) 
-                      ? 'text-yellow-400 fill-current' 
-                      : 'text-zinc-600'
-                  }`}
+                  className={`w-5 h-5 ${i < Math.floor(product.rating || 0) ? 'text-yellow-400 fill-current' : 'text-zinc-600'}`}
                 />
               ))}
-              <span className="text-black dark:text-white font-semibold ml-2">({product.rating})</span>
+              <span className="text-black dark:text-white font-semibold ml-2">({product.rating || 0})</span>
             </div>
-
             {/* Price */}
             <div className="text-2xl font-bold dark:text-yellow-400 text-yellow-600 mb-6">
-              {getDisplayPrice(product.price)}
+              {getDisplayPrice(Number(product.price))}
             </div>
-
             {/* Color Selection */}
-            <div className="mb-6">
-              <h3 className="text-black dark:text-white font-semibold mb-3">Color: {selectedColor}</h3>
-              <div className="flex space-x-3">
-                {product.colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      selectedColor === color ? 'border-[#059669]' : 'border-zinc-600'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  ></button>
-                ))}
+            {Array.isArray((product as any).colors) && (product as any).colors.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-black dark:text-white font-semibold mb-3">Color: {selectedColor}</h3>
+                <div className="flex space-x-3">
+                  {(product as any).colors?.map((color: string) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-[#059669]' : 'border-zinc-600'}`}
+                      style={{ backgroundColor: color }}
+                    ></button>
+                  ))}
+                </div>
               </div>
-            </div>
-
+            )}
             {/* Size Selection */}
-            <div className="mb-6">
-              <h3 className="text-black dark:text-white font-semibold mb-3">Size:</h3>
-              <div className="flex space-x-3">
-                {product.sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2 border rounded ${
-                      selectedSize === size
-                        ? 'border-[#059669] bg-[#059669] text-white'
-                        : 'border-zinc-600 text-black dark:text-white hover:border-[#059669]'
-                    } transition-colors`}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {Array.isArray((product as any).sizes) && (product as any).sizes.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-black dark:text-white font-semibold mb-3">Size:</h3>
+                <div className="flex space-x-3">
+                  {(product as any).sizes?.map((size: string) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-2 border rounded ${selectedSize === size ? 'border-[#059669] bg-[#059669] text-white' : 'border-zinc-600 text-black dark:text-white hover:border-[#059669]'} transition-colors`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-
+            )}
             {/* Stock Status */}
             <div className="mb-6">
-              {product.inStock ? (
+              {product.in_stock ? (
                 <>
                   <span className="bg-[#059669] text-white px-3 py-1 rounded text-sm">
                     IN STOCK
                   </span>
                   <span className="dark:text-zinc-400 text-zinc-900 ml-2">
-                    In Stock ({product.stock} available)
+                    {typeof (product as any).stock === 'number' ? `In Stock (${(product as any).stock} available)` : 'In Stock'}
                   </span>
                 </>
               ) : (
@@ -153,7 +165,6 @@ const ProductDetailPage = () => {
                 </span>
               )}
             </div>
-
             {/* Quantity */}
             <div className="mb-6">
               <h3 className="text-black dark:text-white font-semibold mb-3">Quantity:</h3>
@@ -175,34 +186,23 @@ const ProductDetailPage = () => {
                 </button>
               </div>
             </div>
-
             {/* Add to Cart */}
             <div className="space-y-4 mb-8">
               <button 
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
-                className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                  product.inStock
-                    ? isAddedToCart
-                      ? 'bg-green-600 text-white'
-                      : 'bg-[#059669] text-white hover:bg-[#059669]/90'
-                    : 'bg-zinc-600 text-zinc-400 cursor-not-allowed'
-                }`}
+                disabled={!product.in_stock}
+                className={`w-full py-3 rounded-lg font-semibold transition-colors ${product.in_stock ? isAddedToCart ? 'bg-green-600 text-white' : 'bg-[#059669] text-white hover:bg-[#059669]/90' : 'bg-zinc-600 text-zinc-400 cursor-not-allowed'}`}
               >
                 {isAddedToCart 
                   ? '✓ Added to Cart!' 
-                  : product.inStock 
-                    ? `Add to Cart - ${getDisplayPrice(product.price * quantity)}`
+                  : product.in_stock 
+                    ? `Add to Cart - ${getDisplayPrice(Number(product.price) * quantity)}`
                     : 'Out of Stock'
                 }
               </button>
               <button 
                 onClick={handleAddToWishlist}
-                className={`w-full border py-3 rounded-lg font-semibold transition-colors flex items-center justify-center ${
-                  inWishlist || isAddedToWishlist
-                    ? 'border-red-500 text-red-500 bg-red-500 bg-opacity-10'
-                    : 'border-[#059669] text-[#059669] hover:bg-[#059669] hover:text-white'
-                }`}
+                className={`w-full border py-3 rounded-lg font-semibold transition-colors flex items-center justify-center ${inWishlist || isAddedToWishlist ? 'border-red-500 text-red-500 bg-red-500 bg-opacity-10' : 'border-[#059669] text-[#059669] hover:bg-[#059669] hover:text-white'}`}
               >
                 <Heart className={`w-5 h-5 mr-2 ${inWishlist || isAddedToWishlist ? 'fill-current' : ''}`} />
                 {isAddedToWishlist 
@@ -213,7 +213,6 @@ const ProductDetailPage = () => {
                 }
               </button>
             </div>
-
             {/* Ask a Question */}
             <button className="text-[#059669] dark:text-[#1b8d69] hover:text-[#1b8d69] underline">
               Ask a question

@@ -50,8 +50,8 @@ const VerifyEmailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-900">
-      <div className="w-full max-w-md bg-zinc-800 rounded-lg shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-900 pt-[90px]">
+      <div className="w-full max-w-md bg-zinc-800/50 backdrop-blur-xl border border-zinc-700/50 rounded-lg shadow-lg p-8">
         <div className="flex flex-col items-center mb-6">
           <MailCheck className="h-12 w-12 text-[#1b8d69] mb-2" />
           <h2 className="text-2xl font-bold text-white mb-1">Verify Your Email</h2>

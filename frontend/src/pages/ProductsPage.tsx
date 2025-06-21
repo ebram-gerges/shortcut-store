@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Star, ChevronDown, Heart } from 'lucide-react';
-import { mockProducts } from '../data/mockData';
+// import { mockProducts } from '../data/mockData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { getProducts } from '../services/productService';
 
 function getQueryParams(search: string) {
   const params = new URLSearchParams(search);
@@ -27,7 +28,7 @@ const ProductsPage = () => {
     categories: [] as string[],
     seasons: [] as string[],
   });
-  const [sortBy, setSortBy] = useState('featured');
+  const [sortBy, setSortBy] = useState('no-sort');
   const [collapsed, setCollapsed] = useState({
     availability: true,
     price: true,
@@ -35,11 +36,29 @@ const ProductsPage = () => {
     category: true,
     season: true,
   });
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const { currency } = useCurrency();
   const conversionRate = 50; // 1 USD = 50 EGP
   const { addItem } = useCart();
   const { items: wishlistItems, addItem: addWishlistItem } = useWishlist();
+
+  // Fetch products from API
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    getProducts()
+      .then((data) => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError('Failed to load products.');
+        setLoading(false);
+      });
+  }, []);
 
   // Set initial filters from query params
   useEffect(() => {
@@ -76,7 +95,7 @@ const ProductsPage = () => {
   };
 
   // Helper to filter products
-  const filteredProducts = mockProducts
+  const filteredProducts = products
     .filter(product => {
       // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(product.category)) return false;
@@ -84,46 +103,49 @@ const ProductsPage = () => {
       if (filters.seasons.length > 0 && !filters.seasons.includes(product.season)) return false;
       // Availability filter
       if (filters.availability.length > 0) {
-        if (filters.availability.includes('in-stock') && !product.inStock) return false;
-        if (filters.availability.includes('out-of-stock') && product.inStock) return false;
+        if (filters.availability.includes('in-stock') && !product.in_stock) return false;
+        if (filters.availability.includes('out-of-stock') && product.in_stock) return false;
       }
       // Price filter
-      if (filters.priceMin && product.price < Number(filters.priceMin)) return false;
-      if (filters.priceMax && product.price > Number(filters.priceMax)) return false;
+      if (filters.priceMin && Number(product.price) < Number(filters.priceMin)) return false;
+      if (filters.priceMax && Number(product.price) > Number(filters.priceMax)) return false;
       // Size filter
-      if (filters.sizes.length > 0 && !filters.sizes.some(size => product.sizes?.includes(size))) return false;
+      if (filters.sizes && filters.sizes.length > 0 && product.sizes) {
+        if (!filters.sizes.some(size => product.sizes.includes(size))) return false;
+      }
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === 'price-low') return a.price - b.price;
-      if (sortBy === 'price-high') return b.price - a.price;
-      if (sortBy === 'newest') return b.id - a.id;
-      return 0; // featured or default
+      if (sortBy === 'price-low') return Number(a.price) - Number(b.price);
+      if (sortBy === 'price-high') return Number(b.price) - Number(a.price);
+      if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortBy === 'featured' || sortBy === 'top-selling') return (b.rating || 0) - (a.rating || 0); // Sort by rating descending
+      return 0; // 'no-sort' or default
     });
 
-  const handleQuickAdd = (product: typeof mockProducts[0]) => {
+  const handleQuickAdd = (product: any) => {
     addItem({
       id: product.id,
       name: product.name,
-      price: product.price, // always store in EGP
-      color: product.colors[0],
-      size: product.sizes[0],
+      price: Number(product.price), // always store in EGP
+      color: product.colors ? product.colors[0] : '',
+      size: product.sizes ? product.sizes[0] : '',
     });
   };
 
-  const handleQuickWishlist = (product: typeof mockProducts[0]) => {
+  const handleQuickWishlist = (product: any) => {
     addWishlistItem({
       id: product.id,
       name: product.name,
-      price: product.price,
-      color: product.colors[0],
-      size: product.sizes[0],
+      price: Number(product.price),
+      color: product.colors ? product.colors[0] : '',
+      size: product.sizes ? product.sizes[0] : '',
     });
   };
 
-  const isInWishlist = (product: typeof mockProducts[0]) =>
+  const isInWishlist = (product: any) =>
     wishlistItems.some(
-      (item) => item.id === product.id && item.color === product.colors[0] && item.size === product.sizes[0]
+      (item) => item.id === product.id && item.color === (product.colors ? product.colors[0] : '') && item.size === (product.sizes ? product.sizes[0] : '')
     );
 
   return (
@@ -361,92 +383,97 @@ const ProductsPage = () => {
             </div>
           </div>
 
-          {/* Products Grid */}
+          {/* Products Grid and Top Row */}
           <div className="lg:w-3/4">
             <div className="flex justify-between items-center mb-6 backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 border border-zinc-400/50 dark:border-zinc-700/50">
-              <span className="text-zinc-900 dark:text-zinc-300">{filteredProducts.length} products</span>
+              <span className="text-zinc-900 dark:text-zinc-300">{loading || error ? 0 : filteredProducts.length} products</span>
               <select 
                 className="bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white pl-4 md:pr-6 max-md:w-28 py-2 rounded-md border border-zinc-600/40"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
+                <option value="no-sort">No Sort</option>
                 <option value="featured">Featured</option>
+                <option value="top-selling">Top Selling</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="newest">Newest</option>
               </select>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 md:gap-6 gap-4">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="backdrop-blur-xl bg-white/50 dark:bg-black/20 border-2 border-zinc-500/50 dark:border-zinc-300/50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
-                  <Link to={`/products/${product.id}`}>
-                    <div className="h-64 bg-zinc-600 flex items-center justify-center">
-                      <span className="text-zinc-400">Product Image</span>
-                    </div>
-                  </Link>
-                  
-                  <div className="p-4">
+            {loading ? (
+              <div className="text-center text-zinc-500 py-20">Loading products...</div>
+            ) : error ? (
+              <div className="text-center text-red-500 py-20">{error}</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 md:gap-6 gap-4">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="backdrop-blur-xl bg-white/50 dark:bg-black/20 border-2 border-zinc-500/50 dark:border-zinc-300/50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
                     <Link to={`/products/${product.id}`}>
-                      <h3 className="text-black dark:text-white font-semibold mb-2 hover:text-[#059669] transition-colors">
-                        {product.name}
-                      </h3>
+                      <div className="h-64 bg-zinc-600 flex items-center justify-center">
+                        <span className="text-zinc-400">Product Image</span>
+                      </div>
                     </Link>
                     
-                    <div className="flex items-center mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(product.rating) 
-                              ? 'dark:text-yellow-400 text-yellow-500 fill-current' 
-                              : 'text-zinc-600 dark:text-zinc-400'
-                          }`}
-                        />
-                      ))}
-                      <span className="text-zinc-700 dark:text-zinc-400 text-sm ml-2">({product.rating})</span>
-                    </div>
-                    
-                    <div className="flex flex-col md:flex-row gap-5 max-lg:my-4 justify-between items-center">
-                      <span className="text-black dark:text-white font-bold">{getDisplayPrice(product.price)}</span>
-                      <div className="flex items-center gap-2 w-full md:w-auto">
-                        <button
-                          className="p-2 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
-                          title={isInWishlist(product) ? 'Already in wishlist' : 'Add to wishlist'}
-                          onClick={() => handleQuickWishlist(product)}
-                          disabled={isInWishlist(product)}
-                          type="button"
-                        >
-                          <Heart className={`w-4 h-4 ${isInWishlist(product) ? 'text-[#1fffb8] fill-[#1fffb8]' : 'text-zinc-500'}`} fill={isInWishlist(product) ? '#1fffb8' : 'none'} />
-                        </button>
-                        <button
-                          className="bg-[#059669] text-white px-4 py-2 rounded hover:bg-[#059669]/90 transition-colors disabled:opacity-50 max-md:w-full"
-                          onClick={() => handleQuickAdd(product)}
-                          disabled={!product.inStock}
-                        >
-                          Quick add
-                        </button>
+                    <div className="p-4">
+                      <Link to={`/products/${product.id}`}>
+                        <h3 className="text-black dark:text-white font-semibold mb-2 hover:text-[#059669] transition-colors">
+                          {product.name}
+                        </h3>
+                      </Link>
+                      
+                      <div className="flex items-center mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < Math.floor(product.rating || 0) ? 'dark:text-yellow-400 text-yellow-500 fill-current' : 'text-zinc-600 dark:text-zinc-400'}`}
+                          />
+                        ))}
+                        <span className="text-zinc-700 dark:text-zinc-400 text-sm ml-2">({product.rating || 0})</span>
                       </div>
-                    </div>
-                    
-                    {!product.inStock && (
-                      <div className="text-red-500 text-xs mt-2">Out of stock</div>
-                    )}
-                    
-                    {/* Color variants */}
-                    <div className="flex space-x-2 mt-10">
-                      {product.colors.map((color, index) => (
-                        <div
-                          key={index}
-                          className={`w-6 h-6 rounded-full border-2 border-zinc-600`}
-                          style={{ backgroundColor: color }}
-                        ></div>
-                      ))}
+                      
+                      <div className="flex flex-col md:flex-row gap-5 max-lg:my-4 justify-between items-center">
+                        <span className="text-black dark:text-white font-bold">{getDisplayPrice(Number(product.price))}</span>
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                          <button
+                            className="p-2 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                            title={isInWishlist(product) ? 'Already in wishlist' : 'Add to wishlist'}
+                            onClick={() => handleQuickWishlist(product)}
+                            disabled={isInWishlist(product)}
+                            type="button"
+                          >
+                            <Heart className={`w-4 h-4 ${isInWishlist(product) ? 'text-[#1fffb8] fill-[#1fffb8]' : 'text-zinc-500'}`} fill={isInWishlist(product) ? '#1fffb8' : 'none'} />
+                          </button>
+                          <button
+                            className="bg-[#059669] text-white px-4 py-2 rounded hover:bg-[#059669]/90 transition-colors disabled:opacity-50 max-md:w-full"
+                            onClick={() => handleQuickAdd(product)}
+                            disabled={!product.in_stock}
+                          >
+                            Quick add
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {!product.in_stock && (
+                        <div className="text-red-500 text-xs mt-2">Out of stock</div>
+                      )}
+                      
+                      {/* Color variants */}
+                      {product.colors && (
+                        <div className="flex space-x-2 mt-10">
+                          {product.colors.map((color: string, index: number) => (
+                            <div
+                              key={index}
+                              className={`w-6 h-6 rounded-full border-2 border-zinc-600`}
+                              style={{ backgroundColor: color }}
+                            ></div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

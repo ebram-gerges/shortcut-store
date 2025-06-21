@@ -33,7 +33,7 @@ interface AuthContextType {
     address: string,
     phone: string,
     secondaryPhone: string
-  ) => Promise<boolean>;
+  ) => Promise<boolean | string>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     address: string,
     phone: string,
     secondaryPhone: string
-  ): Promise<boolean> => {
+  ): Promise<boolean | string> => {
     try {
       await register({
         username: email,
@@ -115,7 +115,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         secondary_phone: secondaryPhone,
       } as RegisterData & { password_confirm: string; height: string; weight: string; address: string; phone: string; secondary_phone: string });
       return true;
-    } catch {
+    } catch (err: any) {
+      // Try to extract backend error message
+      if (err.response && err.response.data) {
+        if (typeof err.response.data === 'string') return err.response.data;
+        if (typeof err.response.data.detail === 'string') return err.response.data.detail;
+        // If it's an object, join all error messages
+        if (typeof err.response.data === 'object') {
+          return Object.values(err.response.data).flat().join(' ');
+        }
+      }
       return false;
     }
   };

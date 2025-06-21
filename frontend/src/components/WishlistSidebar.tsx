@@ -3,6 +3,7 @@ import { X, Heart, ShoppingCart, Check } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
+import { mockProducts } from '../data/mockData';
 
 interface WishlistSidebarProps {
   isOpen: boolean;
@@ -69,47 +70,57 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
               </div>
             ) : (
               <div className="space-y-4">
-                {items.map((item) => (
-                  <div key={item.id} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center">
-                        <span className="text-zinc-400 text-xs">IMG</span>
+                {items.map((item) => {
+                  // Fallback to mockProducts for inStock
+                  const product = mockProducts.find(p => p.id === item.id);
+                  const inStock = product?.inStock;
+                  return (
+                    <div key={item.id} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center">
+                          <span className="text-zinc-400 text-xs">IMG</span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-white font-medium">{item.name}</h3>
+                          <p className="text-zinc-400 text-sm">
+                            {item.color} • {item.size}
+                          </p>
+                          <p className="text-[#059669] font-semibold">LE {item.price}</p>
+                          {!inStock && (
+                            <div className="text-red-500 text-xs mt-2">Out of stock</div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-zinc-400 hover:text-red-400 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-white font-medium">{item.name}</h3>
-                        <p className="text-zinc-400 text-sm">
-                          {item.color} • {item.size}
-                        </p>
-                        <p className="text-[#059669] font-semibold">LE {item.price}</p>
+                      <div className="mt-3 flex space-x-2">
+                        <button
+                          onClick={() => handleToggleCart(item)}
+                          className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center transition-colors
+                            ${isInCart(item) ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-[#059669] text-white hover:bg-[#157557]'}
+                            ${!inStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          disabled={!inStock}
+                        >
+                          {isInCart(item) ? (
+                            <>
+                              <Check className="h-4 w-4 mr-1" />
+                              Added to Cart
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart className="h-4 w-4 mr-1" />
+                              Add to Cart
+                            </>
+                          )}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-zinc-400 hover:text-red-400 transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
                     </div>
-                    <div className="mt-3 flex space-x-2">
-                      <button
-                        onClick={() => handleToggleCart(item)}
-                        className={`flex-1 py-2 px-3 rounded text-sm font-medium flex items-center justify-center transition-colors
-                          ${isInCart(item) ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-[#059669] text-white hover:bg-[#157557]'}`}
-                      >
-                        {isInCart(item) ? (
-                          <>
-                            <Check className="h-4 w-4 mr-1" />
-                            Added to Cart
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="h-4 w-4 mr-1" />
-                            Add to Cart
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

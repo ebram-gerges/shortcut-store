@@ -82,8 +82,8 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               Shortcut Store
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
+            {/* Desktop Navigation (lg and up) */}
+            <nav className="hidden xl:flex items-center space-x-8">
               {navLinks.map((link) => {
                 let to = link.href;
                 if (link.name === 'T-Shirts') to = '/products?category=tshirts';
@@ -171,8 +171,8 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               </div>
             </nav>
 
-            {/* Right side icons */}
-            <div className="hidden lg:flex items-center space-x-4">
+            {/* Right side icons (lg and up) */}
+            <div className="hidden lg:flex max-xl:ml-auto items-center space-x-4">
               <button className="text-black dark:text-white hover:text-[#059669] transition-colors" onClick={() => setShowSearch(true)}>
                 <Search className="h-6 w-6" />
               </button>
@@ -256,9 +256,9 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               </select>
             </div>
 
-            {/* Hamburger menu button */}
+            {/* Hamburger menu button for all screens below lg */}
             <button
-              className="lg:hidden text-black dark:text-white hover:text-[#059669] transition-colors p-2 ml-auto"
+              className="inline-block xl:hidden p-2 ml-3 max-lg:ml-auto text-black dark:text-white hover:text-[#059669] transition-colors"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -272,8 +272,8 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
       <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <WishlistSidebar isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
 
-      {/* Mobile Menu Overlay */}
-      <div className={`fixed inset-0 z-50 bg-black bg-opacity-60 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {/* Hamburger Menu Overlay for md and above sm (nav links only) */}
+      <div className={`fixed inset-0 z-50 bg-black bg-opacity-60 xl:block 2xl:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div
           className={`fixed right-0 top-0 h-full w-4/5 max-w-xs bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xl border-l-2 border-zinc-300/50 dark:border-zinc-700/50 shadow-xl p-6 flex flex-col transition-transform duration-500 transform ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0,0,0,0.99)' }}
@@ -296,53 +296,35 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                 {link.name}
               </Link>
             ))}
-            {/* Dropdowns for T-Shirts and Bottoms */}
-            <div>
-              <button
-                onClick={() => toggleDropdown('tshirts')}
-                className="flex items-center w-full text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
+          </nav>
+        </div>
+        <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
+      </div>
+      {/* Hamburger Menu Overlay for sm and below (nav links + right-side icons) */}
+      <div className={`fixed inset-0 z-50 bg-black bg-opacity-60 sm:block md:hidden lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div
+          className={`fixed right-0 top-0 h-full w-4/5 max-w-xs bg-white/50 dark:bg-zinc-800/30 backdrop-blur-xl border-l-2 border-zinc-300/50 dark:border-zinc-700/50 shadow-xl p-6 flex flex-col transition-transform duration-500 transform ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          style={{ transitionTimingFunction: 'cubic-bezier(0,0,0,0.99)' }}
+        >
+          <button
+            className="absolute top-4 right-4 text-black dark:text-white hover:text-[#059669]"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <Close className="h-7 w-7" />
+          </button>
+          <nav className="flex flex-col space-y-4 mt-10">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                T-Shirts <ChevronDown className="ml-1 h-4 w-4" />
-              </button>
-              {isDropdownOpen === 'tshirts' && (
-                <div className="ml-4 mt-2 flex flex-col space-y-2">
-                  <Link to="/products?category=tshirts" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                    All T-Shirts
-                  </Link>
-                  <Link to="/products?category=tshirts-graphic" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                    Graphic Tees
-                  </Link>
-                  <Link to="/products?category=tshirts-basic" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                    Basic Tees
-                  </Link>
-                </div>
-              )}
-            </div>
-            <div>
-              <button
-                onClick={() => toggleDropdown('bottoms')}
-                className="flex items-center w-full text-lg text-black dark:text-white hover:text-[#059669] transition-colors"
-              >
-                Bottoms <ChevronDown className="ml-1 h-4 w-4" />
-              </button>
-              {isDropdownOpen === 'bottoms' && (
-                <div className="ml-4 mt-2 flex flex-col space-y-2">
-                  <Link to="/products?category=bottoms-pants" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                    Pants
-                  </Link>
-                  <Link to="/products?category=bottoms-shorts" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                    Shorts
-                  </Link>
-                  <Link to="/products?category=bottoms-jeans" className="block px-2 py-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded" onClick={() => setIsMobileMenuOpen(false)}>
-                    Jeans
-                  </Link>
-                </div>
-              )}
-            </div>
-            <Link to="/products" className="text-lg text-black dark:text-white hover:text-[#059669] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-              Customer Service
-            </Link>
-            {/* Divider */}
+                {link.name}
+              </Link>
+            ))}
+            {/* Dropdowns for T-Shirts and Bottoms if needed */}
             <hr className="my-4 border-zinc-300 dark:border-zinc-700" />
             {/* Right side actions in mobile menu */}
             <button className="text-black dark:text-white hover:text-[#059669] transition-colors flex items-center space-x-2" onClick={() => { setShowSearch(true); setIsMobileMenuOpen(false); }}>
@@ -384,7 +366,6 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
             </button>
           </nav>
         </div>
-        {/* Click outside to close */}
         <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
       </div>
 

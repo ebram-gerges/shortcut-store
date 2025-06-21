@@ -50,7 +50,7 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
 export const register = async (userData: RegisterData): Promise<AuthResponse> => {
   try {
     // First register the user
-    await api.post('/api/accounts/register/', userData);
+    await api.post('/accounts/api/register/', userData);
     
     // Then log them in
     return login({
