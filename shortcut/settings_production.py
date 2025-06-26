@@ -2,8 +2,12 @@
 Production settings for shortcut project.
 """
 import os
+import pymysql
 from pathlib import Path
 from .settings import *
+
+# Configure PyMySQL to work with Django
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,7 +21,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-b^lazyv&dao&g79==@g#(
 # Get allowed hosts from environment variable
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') + ['localhost', '127.0.0.1']
 
-# Database - MySQL Configuration
+# Database - MySQL Configuration with PyMySQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',

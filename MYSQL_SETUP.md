@@ -25,13 +25,10 @@
    brew services start mysql
    ```
 
-3. **Install MySQL Python Client**
+3. **Install Python Dependencies**
    ```bash
-   # Ubuntu/Debian
-   sudo apt install python3-dev default-libmysqlclient-dev build-essential
-   
-   # macOS
-   brew install mysql-connector-c
+   # No system-level MySQL libraries needed with PyMySQL!
+   pip install -r requirements.txt
    ```
 
 ## Database Setup
@@ -115,27 +112,27 @@ SECRET_KEY=your_production_secret_key
 ALLOWED_HOSTS=your-domain.com
 ```
 
+## Advantages of PyMySQL
+
+- **No system dependencies**: PyMySQL is a pure Python MySQL client
+- **Easier deployment**: Works on any platform without MySQL development libraries
+- **Cross-platform**: Works on Windows, macOS, and Linux
+- **Production ready**: Used by many Django applications in production
+
 ## Troubleshooting
 
 ### Common Issues:
 
-1. **"mysqlclient not found"**
-   ```bash
-   # Install system dependencies first
-   sudo apt install python3-dev default-libmysqlclient-dev build-essential
-   pip install mysqlclient
-   ```
-
-2. **"Access denied for user"**
+1. **"Access denied for user"**
    - Check if the user exists and has correct permissions
    - Verify the password is correct
    - Ensure the user can connect from your application's host
 
-3. **"Database doesn't exist"**
+2. **"Database doesn't exist"**
    - Create the database first
    - Check the database name in your environment variables
 
-4. **"Connection refused"**
+3. **"Connection refused"**
    - Make sure MySQL is running
    - Check if the port is correct (default: 3306)
    - Verify firewall settings

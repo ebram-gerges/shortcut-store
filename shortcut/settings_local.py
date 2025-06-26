@@ -2,8 +2,12 @@
 Local development settings for shortcut project with MySQL.
 """
 import os
+import pymysql
 from pathlib import Path
 from .settings import *
+
+# Configure PyMySQL to work with Django
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,7 +20,7 @@ SECRET_KEY = 'django-insecure-b^lazyv&dao&g79==@g#(m-ekmq6!pfmonptv8205opyqnu$3@
 
 ALLOWED_HOSTS = ['*']
 
-# Database - MySQL Configuration for Local Development
+# Database - MySQL Configuration for Local Development with PyMySQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',

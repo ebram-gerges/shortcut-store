@@ -11,7 +11,7 @@ setup(
         "django-cors-headers>=4.3.0",
         "gunicorn>=21.2.0",
         "whitenoise>=6.6.0",
-        "mysqlclient>=2.2.0",
+        "PyMySQL>=1.1.0",
     ],
     python_requires=">=3.9",
 ) 
