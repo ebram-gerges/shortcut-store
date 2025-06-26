@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["python39", "nodejs_18", "npm", "mysql"]
+
+[phases.install]
+cmds = [
+    "pip install -r requirements.txt"
+]
+
+[phases.build]
+cmds = [
+    "chmod +x railway_build.sh",
+    "./railway_build.sh"
+]
+
+[start]
+cmd = "gunicorn shortcut.wsgi:application --bind 0.0.0.0:$PORT" 

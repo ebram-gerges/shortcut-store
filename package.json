@@ -10,12 +10,17 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+<<<<<<< HEAD
     "@types/react-slick": "^0.23.13",
+=======
+    "@types/node": "^24.0.3",
+>>>>>>> 10c57fdec293134f4372ab8fbccf5f1baa226be5
     "tailwindcss": "^4.1.8"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.5",
     "axios": "^1.10.0",
+<<<<<<< HEAD
     "clsx": "^2.1.1",
     "lucide": "^0.522.0",
     "lucide-react": "^0.522.0",
@@ -23,5 +28,11 @@
     "react-slick": "^0.30.3",
     "slick-carousel": "^1.8.1",
     "tailwind-merge": "^3.3.1"
+=======
+    "class-variance-authority": "^0.7.1",
+    "lucide": "^0.522.0",
+    "lucide-react": "^0.522.0",
+    "path": "^0.12.7"
+>>>>>>> 10c57fdec293134f4372ab8fbccf5f1baa226be5
   }
 }
