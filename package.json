@@ -10,7 +10,8 @@
     "node": "18.x",
     "npm": "9.x"
   },
-  "keywords": ["django", "react", "ecommerce"],
+  "keywords": ["django", "react", "ecommerce", "python"],
   "author": "Shortcut Store Team",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module"
 }

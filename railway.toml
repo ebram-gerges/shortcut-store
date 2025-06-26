@@ -1,6 +1,3 @@
-[build]
-builder = "nixpacks"
-
 [deploy]
 healthcheckPath = "/admin/"
 healthcheckTimeout = 300
