@@ -1,38 +1,16 @@
 {
   "name": "shortcut-store",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Shortcut Store - Django + React E-commerce",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "gunicorn shortcut.wsgi:application --bind 0.0.0.0:$PORT",
+    "build": "./railway_build.sh"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "devDependencies": {
-<<<<<<< HEAD
-    "@types/react-slick": "^0.23.13",
-=======
-    "@types/node": "^24.0.3",
->>>>>>> 10c57fdec293134f4372ab8fbccf5f1baa226be5
-    "tailwindcss": "^4.1.8"
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
   },
-  "dependencies": {
-    "@radix-ui/react-select": "^2.2.5",
-    "axios": "^1.10.0",
-<<<<<<< HEAD
-    "clsx": "^2.1.1",
-    "lucide": "^0.522.0",
-    "lucide-react": "^0.522.0",
-    "react-hot-toast": "^2.5.2",
-    "react-slick": "^0.30.3",
-    "slick-carousel": "^1.8.1",
-    "tailwind-merge": "^3.3.1"
-=======
-    "class-variance-authority": "^0.7.1",
-    "lucide": "^0.522.0",
-    "lucide-react": "^0.522.0",
-    "path": "^0.12.7"
->>>>>>> 10c57fdec293134f4372ab8fbccf5f1baa226be5
-  }
+  "keywords": ["django", "react", "ecommerce"],
+  "author": "Shortcut Store Team",
+  "license": "MIT"
 }
