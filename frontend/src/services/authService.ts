@@ -34,7 +34,7 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
     localStorage.setItem('refresh_token', refresh);
     
     // Get user profile
-    const userResponse = await api.get('/api/accounts/profile/');
+    const userResponse = await api.get('/api/accounts/user/');
     
     return {
       access,
@@ -47,16 +47,10 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
   }
 };
 
-export const register = async (userData: RegisterData): Promise<AuthResponse> => {
+export const register = async (userData: RegisterData): Promise<boolean> => {
   try {
-    // First register the user
-    await api.post('/accounts/api/register/', userData);
-    
-    // Then log them in
-    return login({
-      username: userData.username,
-      password: userData.password
-    });
+    await api.post('/api/accounts/register/', userData);
+    return true;
   } catch (error) {
     console.error('Registration failed:', error);
     throw error;
@@ -73,7 +67,7 @@ export const logout = (): void => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getCurrentUser = async (): Promise<any> => {
   try {
-    const response = await api.get('/api/accounts/profile/');
+    const response = await api.get('/api/accounts/user/');
     return response.data;
   } catch (error) {
     console.error('Failed to fetch user:', error);
@@ -83,4 +77,18 @@ export const getCurrentUser = async (): Promise<any> => {
 
 export const isAuthenticated = (): boolean => {
   return !!localStorage.getItem('access_token');
+};
+
+export const verifyEmail = async (code: string, token: string) => {
+    const response = await api.post('/auth/verify-email/', { code }, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+};
+
+export const fetchUserProfile = async (token: string) => {
+    const response = await api.get('/api/accounts/user/', {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
 };

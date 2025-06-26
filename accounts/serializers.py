@@ -4,6 +4,8 @@ from django.contrib.auth.password_validation import validate_password
 from .models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -37,23 +39,75 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
+    phone = serializers.CharField(required=True)
+    secondary_phone = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    height = serializers.DecimalField(max_digits=5, decimal_places=2, required=True)
+    weight = serializers.DecimalField(max_digits=5, decimal_places=2, required=True)
+    address = serializers.CharField(required=True)
+    city = serializers.CharField(required=True)
+    governorate = serializers.CharField(required=True)
     
     class Meta:
         model = User
-        fields = ['email', 'username', 'first_name', 'last_name', 'password', 'password_confirm']
+        fields = [
+            'email', 'username', 'first_name', 'last_name', 'password', 'password_confirm',
+            'phone', 'secondary_phone', 'height', 'weight', 'address', 'city', 'governorate'
+        ]
         extra_kwargs = {
             'email': {'required': True},
             'username': {'required': True},
         }
     
+    def validate_phone(self, value):
+        """Format phone number to +20 format"""
+        # Remove any existing country code or + symbol
+        clean_phone = value.replace('+', '').replace('20', '')
+        
+        # Remove leading 0 if present
+        if clean_phone.startswith('0'):
+            clean_phone = clean_phone[1:]
+        
+        # Add +20 prefix
+        return f"+20{clean_phone}"
+    
+    def validate_secondary_phone(self, value):
+        """Format secondary phone number to +20 format if provided"""
+        if not value:
+            return value
+        
+        # Remove any existing country code or + symbol
+        clean_phone = value.replace('+', '').replace('20', '')
+        
+        # Remove leading 0 if present
+        if clean_phone.startswith('0'):
+            clean_phone = clean_phone[1:]
+        
+        # Add +20 prefix
+        return f"+20{clean_phone}"
+    
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError("Passwords don't match")
+        # Check for unique email
+        if User.objects.filter(email=attrs['email']).exists():
+            raise serializers.ValidationError({'email': 'An account with this email already exists.'})
+        # Check for unique phone
+        if User.objects.filter(phone=attrs['phone']).exists():
+            raise serializers.ValidationError({'phone': 'An account with this phone number already exists.'})
         return attrs
     
     def create(self, validated_data):
         validated_data.pop('password_confirm')
-        user = User.objects.create_user(**validated_data)
+        try:
+            user = User.objects.create_user(**validated_data)
+        except IntegrityError as e:
+            if 'email' in str(e):
+                raise serializers.ValidationError({'email': 'An account with this email already exists.'})
+            if 'phone' in str(e):
+                raise serializers.ValidationError({'phone': 'An account with this phone number already exists.'})
+            raise serializers.ValidationError('Registration failed. Please try again.')
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
         return user
 
 
@@ -66,7 +120,6 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
         
         if username and password:
-            # Try to authenticate with username or email
             user = authenticate(username=username, password=password)
             if not user:
                 # Try with email
@@ -77,15 +130,15 @@ class UserLoginSerializer(serializers.Serializer):
                     pass
             
             if not user:
-                raise serializers.ValidationError('Invalid credentials')
+                raise serializers.ValidationError({'non_field_errors': 'Invalid email/username or password.'})
             
             if not user.is_active:
-                raise serializers.ValidationError('User account is disabled')
+                raise serializers.ValidationError({'non_field_errors': 'User account is disabled or not verified.'})
             
             attrs['user'] = user
             return attrs
         else:
-            raise serializers.ValidationError('Must include username and password')
+            raise serializers.ValidationError({'non_field_errors': 'Must include username and password.'})
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -94,9 +147,28 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 
             'fullName', 'phone', 'secondary_phone', 'height', 'weight', 
-            'address', 'avatar_color', 'email_verified', 'date_joined'
+            'address', 'city', 'governorate', 'avatar_color', 'email_verified', 'date_joined'
         ]
         read_only_fields = ['id', 'username', 'email', 'email_verified', 'date_joined']
+    
+    def to_representation(self, instance):
+        """Format phone numbers in the response"""
+        data = super().to_representation(instance)
+        
+        # Format phone numbers to +20 format
+        if data.get('phone'):
+            clean_phone = data['phone'].replace('+', '').replace('20', '')
+            if clean_phone.startswith('0'):
+                clean_phone = clean_phone[1:]
+            data['phone'] = f"+20{clean_phone}"
+        
+        if data.get('secondary_phone'):
+            clean_phone = data['secondary_phone'].replace('+', '').replace('20', '')
+            if clean_phone.startswith('0'):
+                clean_phone = clean_phone[1:]
+            data['secondary_phone'] = f"+20{clean_phone}"
+        
+        return data
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -104,8 +176,35 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'first_name', 'last_name', 'fullName', 'phone', 
-            'secondary_phone', 'height', 'weight', 'address'
+            'secondary_phone', 'height', 'weight', 'address', 'city', 'governorate'
         ]
+    
+    def validate_phone(self, value):
+        """Format phone number to +20 format"""
+        # Remove any existing country code or + symbol
+        clean_phone = value.replace('+', '').replace('20', '')
+        
+        # Remove leading 0 if present
+        if clean_phone.startswith('0'):
+            clean_phone = clean_phone[1:]
+        
+        # Add +20 prefix
+        return f"+20{clean_phone}"
+    
+    def validate_secondary_phone(self, value):
+        """Format secondary phone number to +20 format if provided"""
+        if not value:
+            return value
+        
+        # Remove any existing country code or + symbol
+        clean_phone = value.replace('+', '').replace('20', '')
+        
+        # Remove leading 0 if present
+        if clean_phone.startswith('0'):
+            clean_phone = clean_phone[1:]
+        
+        # Add +20 prefix
+        return f"+20{clean_phone}"
 
 
 class PasswordChangeSerializer(serializers.Serializer):

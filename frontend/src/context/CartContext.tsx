@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { getCart, addToCart } from '../services/cartService';
 
 interface CartItem {
   id: number;
@@ -7,6 +8,8 @@ interface CartItem {
   quantity: number;
   color: string;
   size: string;
+  image?: string;
+  sale_percent?: number;
 }
 
 interface CartContextType {
@@ -55,7 +58,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const removeItem = (id: number) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
+    setItems(prevItems => {
+      return prevItems.filter(item => item.id !== id);
+    });
   };
 
   const updateQuantity = (id: number, quantity: number) => {
@@ -63,12 +68,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       removeItem(id);
       return;
     }
-
-    setItems(prevItems =>
-      prevItems.map(item =>
+    setItems(prevItems => {
+      return prevItems.map(item =>
         item.id === id ? { ...item, quantity } : item
-      )
-    );
+      );
+    });
   };
 
   const getTotalItems = () => {
@@ -76,14 +80,50 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const getTotalPrice = () => {
-    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return items.reduce((total, item) => {
+      const salePercent = item.sale_percent;
+      const basePrice = item.price;
+      const finalPrice = salePercent && salePercent > 0 ? basePrice * (1 - salePercent / 100) : basePrice;
+      return total + (finalPrice * item.quantity);
+    }, 0);
   };
 
   const clearCart = () => {
     setItems([]);
   };
 
-  const value: CartContextType = {
+  // Sync cart with backend after login
+  const syncCartWithBackend = async () => {
+    try {
+      // Send local cart items to backend
+      for (const item of items) {
+        await addToCart(item.id, item.quantity);
+      }
+      // Fetch merged cart from backend
+      const backendCart = await getCart();
+      if (backendCart && backendCart.items) {
+        setItems(
+          backendCart.items.map((i: {
+            product: { id: number; name: string; price: string; image?: string };
+            quantity: number;
+            variant?: { color?: string; size?: string };
+          }): CartItem => ({
+            id: i.product.id,
+            name: i.product.name,
+            price: Number(i.product.price),
+            quantity: i.quantity,
+            color: i.variant?.color || '',
+            size: i.variant?.size || '',
+            image: i.product.image || '',
+          }))
+        );
+      }
+    } catch {
+      // Ignore errors for now
+    }
+  };
+
+  const value: CartContextType & { syncCartWithBackend: () => Promise<void> } = {
     items,
     addItem,
     removeItem,
@@ -91,6 +131,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     getTotalItems,
     getTotalPrice,
     clearCart,
+    syncCartWithBackend,
   };
 
   return (

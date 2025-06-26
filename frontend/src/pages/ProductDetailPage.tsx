@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Star, Heart, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { Heart, Plus, Minus } from 'lucide-react';
 // import { mockProducts } from '../data/mockData';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { getProductById } from '../services/productService';
 import { Product as ProductType } from '../types/product';
+import ProductReviews from '../components/ProductReviews';
+import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
+type ProductWithSale = ProductType & { sale_percent?: number };
 
 const ProductDetailPage = () => {
   const { id } = useParams();
-  const [product, setProduct] = useState<ProductType | null>(null);
+  const [product, setProduct] = useState<ProductWithSale | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { addItem } = useCart();
@@ -23,6 +29,13 @@ const ProductDetailPage = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const sliderRef = React.useRef<Slider>(null);
+  const carouselInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Carousel interval duration (ms)
+  const CAROUSEL_INTERVAL = 5000;
+  const SLIDE_DURATION = 600; // ms
 
   useEffect(() => {
     if (!id) return;
@@ -31,8 +44,8 @@ const ProductDetailPage = () => {
     getProductById(Number(id))
       .then((data) => {
         setProduct(data);
-        setSelectedColor(Array.isArray((data as any).colors) && (data as any).colors.length > 0 ? (data as any).colors[0] : '');
-        setSelectedSize(Array.isArray((data as any).sizes) && (data as any).sizes.length > 0 ? (data as any).sizes[0] : '');
+        setSelectedColor(Array.isArray(data.colors) && data.colors.length > 0 ? data.colors[0] : '');
+        setSelectedSize(Array.isArray(data.sizes) && data.sizes.length > 0 ? data.sizes[0] : '');
         setLoading(false);
       })
       .catch(() => {
@@ -41,11 +54,93 @@ const ProductDetailPage = () => {
       });
   }, [id]);
 
+  // Auto-select the first available color and the smallest available size variant when product or options change
+  useEffect(() => {
+    if (product) {
+      if (Array.isArray(product.available_colors) && product.available_colors.length > 0) {
+        setSelectedColor(product.available_colors[0]);
+      }
+      if (Array.isArray(product.available_sizes) && product.available_sizes.length > 0) {
+        // Sort sizes by XS < S < M < L < XL < XXL < XXXL
+        const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+        const sortedSizes = [...product.available_sizes].sort((a, b) => {
+          const idxA = sizeOrder.indexOf(a.toUpperCase());
+          const idxB = sizeOrder.indexOf(b.toUpperCase());
+          if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
+        setSelectedSize(sortedSizes[0]);
+      }
+    }
+  }, [product]);
+
+  // Get images for the selected color
+  const colorVariant = product ? product.color_variants?.find((cv) => cv.color === selectedColor) : undefined;
+  const images = colorVariant?.images?.length ? colorVariant.images : product?.color_variants?.flatMap((cv) => cv.images || []) || [];
+
+  // Handler for manual image change (thumbnail click)
+  const handleThumbnailClick = (idx: number) => {
+    if (sliderRef.current) {
+      sliderRef.current.slickGoTo(idx);
+    }
+    setCurrentImageIdx(idx);
+  };
+
+  // Auto-slide interval
+  useEffect(() => {
+    if (carouselInterval.current) clearInterval(carouselInterval.current);
+    if (images.length > 1) {
+      carouselInterval.current = setInterval(() => {
+        if (currentImageIdx !== null) {
+          setCurrentImageIdx((currentImageIdx + 1) % images.length);
+        }
+      }, CAROUSEL_INTERVAL);
+    }
+    return () => {
+      if (carouselInterval.current) clearInterval(carouselInterval.current);
+    };
+    // eslint-disable-next-line
+  }, [images.length, selectedColor]);
+
+  // When transitioning, trigger the slide after a tick
+  useEffect(() => {
+    if (currentImageIdx !== null) {
+      const raf = requestAnimationFrame(() => {
+        // After the slide duration, update the current image
+        setTimeout(() => {
+          setCurrentImageIdx((currentImageIdx + 1) % images.length);
+        }, SLIDE_DURATION);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [currentImageIdx, images.length]);
+
+  // Reset carousel when color changes or images change
+  useEffect(() => {
+    setCurrentImageIdx(0);
+    if (carouselInterval.current) clearInterval(carouselInterval.current);
+    // eslint-disable-next-line
+  }, [selectedColor, images.length]);
+
+  // Set the web tab title to product name and selected color
+  useEffect(() => {
+    if (product && selectedColor) {
+      document.title = `${product.name} (${selectedColor})`;
+    } else if (product) {
+      document.title = product.name;
+    }
+    return () => {
+      document.title = 'Shortcut Store'; // or your default title
+    };
+  }, [product, selectedColor]);
+
   const getDisplayPrice = (price: number) => {
     if (currency === 'USD') {
-      return `$${(price / conversionRate).toFixed(2)}`;
+      return `${(price / conversionRate).toFixed(2)} USD`;
     }
-    return `LE ${price}`;
+    return `${price} EGP`;
   };
 
   if (loading) {
@@ -56,6 +151,8 @@ const ProductDetailPage = () => {
   }
 
   const handleAddToCart = () => {
+    // Get the image for the selected color variant or use the main product indoor image
+    const selectedImage = colorVariant?.images?.[0]?.image || product.indoor_image || '';
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: product.id,
@@ -63,6 +160,8 @@ const ProductDetailPage = () => {
         price: Number(product.price),
         color: selectedColor,
         size: selectedSize,
+        image: selectedImage,
+        sale_percent: product.sale_percent,
       });
     }
     setIsAddedToCart(true);
@@ -81,8 +180,16 @@ const ProductDetailPage = () => {
     setTimeout(() => setIsAddedToWishlist(false), 2000);
   };
 
-  const totalPrice = (Number(product.price) * quantity).toFixed(2);
   const inWishlist = isInWishlist(product.id);
+
+  // Find the stock item for the selected color and size
+  const selectedStockItem = product?.stock_items?.find((item) => {
+    const color = item.color_variant && item.color_variant.color;
+    const size = item.size;
+    return color === selectedColor && size === selectedSize;
+  });
+  const selectedInStock = selectedStockItem ? (selectedStockItem.available_quantity ?? 0) > 0 : false;
+  const maxQuantity = selectedStockItem ? selectedStockItem.available_quantity ?? 1 : 1;
 
   return (
     <div className="relative min-h-screen z-20 py-8 pt-[125px]">
@@ -90,11 +197,64 @@ const ProductDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Images */}
           <div>
-            <div className="bg-zinc-700 rounded-lg h-96 lg:h-[500px] flex items-center justify-center mb-4">
-              <span className="text-zinc-400 text-lg">Product picture</span>
+            {/* Main Product Image or Color Variant Images */}
+            <div className="bg-transparent h-96 lg:h-[500px] flex items-center justify-center mb-4 overflow-visible relative">
+              {/* Sale badge */}
+              {product.sale_percent && product.sale_percent > 0 && (
+                <div className="absolute top-2 -left-4 bg-red-600 text-white px-3 py-1 font-bold text-xs rounded-full shadow-md z-20 transform -rotate-[30deg]">
+                  {product.sale_percent}% OFF
+                </div>
+              )}
+              <div className="w-full h-full">
+                {images.length > 0 ? (
+                  // @ts-expect-error: React Slick typing issue: Slider is not recognized as a valid JSX component in some TypeScript setups
+                  <Slider
+                    ref={sliderRef}
+                    beforeChange={(_, next) => setCurrentImageIdx(next)}
+                    dots={true}
+                    arrows={true}
+                    infinite={true}
+                    speed={500}
+                    slidesToShow={1}
+                    slidesToScroll={1}
+                    autoplay={true}
+                    autoplaySpeed={5000}
+                    fade={true}
+                    className="w-full h-full"
+                  >
+                    {images.map((img, idx) => (
+                      <div key={img.id || idx} className="w-full h-96 lg:h-[500px] flex items-center justify-center">
+                        <img
+                          src={img.image}
+                          alt={img.alt_text || product.name}
+                          className="object-contain h-full w-full"
+                          style={{ maxHeight: '100%', maxWidth: '100%' }}
+                        />
+                      </div>
+                    ))}
+                  </Slider>
+                ) : product.indoor_image ? (
+                  <img
+                    src={product.indoor_image}
+                    alt={product.name}
+                    className="object-contain h-full w-full"
+                  />
+                ) : (
+                  <span className="text-zinc-400 text-lg">No Image Available</span>
+                )}
+              </div>
             </div>
-            <div className="bg-zinc-700 rounded-lg h-24 w-24 flex items-center justify-center">
-              <span className="text-zinc-400 text-xs text-center">Mini Product picture preview</span>
+            {/* Thumbnails for all images */}
+            <div className="flex space-x-2 mt-2">
+              {images.length > 0 ? images.map((img, idx) => (
+                <img
+                  key={img.id || idx}
+                  src={img.image}
+                  alt={img.alt_text || product.name}
+                  className={`h-16 w-16 object-cover rounded border-2 cursor-pointer ${currentImageIdx === idx ? 'border-[#059669]' : 'border-zinc-600'}`}
+                  onClick={() => handleThumbnailClick(idx)}
+                />
+              )) : null}
             </div>
           </div>
 
@@ -103,44 +263,76 @@ const ProductDetailPage = () => {
             <h1 className="text-3xl font-bold text-black dark:text-white mb-4">{product.name}</h1>
             {/* Rating */}
             <div className="flex items-center mb-4">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-5 h-5 ${i < Math.floor(product.rating || 0) ? 'text-yellow-400 fill-current' : 'text-zinc-600'}`}
-                />
-              ))}
-              <span className="text-black dark:text-white font-semibold ml-2">({product.rating || 0})</span>
+              {[1,2,3,4,5].map(i => {
+                const rating = typeof product.rating === 'number' ? product.rating : 0;
+                if (rating >= i) {
+                  return <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20"><polygon points="9.9,1.1 7.6,6.6 1.6,7.6 6,11.9 4.9,17.9 9.9,14.9 14.9,17.9 13.8,11.9 18.2,7.6 12.2,6.6 "/></svg>;
+                } else if (rating >= i - 0.5) {
+                  return <svg key={i} className="w-5 h-5 text-yellow-400" viewBox="0 0 20 20"><defs><linearGradient id={`half${i}`}><stop offset="50%" stopColor="#facc15"/><stop offset="50%" stopColor="#d1d5db"/></linearGradient></defs><polygon fill={`url(#half${i})`} points="9.9,1.1 7.6,6.6 1.6,7.6 6,11.9 4.9,17.9 9.9,14.9 14.9,17.9 13.8,11.9 18.2,7.6 12.2,6.6 "/></svg>;
+                } else {
+                  return <svg key={i} className="w-5 h-5 text-zinc-300 dark:text-zinc-600" viewBox="0 0 20 20"><polygon points="9.9,1.1 7.6,6.6 1.6,7.6 6,11.9 4.9,17.9 9.9,14.9 14.9,17.9 13.8,11.9 18.2,7.6 12.2,6.6 "/></svg>;
+                }
+              })}
+              <span className="text-black dark:text-white font-semibold ml-2">({typeof product.rating === 'number' ? product.rating.toFixed(1) : '0.0'})</span>
             </div>
             {/* Price */}
-            <div className="text-2xl font-bold dark:text-yellow-400 text-yellow-600 mb-6">
-              {getDisplayPrice(Number(product.price))}
+            <div className="mb-6 flex items-center space-x-4">
+              {product.sale_percent && product.sale_percent > 0 ? (
+                <>
+                  <del className="text-zinc-400 dark:text-zinc-400 font-bold text-3xl">{getDisplayPrice(Number(product.price))}</del>
+                  <span className="text-[#059669] dark:text-[#1fffb8] font-bold text-3xl">{getDisplayPrice(Number(product.price) * (1 - product.sale_percent / 100))}</span>
+                </>
+              ) : (
+                <span className="text-black dark:text-white font-bold text-3xl">{getDisplayPrice(Number(product.price))}</span>
+              )}
             </div>
             {/* Color Selection */}
-            {Array.isArray((product as any).colors) && (product as any).colors.length > 0 && (
+            {Array.isArray(product.available_colors) && product.available_colors.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-black dark:text-white font-semibold mb-3">Color: {selectedColor}</h3>
+                <h3 className="text-black dark:text-white font-semibold mb-3">Color:</h3>
                 <div className="flex space-x-3">
-                  {(product as any).colors?.map((color: string) => (
+                  {product.available_colors.map((color: string) => (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-[#059669]' : 'border-zinc-600'}`}
+                      className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-150 shadow-sm relative group
+                        ${selectedColor === color ? 'border-[#059669] ring-2 ring-[#059669] scale-110 shadow-lg' : 'border-zinc-400 hover:border-[#059669]'}
+                      `}
                       style={{ backgroundColor: color }}
-                    ></button>
+                      aria-label={color}
+                      type="button"
+                    >
+                      {selectedColor === color && (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white drop-shadow" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                      )}
+                      <span className="sr-only">{color}</span>
+                      {/* Tooltip */}
+                      <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">
+                        {color}
+                      </span>
+                    </button>
                   ))}
                 </div>
               </div>
             )}
             {/* Size Selection */}
-            {Array.isArray((product as any).sizes) && (product as any).sizes.length > 0 && (
+            {Array.isArray(product.available_sizes) && product.available_sizes.length > 0 && (
               <div className="mb-6">
                 <h3 className="text-black dark:text-white font-semibold mb-3">Size:</h3>
                 <div className="flex space-x-3">
-                  {(product as any).sizes?.map((size: string) => (
+                  {product.available_sizes.map((size: string) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 border rounded ${selectedSize === size ? 'border-[#059669] bg-[#059669] text-white' : 'border-zinc-600 text-black dark:text-white hover:border-[#059669]'} transition-colors`}
+                      className={`px-5 h-10 rounded-full border-2 flex items-center justify-center text-base font-semibold transition-all duration-150 shadow-sm
+                        ${selectedSize === size ? 'border-[#059669] bg-[#059669] text-white scale-105 shadow-lg' : 'border-zinc-400 bg-zinc-800 text-white hover:border-[#059669]'}
+                      `}
+                      aria-label={size}
+                      type="button"
                     >
                       {size}
                     </button>
@@ -150,13 +342,13 @@ const ProductDetailPage = () => {
             )}
             {/* Stock Status */}
             <div className="mb-6">
-              {product.in_stock ? (
+              {selectedInStock ? (
                 <>
                   <span className="bg-[#059669] text-white px-3 py-1 rounded text-sm">
                     IN STOCK
                   </span>
                   <span className="dark:text-zinc-400 text-zinc-900 ml-2">
-                    {typeof (product as any).stock === 'number' ? `In Stock (${(product as any).stock} available)` : 'In Stock'}
+                    {selectedStockItem?.available_quantity} available
                   </span>
                 </>
               ) : (
@@ -179,8 +371,9 @@ const ProductDetailPage = () => {
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
                   className="bg-zinc-700 border-2 border-zinc-600/50 text-white p-2 rounded hover:bg-[#059669] transition-colors"
+                  disabled={quantity >= maxQuantity}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -190,13 +383,15 @@ const ProductDetailPage = () => {
             <div className="space-y-4 mb-8">
               <button 
                 onClick={handleAddToCart}
-                disabled={!product.in_stock}
-                className={`w-full py-3 rounded-lg font-semibold transition-colors ${product.in_stock ? isAddedToCart ? 'bg-green-600 text-white' : 'bg-[#059669] text-white hover:bg-[#059669]/90' : 'bg-zinc-600 text-zinc-400 cursor-not-allowed'}`}
+                disabled={!selectedInStock}
+                className={`w-full py-3 rounded-lg font-semibold transition-colors ${selectedInStock ? isAddedToCart ? 'bg-green-600 text-white' : 'bg-[#059669] text-white hover:bg-[#059669]/90' : 'bg-zinc-600 text-zinc-400 cursor-not-allowed'}`}
               >
                 {isAddedToCart 
                   ? '✓ Added to Cart!' 
-                  : product.in_stock 
-                    ? `Add to Cart - ${getDisplayPrice(Number(product.price) * quantity)}`
+                  : selectedInStock 
+                    ? product.sale_percent && product.sale_percent > 0
+                      ? `Add to Cart - ${getDisplayPrice(Number(product.price) * (1 - product.sale_percent / 100) * quantity)}`
+                      : `Add to Cart - ${getDisplayPrice(Number(product.price) * quantity)}`
                     : 'Out of Stock'
                 }
               </button>
@@ -286,31 +481,16 @@ const ProductDetailPage = () => {
             {activeTab === 'reviews' && (
               <div className="text-zinc-900 dark:text-zinc-300 space-y-6">
                 <h4 className="text-black dark:text-white font-semibold text-lg mb-4">Customer Reviews</h4>
-                <div className="space-y-4">
-                  <div className="bg-zinc-200 dark:bg-zinc-800 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                      <span className="text-black dark:text-white font-medium ml-2">Ahmed M.</span>
-                    </div>
-                    <p className="text-zinc-900 dark:text-zinc-300">Great quality and comfortable fit. Exactly as described!</p>
-                  </div>
-                  <div className="bg-zinc-200 dark:bg-zinc-800 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <div className="flex">
-                        {[...Array(4)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                        ))}
-                        <Star className="w-4 h-4 text-zinc-600" />
-                      </div>
-                      <span className="text-black dark:text-white font-medium ml-2">Sarah K.</span>
-                    </div>
-                    <p className="text-zinc-900 dark:text-zinc-300">Love the design and material. Fast shipping too!</p>
-                  </div>
+                {/* Add Review Button */}
+                <div className="flex justify-end mb-6">
+                  <Link
+                    to={`/products/${product.id}/review`}
+                    className="inline-flex items-center px-6 py-3 bg-[#059669] text-white font-semibold rounded-lg shadow hover:bg-[#059669]/90 transition-colors"
+                  >
+                    Add a review to {product.name}
+                  </Link>
                 </div>
+                <ProductReviews productId={product.id} productName={product.name} />
               </div>
             )}
           </div>

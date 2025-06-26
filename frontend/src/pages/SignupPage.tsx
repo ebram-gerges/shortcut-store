@@ -1,7 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, PhoneForwarded, Ruler, Dumbbell, UserRound } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, UserRound, Phone, MapPin, PhoneForwarded, Ruler, Dumbbell, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+// Phone number formatting utility
+const formatPhoneNumber = (phone: string): string => {
+  // Remove any existing country code or + symbol
+  let cleanPhone = phone.replace(/^\+/, '').replace(/^20/, '');
+  
+  // Remove leading 0 if present
+  if (cleanPhone.startsWith('0')) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  
+  // Add +20 prefix
+  return `+20${cleanPhone}`;
+};
+
+// Egyptian Governorates
+const EGYPTIAN_GOVERNORATES = [
+  'Alexandria', 'Aswan', 'Asyut', 'Beheira', 'Beni Suef', 'Cairo', 'Dakahlia', 'Damietta', 
+  'Faiyum', 'Gharbia', 'Giza', 'Ismailia', 'Kafr El Sheikh', 'Luxor', 'Matruh', 'Minya', 
+  'Monufia', 'New Valley', 'North Sinai', 'Port Said', 'Qalyubia', 'Qena', 'Red Sea', 
+  'Sharqia', 'Sohag', 'South Sinai', 'Suez'
+];
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -18,15 +40,38 @@ const SignupPage = () => {
     weight: '',
     password: '',
     confirmPassword: '',
+    city: '',
+    governorate: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showGovernorateDropdown, setShowGovernorateDropdown] = useState(false);
+  const [governorateSearch, setGovernorateSearch] = useState('');
+  const governorateDropdownRef = useRef<HTMLDivElement>(null);
 
   const { signup } = useAuth();
   const navigate = useNavigate();
+
+  const filteredGovernorates = EGYPTIAN_GOVERNORATES.filter(gov =>
+    gov.toLowerCase().includes(governorateSearch.toLowerCase())
+  );
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (governorateDropdownRef.current && !governorateDropdownRef.current.contains(event.target as Node)) {
+        setShowGovernorateDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +79,7 @@ const SignupPage = () => {
     setError('');
 
     // All fields required (except secondary_phone)
-    if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone || !formData.address || !formData.height || !formData.weight || !formData.password || !formData.confirmPassword) {
+    if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone || !formData.address || !formData.height || !formData.weight || !formData.password || !formData.confirmPassword || !formData.city || !formData.governorate) {
       setError('All fields are required');
       setIsLoading(false);
       return;
@@ -70,10 +115,10 @@ const SignupPage = () => {
       return;
     }
     try {
-      const phoneWithPlus = formData.phone.startsWith('+') ? formData.phone : `+${formData.phone}`;
-      const secondaryPhoneWithPlus = formData.secondary_phone
-        ? (formData.secondary_phone.startsWith('+') ? formData.secondary_phone : `+${formData.secondary_phone}`)
-        : '';
+      // Format phone numbers to +20 format
+      const formattedPhone = formatPhoneNumber(formData.phone);
+      const formattedSecondaryPhone = formData.secondary_phone ? formatPhoneNumber(formData.secondary_phone) : '';
+      
       const success = await signup(
         formData.email,
         formData.password,
@@ -81,18 +126,29 @@ const SignupPage = () => {
         formData.height,
         formData.weight,
         formData.address,
-        phoneWithPlus,
-        secondaryPhoneWithPlus
+        formData.city,
+        formData.governorate,
+        formattedPhone,
+        formattedSecondaryPhone
       );
-      if (success) {
+      if (success === true) {
         // Store email for verification page
         localStorage.setItem('pending_verification_email', formData.email);
         navigate('/verify-email');
+      } else if (typeof success === 'string') {
+        setError(success);
       } else {
         setError('Failed to create account. Please try again.');
       }
-    } catch {
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        // Show the first error message from the backend
+        const data = err.response.data;
+        const firstKey = Object.keys(data)[0];
+        setError(Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey]);
+      } else {
       setError('An error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -107,11 +163,11 @@ const SignupPage = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Mock successful Google sign-up - redirect to verification
-      const success = await signup('google.user@gmail.com', 'google-auth', 'Google User', '180', '70', '123 Main St, Anytown, USA', '+1234567890', '+1234567890');
+      const success = await signup('google.user@gmail.com', 'google-auth', 'Google User', '180', '70', '123 Main St, Anytown, USA', 'Anytown', 'Cairo', '+1234567890', '+1234567890');
       if (success) {
         navigate('/verify-email');
       }
-    } catch (err) {
+    } catch {
       setError('Google sign-up failed. Please try again.');
     } finally {
       setIsGoogleLoading(false);
@@ -130,9 +186,27 @@ const SignupPage = () => {
     }));
   };
 
+  const handleGovernorateSelect = (governorate: string) => {
+    setFormData(prev => ({ ...prev, governorate }));
+    setGovernorateSearch('');
+    setShowGovernorateDropdown(false);
+  };
+
+  // Add a type guard for axios error
+  function isAxiosError(error: unknown): error is { response: { data: Record<string, string[]> } } {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      typeof (error as { response?: unknown }).response === 'object' &&
+      (error as { response?: unknown }).response !== null &&
+      'data' in (error as { response: { data?: unknown } }).response
+    );
+  }
+
   return (
-    <div className="min-h-screen z-20 relative flex items-center justify-center py-6 px-2 sm:px-4 md:px-8 lg:px-16 pt-[140px]">
-      <div className="border border-zinc-200 dark:border-zinc-700 space-y-8 w-[60%] max-md:w-[70%] max-sm:w-[90%] bg-white/50 dark:bg-zinc-800/30 backdrop-blur-lg rounded-2xl shadow-xl py-8 md:px-16 px-6">
+    <div className="min-h-screen z-20 relative flex items-center justify-center py-6 px-2 sm:px-4 md:px-8 lg:px-16 pt-2">
+      <div className="border border-zinc-200 dark:border-zinc-700 space-y-8 w-[500px] max-md:w-[90%] bg-white/50 dark:bg-zinc-800/30 backdrop-blur-lg rounded-2xl shadow-xl py-8 md:px-10 px-4">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-black dark:text-white">
             Create your account
@@ -151,8 +225,9 @@ const SignupPage = () => {
 
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-4">
-              <div className='flex flex-col gap-6 w-full' >
-                <div className="w-full">
+              {/* First row: First Name & Last Name side by side */}
+              <div className="flex gap-4 w-full">
+                <div className="w-1/2">
                   <label htmlFor="first_name" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
                     First Name
                   </label>
@@ -170,220 +245,278 @@ const SignupPage = () => {
                     />
                   </div>
                 </div>
-                <div className="w-full">
+                <div className="w-1/2">
                   <label htmlFor="last_name" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
                     Last Name
-                  </label>
-                  <div className="relative">
+                </label>
+                <div className="relative">
                     <UserRound className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-5 w-5" />
-                    <input
+                  <input
                       id="last_name"
                       name="last_name"
-                      type="text"
-                      required
+                    type="text"
+                    required
                       value={formData.last_name}
-                      onChange={handleChange}
+                    onChange={handleChange}
                       className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
                       placeholder="Last name"
-                    />
-                  </div>
-                </div>
-                <div className='w-full'>
-                  <label htmlFor="email" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
-                    Email address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                </div>
-                <div className='w-full'>
-                  <label htmlFor="password" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
-                    <input
-                      id="password"
-                      name="password"
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="py-3 pr-12 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Create a password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 text-zinc-400 transform -translate-y-1/2 hover:text-white"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-                <div className='w-full'>
-                  <label htmlFor="confirmPassword" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      required
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className="py-3 pr-12 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Confirm your password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 text-zinc-400 transform -translate-y-1/2 hover:text-white"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
+                  />
                   </div>
                 </div>
               </div>
-              <div className='flex flex-col gap-6 w-full' >
-                <div className='w-full'>
-                  <label htmlFor="phone" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="relative flex">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">
-                      <Phone className="h-5 w-5" />
-                    </span>
-                    <select
-                      name="phoneCountry"
-                      value={formData.phoneCountry}
-                      onChange={handleChange}
-                      className="pl-10 pr-2 py-3 bg-zinc-800 border border-zinc-700 rounded-l-lg text-white focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      
-                    >
-                      <option value="+20">+20</option>
-                    </select>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="text"
-                      required
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full pl-2 pr-4 py-3 bg-zinc-800 border-t border-b border-r border-zinc-700 rounded-r-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Enter your phone number"
-                      maxLength={13}
-                    />
-                  </div>
+              {/* Email */}
+              <div className='w-full'>
+                <label htmlFor="email" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  Email address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Enter your email"
+                  />
                 </div>
-
-                <div className='w-full'>
-                  <label htmlFor="secondary_phone" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
-                    Second Phone Number <span className="text-xs text-zinc-400">(optional)</span>
-                  </label>
-                  <div className="relative flex">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">
-                      <PhoneForwarded className="h-5 w-5" />
-                    </span>
-                    <select
-                      name="secondaryPhoneCountry"
-                      value={formData.secondaryPhoneCountry}
-                      onChange={handleChange}
-                      className="pl-10 pr-2 py-3 bg-zinc-800 border border-zinc-700 rounded-l-lg text-white focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                     
-                    >
-                      <option value="+20">+20</option>
-                    </select>
-                    <input
-                      id="secondary_phone"
-                      name="secondary_phone"
-                      type="text"
-                      value={formData.secondary_phone}
-                      onChange={handleChange}
-                      className="w-full pl-2 pr-4 py-3 bg-zinc-800 border-t border-b border-r border-zinc-700 rounded-r-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Enter your secondary phone number"
-                      maxLength={13}
-                    />
-                  </div>
+              </div>
+              {/* Phone Number */}
+              <div className='w-full'>
+                <label htmlFor="phone" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
+                  Phone Number
+                </label>
+                <div className="relative flex">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">
+                    <Phone className="h-5 w-5" />
+                  </span>
+                  <select
+                    name="phoneCountry"
+                    value={formData.phoneCountry}
+                    onChange={handleChange}
+                    className="pl-10 pr-2 py-3 bg-zinc-800 border border-zinc-700 rounded-l-lg text-white focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                  >
+                    <option value="+20">+20</option>
+                  </select>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="text"
+                    required
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full pl-2 pr-4 py-3 bg-zinc-800 border-t border-b border-r border-zinc-700 rounded-r-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Enter your phone number"
+                    maxLength={13}
+                  />
                 </div>
-
-                <div className='w-full'>
-                  <label htmlFor="address" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
-                    Full Address
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
-                    <input
-                      id="address"
-                      name="address"
-                      type="text"
-                      required
-                      value={formData.address}
-                      onChange={handleChange}
-                      className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Enter your address"
-                    />
-                  </div>
+              </div>
+              {/* Secondary Phone Number */}
+              <div className='w-full'>
+                <label htmlFor="secondary_phone" className="block text-sm font-medium dark:text-zinc-300 text-zinc-900 mb-2">
+                  Second Phone Number <span className="text-xs text-zinc-400">(optional)</span>
+                </label>
+                <div className="relative flex">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">
+                    <PhoneForwarded className="h-5 w-5" />
+                  </span>
+                  <select
+                    name="secondaryPhoneCountry"
+                    value={formData.secondaryPhoneCountry}
+                    onChange={handleChange}
+                    className="pl-10 pr-2 py-3 bg-zinc-800 border border-zinc-700 rounded-l-lg text-white focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                  >
+                    <option value="+20">+20</option>
+                  </select>
+                  <input
+                    id="secondary_phone"
+                    name="secondary_phone"
+                    type="text"
+                    value={formData.secondary_phone}
+                    onChange={handleChange}
+                    className="w-full pl-2 pr-4 py-3 bg-zinc-800 border-t border-b border-r border-zinc-700 rounded-r-lg text-white placeholder-zinc-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Enter your secondary phone number"
+                    maxLength={13}
+                  />
                 </div>
-                <div className='w-full'>
-                  <label htmlFor="height" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
-                    Height (cm)
-                  </label>
-                  <div className="relative">
-                    <Ruler className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
-                    <input
-                      id="height"
-                      name="height"
-                      type="text"
-                      required
-                      value={formData.height}
-                      onChange={handleChange}
-                      className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Enter your height in cm"
-                      min={50}
-                      max={250}
-                    />
-                  </div>
+              </div>
+              {/* Address */}
+              <div className='w-full'>
+                <label htmlFor="address" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  Full Address
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
+                  <input
+                    id="address"
+                    name="address"
+                    type="text"
+                    required
+                    value={formData.address}
+                    onChange={handleChange}
+                    className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Enter your address"
+                  />
                 </div>
-
-                <div className='w-full'>
-                  <label htmlFor="weight" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
-                    Weight (kg)
-                  </label>
-                  <div className="relative">
-                    <Dumbbell className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
-                    <input
-                      id="weight"
-                      name="weight"
-                      type="text"
-                      required
-                      value={formData.weight}
-                      onChange={handleChange}
-                      className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
-                      placeholder="Enter your weight in kg"
-                      min={20}
-                      max={300}
-                    />
-                  </div>
+              </div>
+              {/* City */}
+              <div className='w-full'>
+                <label htmlFor="city" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  City
+                </label>
+                <div className="relative">
+                  <input
+                    id="city"
+                    name="city"
+                    type="text"
+                    required
+                    value={formData.city}
+                    onChange={handleChange}
+                    className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Enter your city"
+                  />
+                </div>
+              </div>
+              {/* Governorate */}
+              <div className='w-full'>
+                <label htmlFor="governorate" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  Governorate
+                </label>
+                <div className="relative">
+                  <input
+                    id="governorate"
+                    name="governorate"
+                    type="text"
+                    required
+                    value={formData.governorate}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, governorate: e.target.value }));
+                      setGovernorateSearch(e.target.value);
+                      setShowGovernorateDropdown(true);
+                    }}
+                    onFocus={() => setShowGovernorateDropdown(true)}
+                    className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Search governorate..."
+                  />
+                  <Search className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
+                  
+                  {showGovernorateDropdown && (
+                    <div className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg max-h-60 overflow-y-auto" ref={governorateDropdownRef}>
+                      {filteredGovernorates.length > 0 ? (
+                        filteredGovernorates.map((governorate) => (
+                          <button
+                            key={governorate}
+                            type="button"
+                            onClick={() => handleGovernorateSelect(governorate)}
+                            className="w-full px-4 py-2 text-left text-white hover:bg-zinc-700 focus:bg-zinc-700 focus:outline-none"
+                          >
+                            {governorate}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-zinc-400">No governorates found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Height */}
+              <div className='w-full'>
+                <label htmlFor="height" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  Height (cm)
+                </label>
+                <div className="relative">
+                  <Ruler className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
+                  <input
+                    id="height"
+                    name="height"
+                    type="text"
+                    required
+                    value={formData.height}
+                    onChange={handleChange}
+                    className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Enter your height in cm"
+                    min={50}
+                    max={250}
+                  />
+                </div>
+              </div>
+              {/* Weight */}
+              <div className='w-full'>
+                <label htmlFor="weight" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  Weight (kg)
+                </label>
+                <div className="relative">
+                  <Dumbbell className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
+                  <input
+                    id="weight"
+                    name="weight"
+                    type="text"
+                    required
+                    value={formData.weight}
+                    onChange={handleChange}
+                    className="py-3 pr-4 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Enter your weight in kg"
+                    min={20}
+                    max={300}
+                  />
+                </div>
+              </div>
+              {/* Password */}
+              <div className='w-full'>
+                <label htmlFor="password" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="py-3 pr-12 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Create a password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 text-zinc-400 transform -translate-y-1/2 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              {/* Confirm Password */}
+              <div className='w-full'>
+                <label htmlFor="confirmPassword" className="block mb-2 text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 w-5 h-5 text-zinc-400 transform -translate-y-1/2" />
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="py-3 pr-12 pl-10 w-full placeholder-zinc-400 text-white bg-zinc-800 rounded-lg border border-zinc-700 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]"
+                    placeholder="Confirm your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 text-zinc-400 transform -translate-y-1/2 hover:text-white"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
               </div>
             </div>
-
-
-
-
 
             <div className="flex items-center">
               <input
@@ -425,8 +558,8 @@ const SignupPage = () => {
             <span className="px-2 text-zinc-900 flex-2 dark:text-zinc-400">Or try another way!</span>
             <div className="flex-1 border-t border-zinc-600" />
           </div>
-          {/* Google Sign In Button */}
-          <button
+           {/* Google Sign In Button */}
+           <button
             onClick={handleGoogleSignUp}
             disabled={isGoogleLoading || isLoading}
             className="flex justify-center items-center px-4 py-3 w-full font-medium text-zinc-900 bg-white rounded-lg border border-zinc-600 transition-colors hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-[#059669] focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"

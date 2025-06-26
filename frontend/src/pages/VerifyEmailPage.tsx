@@ -28,12 +28,22 @@ const VerifyEmailPage: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      await axios.post(
+      const response = await axios.post(
         '/api/accounts/verify-email/',
         { email, code: enteredCode }
       );
+      // If tokens are present, auto-login
+      if (response.data && response.data.tokens && response.data.user) {
+        localStorage.setItem('access_token', response.data.tokens.access);
+        localStorage.setItem('refresh_token', response.data.tokens.refresh);
+        localStorage.removeItem('pending_verification_email');
+        // Optionally, you can fetch the user profile or reload
+        window.location.href = '/';
+        return;
+      }
+      // Fallback: go to login if no tokens (should not happen)
       localStorage.removeItem('pending_verification_email');
-      navigate('/login', { state: { verified: true } }); // Redirect to login with flag
+      navigate('/login', { state: { verified: true } });
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         setError(
@@ -51,18 +61,18 @@ const VerifyEmailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-900 pt-[90px]">
-      <div className="w-full max-w-md bg-zinc-800/50 backdrop-blur-xl border border-zinc-700/50 rounded-lg shadow-lg p-8">
+      <div className="p-8 w-full max-w-md rounded-lg border shadow-lg backdrop-blur-xl bg-zinc-800/50 border-zinc-700/50">
         <div className="flex flex-col items-center mb-6">
           <MailCheck className="h-12 w-12 text-[#1b8d69] mb-2" />
-          <h2 className="text-2xl font-bold text-white mb-1">Verify Your Email</h2>
-          <p className="text-zinc-400 text-center">
+          <h2 className="mb-1 text-2xl font-bold text-white">Verify Your Email</h2>
+          <p className="text-center text-zinc-400">
             Enter the 6-digit code sent to your email address.<br />
             (Check the Django console for the code in development.)
           </p>
         </div>
         <form className="space-y-6" onSubmit={e => { e.preventDefault(); if (code.length === 6) handleVerify(code); }}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="email" className="block mb-2 text-sm font-medium text-zinc-300">
               Email
             </label>
             <input
@@ -76,16 +86,16 @@ const VerifyEmailPage: React.FC = () => {
               placeholder="Enter your email"
               disabled={isLoading}
             />
-          </div>
+            </div>
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="code" className="block mb-2 text-sm font-medium text-zinc-300">
               Verification Code
             </label>
-            <input
+                <input
               ref={inputRef}
               id="code"
               name="code"
-              type="text"
+                  type="text"
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={6}
@@ -98,7 +108,7 @@ const VerifyEmailPage: React.FC = () => {
               disabled={isLoading}
             />
           </div>
-          {error && <div className="text-red-400 text-sm text-center">{error}</div>}
+          {error && <div className="text-sm text-center text-red-400">{error}</div>}
           <button
             type="submit"
             className="w-full py-3 bg-[#059669] hover:bg-[#157557] text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-60"
@@ -106,14 +116,14 @@ const VerifyEmailPage: React.FC = () => {
           >
             {isLoading ? 'Verifying...' : 'Verify'}
           </button>
-          <button
+            <button
             type="button"
-            className="w-full py-2 mt-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded-lg text-sm"
+            className="py-2 mt-2 w-full text-sm rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200"
             onClick={() => { logout(); navigate('/login'); }}
             disabled={isLoading}
           >
             Cancel &amp; Log Out
-          </button>
+            </button>
         </form>
       </div>
     </div>

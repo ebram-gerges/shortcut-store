@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+from django.templatetags.static import static
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,12 +26,32 @@ SECRET_KEY = 'django-insecure-b^lazyv&dao&g79==@g#(m-ekmq6!pfmonptv8205opyqnu$3@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://192.168.1.4:8000',
+    'http://192.168.1.4:5173',
+]
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://192.168.1.4:8000",
+    "http://192.168.1.4:5173",
+]
+CORS_ALLOW_CREDENTIALS = True
+
 INSTALLED_APPS = [
+    'nested_admin',
     'jazzmin',
     'landing',
     'accounts',
@@ -51,11 +72,9 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    # Django REST Framework
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
-    # CORS headers
     'corsheaders',
 ]
 
@@ -141,55 +160,42 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
+    # Ensure custom admin icon CSS is included
+    # 'static/admin/css/custom_admin_icons.css',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # CORS settings duplicated below; keeping only the more specific allow list.
 # CORS_ALLOW_ALL_ORIGINS = True  # Removed duplicate
 
+# Jazzmin settings for a beautiful admin
 JAZZMIN_SETTINGS = {
     "site_title": "Shortcut Store Admin",
     "site_header": "Shortcut Store Admin",
     "site_brand": "Shortcut Store",
-    "welcome_sign": "Welcome to Shortcut Store Admin",
-    "primary_color": "#10b981",      # Modern emerald green
-    "secondary_color": "#059669",    # Darker emerald
-    "accent": "#34d399",             # Light emerald
-    "navbar": "#047857",             # Darkest emerald
-    "no_navbar_border": True,
-    "related_modal_active": "#10b981",
-    "custom_css": "admin/css/admin-custom.css",  # Our custom admin CSS
-    "custom_js": None,
-    "use_google_fonts_cdn": True,
+    "welcome_sign": "Welcome to the Shortcut Store Admin!",
+    "copyright": "Shortcut Store",
+    "search_model": ["products.Product", "products.ProductColorVariant", "products.ProductSizeVariant"],
     "show_sidebar": True,
     "navigation_expanded": True,
-    "theme": "flatly",
-    "dark_mode_theme": "darkly",
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": ["products", "accounts", "orders", "cart", "reviews", "vouchers", "wishlist"],
+    "custom_links": {},
     "icons": {
-        # Products
-        "products.Product": "fas fa-shopping-bag",
-        "products.Category": "fas fa-folder",
-        "products.ProductVariant": "fas fa-palette",
-
-        # Users & Authentication
-        "auth.User": "fas fa-users",
-        "auth.Group": "fas fa-users-cog",
-        "accounts.User": "fas fa-user",
-
-        # Orders & Cart
-        "orders.Order": "fas fa-shopping-cart",
-        "cart.CartItem": "fas fa-cart-plus",
-
-        # Reviews & Wishlist
-        "reviews.Review": "fas fa-star",
-        "wishlist.WishlistItem": "fas fa-heart",
-
-        # Vouchers
-        "vouchers.Voucher": "fas fa-ticket-alt",
-
-        # Sites
-        "sites.Site": "fas fa-cog",
+        "products.Product": "fas fa-tshirt",
+        "products.ProductColorVariant": "fas fa-palette",
+        "products.ProductSizeVariant": "fas fa-ruler-combined",
+        "products.ProductColorVariantImage": "fas fa-image",
     },
+    "default_icon_parents": "fas fa-folder-open",
+    "default_icon_children": "fas fa-file",
+    "related_modal_active": True,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": True,
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {"products.Product": "collapsible",},
+    "theme": "darkly",  # Modern dark theme
 }
 
 # Default primary key field type
@@ -203,17 +209,15 @@ AUTH_USER_MODEL = 'accounts.User'
 # ===================================
 
 # Email backend configuration
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# SMTP Configuration (Gmail example - replace with your preferred provider)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = ''  # Your email address (to be configured)
-EMAIL_HOST_PASSWORD = ''  # Your app password (to be configured)
+EMAIL_HOST_USER = 'shortcut756@gmail.com'
+EMAIL_HOST_PASSWORD = 'wijpdbtlxdfseuxq'  # App password, no spaces
 
 # Default email settings
-DEFAULT_FROM_EMAIL = 'Shortcut Store <noreply@shortcutstore.com>'
+DEFAULT_FROM_EMAIL = 'shortcut756@gmail.com'
 
 # Django Sites Framework
 SITE_ID = 1
@@ -331,9 +335,9 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
-    # Default is IsAuthenticatedOrReadOnly, but we override with AllowAny in the view for verification
+    # Allow any by default, individual views can override with more restrictive permissions
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
@@ -370,15 +374,6 @@ SIMPLE_JWT = {
 # ===================================
 
 # CORS settings for development
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",  # Vite default port
-    "http://127.0.0.1:5173",
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
 CORS_ALLOWED_HEADERS = [
     'accept',
     'accept-encoding',
@@ -390,3 +385,98 @@ CORS_ALLOWED_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Add Unfold settings for light mode with emerald green accent and dark mode
+UNFOLD = {
+    "SITE_TITLE": "Shortcut Store Admin",
+    "SITE_HEADER": "Shortcut Store",
+    "SITE_ICON": {
+        "light": lambda request: static("images/favicon.ico"),
+        "dark": lambda request: static("images/favicon.ico"),
+    },
+    "SITE_LOGO": {
+        "light": lambda request: "/media/site-logo.svg",
+        "dark": lambda request: "/media/site-logo.svg",
+    },
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+    "THEME": "dark",  # Force global dark mode
+    "STYLES": [
+        lambda request: static("admin/css/unfold-dark-global.css"),
+    ],
+    "COLORS": {
+        "base": {
+            "50": "250, 250, 250",
+            "100": "244, 244, 245",
+            "200": "228, 228, 231",
+            "300": "161, 161, 170",
+            "400": "113, 113, 122",
+            "500": "82, 82, 91",
+            "600": "63, 63, 70",    # Main background (dark gray)
+            "700": "39, 39, 42",    # Deeper gray for sidebar/cards
+            "800": "24, 24, 27",    # Even deeper, but not black
+            "900": "17, 17, 20",    # For contrast/depth
+            "950": "10, 10, 12",
+        },
+        "primary": {
+            "50": "236, 253, 245",
+            "100": "209, 250, 229",
+            "200": "167, 243, 208",
+            "300": "110, 231, 183",
+            "400": "52, 211, 153",
+            "500": "16, 185, 129",   # Emerald
+            "600": "5, 150, 105",    # Dark emerald
+            "700": "4, 120, 87",     # Army green
+            "800": "6, 95, 70",
+            "900": "6, 78, 59",
+            "950": "2, 44, 34",
+        },
+        "font": {
+            "subtle-dark": "161, 161, 170",    # gray-400
+            "default-dark": "228, 228, 231",   # gray-200
+            "important-dark": "255, 255, 255", # white
+        },
+    },
+    "SIDEBAR": {
+        "navigation": [
+            {
+                "label": "Store",
+                "icon": "storefront",
+                "items": [
+                    {"model": "products.Product"},
+                    {"model": "products.ProductVariant"},
+                    {"model": "products.ProductColorVariant"},
+                    {"model": "products.ProductStock"},
+                    {"model": "orders.Order"},
+                    {"model": "cart.Cart"},
+                    {"model": "wishlist.Wishlist"},
+                ],
+            },
+            {
+                "label": "Users",
+                "icon": "person",
+                "items": [
+                    {"model": "accounts.User"},
+                ],
+            },
+            {
+                "label": "Vouchers",
+                "icon": "confirmation_number",
+                "items": [
+                    {"model": "vouchers.Voucher"},
+                ],
+            },
+            {
+                "label": "Reviews",
+                "icon": "star",
+                "items": [
+                    {"model": "reviews.ProductReview"},
+                    {"model": "reviews.WebsiteReview"},
+                ],
+            },
+        ],
+        "show_all_applications": True,
+        "show_search": True,
+    },
+    "ENVIRONMENT_LABEL": "Production",  # Change as needed
+}

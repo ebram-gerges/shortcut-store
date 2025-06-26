@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from products.models import Product, CollectionImage
+from products.models import Product, CollectionImage, CollectionGalleryImage
 from django.db.models import Max
 
 def landing_page(request):
@@ -8,8 +8,8 @@ def landing_page(request):
     sale_products = Product.objects.filter(sale_percent__gt=0)
     all_products = Product.objects.all()[:12]  # Get first 12 products for the grid
 
-    # Get active collection images ordered by order field
-    collection_images = CollectionImage.objects.filter(is_active=True).order_by('order', 'created_at')
+    # Temporarily do not pass collection_images for the hero section
+    # collection_images = CollectionImage.objects.filter(is_active=True, image__isnull=False).exclude(image='').order_by('order', 'created_at')
 
     # Get the highest sale percentage
     highest_sale = Product.objects.filter(sale_percent__gt=0).aggregate(
@@ -24,7 +24,7 @@ def landing_page(request):
         'sale_products': sale_products,
         'all_products': all_products,
         'max_sale_percent': max_sale_percent,
-        'collection_images': collection_images,
+        # 'collection_images': collection_images,  # removed for now
     })
 
 def shortcut_store(request):

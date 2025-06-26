@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Order Status Update - Shortcut Store</title>
+    <style>
+        body { background: #f7f7f7; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 480px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px #0001; padding: 32px 24px; }
+        .logo { display: block; margin: 0 auto 24px auto; height: 48px; }
+        h2 { color: #059669; font-size: 1.4rem; margin-bottom: 8px; text-align: center; }
+        .status { font-size: 1.1rem; color: #222; text-align: center; margin: 24px 0; }
+        .serial { font-family: monospace; color: #059669; font-size: 1.1rem; }
+        p { color: #222; font-size: 1rem; line-height: 1.6; text-align: center; }
+        .footer { color: #888; font-size: 0.95rem; text-align: center; margin-top: 32px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="http://192.168.1.4:8000/media/site-logo.svg" alt="Shortcut Store Logo" class="logo" />
+    <h2>Hi {{ user.username }},</h2>
+        <div class="status">
+            The status of your order <span class="serial">#{{ order.serial }}</span> has been updated to:<br>
+            <strong>{{ order.get_status_display }}</strong>
+        </div>
+    <p>Thank you for shopping with us!</p>
+        <div class="footer">&mdash; The Shortcut Store Team</div>
+    </div>
+</body>
+</html> 

@@ -1,25 +1,29 @@
 from rest_framework import viewsets, filters, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
-from .models import Product, ProductColorVariant, ProductStock
+from .models import Product, ProductColorVariant, ProductStock, CollectionImage, CategoryImage
 from .serializers import (
     ProductListSerializer, 
     ProductDetailSerializer, 
     ProductCreateUpdateSerializer,
     ProductColorVariantSerializer,
-    ProductStockSerializer
+    ProductStockSerializer,
+    CollectionImageSerializer,
+    CategoryImageSerializer
 )
+import logging
 
+logger = logging.getLogger(__name__)
 
 class ProductViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Product CRUD operations
     """
     queryset = Product.objects.all().prefetch_related(
-        'color_variants__images', 'variants', 'stock_items'
+        'color_variants__images', 'stock_items'
     )
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'sale_percent']
@@ -139,3 +143,26 @@ class ProductViewSet(viewsets.ModelViewSet):
         featured_products = self.get_queryset().filter(sale_percent__gt=0)[:8]
         serializer = ProductListSerializer(featured_products, many=True)
         return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            logger.debug(f"ProductViewSet.list queryset: {queryset}")
+            serializer = self.get_serializer(queryset, many=True)
+            logger.debug(f"ProductViewSet.list serializer data: {serializer.data}")
+            return Response(serializer.data)
+        except Exception as e:
+            logger.exception(f"Error in ProductViewSet.list: {e}")
+            return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def collection_images_list(request):
+    images = CollectionImage.objects.filter(is_active=True).order_by('order', 'created_at')
+    serializer = CollectionImageSerializer(images, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def category_images_list(request):
+    images = CategoryImage.objects.filter(is_active=True).order_by('order', 'created_at')
+    serializer = CategoryImageSerializer(images, many=True)
+    return Response(serializer.data)

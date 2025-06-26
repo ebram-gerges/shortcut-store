@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Star, ChevronDown, Heart } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { ChevronDown, Menu } from 'lucide-react';
 // import { mockProducts } from '../data/mockData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { getProducts } from '../services/productService';
+import { getProducts, Product } from '../services/productService';
+import ProductCard from '../components/ProductCard';
 
 function getQueryParams(search: string) {
   const params = new URLSearchParams(search);
@@ -15,6 +16,9 @@ function getQueryParams(search: string) {
     sort: params.get('sort'),
   };
 }
+
+// Extend Product type locally to include available_sizes and sale_percent
+type ProductWithSizes = Product & { available_sizes?: string[], sale_percent?: number };
 
 const ProductsPage = () => {
   const location = useLocation();
@@ -27,6 +31,7 @@ const ProductsPage = () => {
     sizes: [] as string[],
     categories: [] as string[],
     seasons: [] as string[],
+    colors: [] as string[],
   });
   const [sortBy, setSortBy] = useState('no-sort');
   const [collapsed, setCollapsed] = useState({
@@ -36,9 +41,10 @@ const ProductsPage = () => {
     category: true,
     season: true,
   });
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const { currency } = useCurrency();
   const conversionRate = 50; // 1 USD = 50 EGP
@@ -54,7 +60,7 @@ const ProductsPage = () => {
         setProducts(data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         setError('Failed to load products.');
         setLoading(false);
       });
@@ -62,7 +68,7 @@ const ProductsPage = () => {
 
   // Set initial filters from query params
   useEffect(() => {
-    let newFilters = { ...filters };
+    const newFilters = { ...filters };
     if (query.category) {
       newFilters.categories = [query.category];
     }
@@ -74,14 +80,7 @@ const ProductsPage = () => {
     // eslint-disable-next-line
   }, [location.search]);
 
-  const getDisplayPrice = (price: number) => {
-    if (currency === 'USD') {
-      return `USD ${(price / conversionRate).toFixed(2)}`;
-    }
-    return `LE ${price}`;
-  };
-
-  const handleFilterChange = (type: 'availability' | 'sizes' | 'categories' | 'seasons', value: string) => {
+  const handleFilterChange = (type: 'availability' | 'sizes' | 'categories' | 'seasons' | 'colors', value: string) => {
     setFilters(prev => ({
       ...prev,
       [type]: prev[type].includes(value)
@@ -90,7 +89,8 @@ const ProductsPage = () => {
     }));
   };
 
-  const toggleCollapse = (section: 'availability' | 'price' | 'size' | 'category' | 'season') => {
+  type FilterSection = 'availability' | 'price' | 'size' | 'category' | 'season';
+  const toggleCollapse = (section: FilterSection) => {
     setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
@@ -98,9 +98,9 @@ const ProductsPage = () => {
   const filteredProducts = products
     .filter(product => {
       // Category filter
-      if (filters.categories.length > 0 && !filters.categories.includes(product.category)) return false;
+      if (filters.categories.length > 0 && !filters.categories.includes(product.category ? product.category : '')) return false;
       // Season filter
-      if (filters.seasons.length > 0 && !filters.seasons.includes(product.season)) return false;
+      if (filters.seasons.length > 0 && !filters.seasons.includes((product as { season?: string }).season)) return false;
       // Availability filter
       if (filters.availability.length > 0) {
         if (filters.availability.includes('in-stock') && !product.in_stock) return false;
@@ -110,8 +110,12 @@ const ProductsPage = () => {
       if (filters.priceMin && Number(product.price) < Number(filters.priceMin)) return false;
       if (filters.priceMax && Number(product.price) > Number(filters.priceMax)) return false;
       // Size filter
-      if (filters.sizes && filters.sizes.length > 0 && product.sizes) {
-        if (!filters.sizes.some(size => product.sizes.includes(size))) return false;
+      if (filters.sizes && filters.sizes.length > 0 && Array.isArray(product.sizes)) {
+        if (!filters.sizes.some(size => product.sizes?.includes(size))) return false;
+      }
+      // Color filter
+      if (filters.colors && filters.colors.length > 0 && Array.isArray(product.colors)) {
+        if (!filters.colors.some(color => product.colors?.includes(color))) return false;
       }
       return true;
     })
@@ -119,168 +123,223 @@ const ProductsPage = () => {
       if (sortBy === 'price-low') return Number(a.price) - Number(b.price);
       if (sortBy === 'price-high') return Number(b.price) - Number(a.price);
       if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      if (sortBy === 'featured' || sortBy === 'top-selling') return (b.rating || 0) - (a.rating || 0); // Sort by rating descending
+      if (sortBy === 'featured' || sortBy === 'top-selling') return ((b as { rating?: number }).rating || 0) - ((a as { rating?: number }).rating || 0); // Sort by rating descending
       return 0; // 'no-sort' or default
     });
 
-  const handleQuickAdd = (product: any) => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price), // always store in EGP
-      color: product.colors ? product.colors[0] : '',
-      size: product.sizes ? product.sizes[0] : '',
-    });
-  };
-
-  const handleQuickWishlist = (product: any) => {
+  const handleQuickWishlist = (product: Product) => {
     addWishlistItem({
       id: product.id,
       name: product.name,
       price: Number(product.price),
-      color: product.colors ? product.colors[0] : '',
-      size: product.sizes ? product.sizes[0] : '',
+      color: Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : '',
+      size: Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : '',
     });
   };
 
-  const isInWishlist = (product: any) =>
+  const isInWishlist = (product: Product) =>
     wishlistItems.some(
-      (item) => item.id === product.id && item.color === (product.colors ? product.colors[0] : '') && item.size === (product.sizes ? product.sizes[0] : '')
+      (item) => item.id === product.id && item.color === (Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : '') && item.size === (Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : '')
     );
 
+  // Prevent body scroll when filters sidebar is open
+  useEffect(() => {
+    if (showMobileFilters) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [showMobileFilters]);
+
+  // Helper: Get unique colors and sizes for a given category from products
+  const getUniqueColorsForCategory = (category: string) => {
+    const colors = new Set<string>();
+    products.filter(p => p.category === category).forEach(p => {
+      (p.colors || []).forEach(c => colors.add(c));
+    });
+    return Array.from(colors);
+  };
+  const getUniqueSizesForCategory = (category: string) => {
+    const sizes = new Set<string>();
+    products.filter(p => p.category === category).forEach(p => {
+      (p.sizes || []).forEach(s => sizes.add(s));
+    });
+    return Array.from(sizes);
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setFilters(prev => ({
+      ...prev,
+      categories: prev.categories[0] === category ? [] : [category],
+      colors: [],
+      sizes: [],
+    }));
+  };
+
   return (
-    <div className="relative z-20 min-h-screen pt-[125px] py-8">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-8">Products</h1>
-        <div className="flex flex-col lg:flex-row gap-8">
+    <div className="relative z-20 min-h-screen pt-4 sm:pt-8 pb-8">
+      <div className="px-4 mx-auto max-w-7xl lg:px-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-black dark:text-white">Products</h1>
+          {/* Mobile filter button */}
+          <button
+            className="flex gap-2 items-center px-4 py-2 text-black rounded-lg border shadow lg:hidden bg-zinc-200 dark:bg-zinc-800 dark:text-white border-zinc-300 dark:border-zinc-700"
+            onClick={() => setShowMobileFilters(true)}
+          >
+            <Menu className="w-5 h-5" />
+            Filters
+          </button>
+        </div>
+        <div className="flex flex-col gap-8 lg:flex-row">
           {/* Filters Sidebar */}
-          <div className="lg:w-1/4">
-            <div className=" backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 pb-4 border border-zinc-400/50 dark:border-zinc-700/50">
-              <h2 className="text-xl font-semibold text-black dark:text-white mb-8">Filter</h2>
+          {/* Desktop sidebar */}
+          <div className="hidden lg:block lg:w-1/4">
+            <div className="p-6 pb-4 rounded-lg border backdrop-blur-xl bg-white/20 dark:bg-black/20 border-zinc-400/50 dark:border-zinc-700/50">
+              <h2 className="mb-8 text-xl font-semibold text-black dark:text-white">Filter</h2>
               
-              {/* Category */}
+              {/* Category (with color/size for each) - Desktop */}
               <div className="mb-8">
                 <button
                   type="button"
-                  className="flex items-center justify-between w-full mb-4"
-                  onClick={() => toggleCollapse('category' as any)}
+                  className="flex justify-between items-center mb-4 w-full"
+                  onClick={() => toggleCollapse('category')}
                 >
-                  <h3 className="text-black dark:text-white font-semibold">Category</h3>
+                  <h3 className="font-semibold text-black dark:text-white">Category</h3>
                   <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.category ? 'rotate-180' : ''}`} />
                 </button>
                 <div
                   className={`transition-all duration-500 ease overflow-hidden ${collapsed.category ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[500px] opacity-100 pointer-events-auto'}`}
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-6">
+                    {/* T-Shirts */}
                     <div>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">T-Shirts</span>
-                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
+                      <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
                         <input
                           type="checkbox"
                           className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories.includes('tshirts-graphic')}
-                          onChange={() => handleFilterChange('categories', 'tshirts-graphic')}
+                          checked={filters.categories[0] === 'tshirts'}
+                          onChange={() => handleCategorySelect('tshirts')}
                         />
-                        Graphic Tees
+                        T-Shirts
                       </label>
-                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
-                        <input
-                          type="checkbox"
-                          className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories.includes('tshirts-basic')}
-                          onChange={() => handleFilterChange('categories', 'tshirts-basic')}
-                        />
-                        Basic Tees
-                      </label>
+                      {filters.categories[0] === 'tshirts' && (
+                        <>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueColorsForCategory('tshirts').map(color => (
+                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.colors?.includes(color)}
+                                  onChange={() => handleFilterChange('colors', color)}
+                                />
+                                <span className="capitalize">{color}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueSizesForCategory('tshirts').map(size => (
+                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.sizes?.includes(size)}
+                                  onChange={() => handleFilterChange('sizes', size)}
+                                />
+                                <span>{size}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <div className="mt-2">
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">Bottoms</span>
-                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
+                    {/* Basic Tops */}
+                    <div>
+                      <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
                         <input
                           type="checkbox"
                           className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories.includes('bottoms-pants')}
-                          onChange={() => handleFilterChange('categories', 'bottoms-pants')}
+                          checked={filters.categories[0] === 'basictop'}
+                          onChange={() => handleCategorySelect('basictop')}
                         />
-                        Pants
+                        Basic Tops
                       </label>
-                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
-                        <input
-                          type="checkbox"
-                          className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories.includes('bottoms-shorts')}
-                          onChange={() => handleFilterChange('categories', 'bottoms-shorts')}
-                        />
-                        Shorts
-                      </label>
-                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
-                        <input
-                          type="checkbox"
-                          className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories.includes('bottoms-jeans')}
-                          onChange={() => handleFilterChange('categories', 'bottoms-jeans')}
-                        />
-                        Jeans
-                      </label>
+                      {filters.categories[0] === 'basictop' && (
+                        <>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueColorsForCategory('basictop').map(color => (
+                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.colors?.includes(color)}
+                                  onChange={() => handleFilterChange('colors', color)}
+                                />
+                                <span className="capitalize">{color}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueSizesForCategory('basictop').map(size => (
+                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.sizes?.includes(size)}
+                                  onChange={() => handleFilterChange('sizes', size)}
+                                />
+                                <span>{size}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <div className="mt-2">
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">Shoes</span>
-                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
+                    {/* Sets */}
+                    <div>
+                      <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
                         <input
                           type="checkbox"
                           className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories.includes('shoes')}
-                          onChange={() => handleFilterChange('categories', 'shoes')}
-                        />
-                        Shoes
-                      </label>
-                    </div>
-                    <div className="mt-2">
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">Sets</span>
-                      <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
-                        <input
-                          type="checkbox"
-                          className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories.includes('sets')}
-                          onChange={() => handleFilterChange('categories', 'sets')}
+                          checked={filters.categories[0] === 'sets'}
+                          onChange={() => handleCategorySelect('sets')}
                         />
                         Sets
                       </label>
+                      {filters.categories[0] === 'sets' && (
+                        <>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueColorsForCategory('sets').map(color => (
+                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.colors?.includes(color)}
+                                  onChange={() => handleFilterChange('colors', color)}
+                                />
+                                <span className="capitalize">{color}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueSizesForCategory('sets').map(size => (
+                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.sizes?.includes(size)}
+                                  onChange={() => handleFilterChange('sizes', size)}
+                                />
+                                <span>{size}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Availability */}
-              <div className="mb-8">
-                <button
-                  type="button"
-                  className="flex items-center justify-between w-full mb-4"
-                  onClick={() => toggleCollapse('availability')}
-                >
-                  <h3 className="text-black dark:text-white font-semibold">Availability</h3>
-                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.availability ? 'rotate-180' : ''}`} />
-                </button>
-                <div
-                  className={`transition-all duration-500 ease overflow-hidden ${collapsed.availability ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[200px] opacity-100 pointer-events-auto'}`}
-                >
-                  <div className="space-y-2">
-                    <label className="flex items-center text-zinc-900 dark:text-zinc-300">
-                      <input 
-                        type="checkbox" 
-                        className="mr-2 bg-zinc-700 border-zinc-600"
-                        onChange={() => handleFilterChange('availability', 'in-stock')}
-                      />
-                      In stock
-                    </label>
-                    <label className="flex items-center text-zinc-900 dark:text-zinc-300">
-                      <input 
-                        type="checkbox" 
-                        className="mr-2 bg-zinc-700 border-zinc-600"
-                        onChange={() => handleFilterChange('availability', 'out-of-stock')}
-                      />
-                      Out of stock
-                    </label>
                   </div>
                 </div>
               </div>
@@ -289,10 +348,10 @@ const ProductsPage = () => {
               <div className="mb-8">
                 <button
                   type="button"
-                  className="flex items-center justify-between w-full mb-4"
+                  className="flex justify-between items-center mb-4 w-full"
                   onClick={() => toggleCollapse('price')}
                 >
-                  <h3 className="text-black dark:text-white font-semibold">Price</h3>
+                  <h3 className="font-semibold text-black dark:text-white">Price</h3>
                   <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.price ? 'rotate-180' : ''}`} />
                 </button>
                 <div
@@ -302,14 +361,14 @@ const ProductsPage = () => {
                     <input
                       type="number"
                       placeholder="Min"
-                      className="bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white px-3 py-2 rounded border border-zinc-600/50 dark:border-zinc-500 w-20"
+                      className="px-3 py-2 w-20 text-black rounded border bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white dark:text-white border-zinc-600/50 dark:border-zinc-500"
                       value={filters.priceMin}
                       onChange={(e) => setFilters(prev => ({ ...prev, priceMin: e.target.value }))}
                     />
                     <input
                       type="number"
                       placeholder="Max"
-                      className="bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white px-3 py-2 rounded border border-zinc-600/50 dark:border-zinc-500 w-20"
+                      className="px-3 py-2 w-20 text-black rounded border bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white dark:text-white border-zinc-600/50 dark:border-zinc-500"
                       value={filters.priceMax}
                       onChange={(e) => setFilters(prev => ({ ...prev, priceMax: e.target.value }))}
                     />
@@ -321,10 +380,10 @@ const ProductsPage = () => {
               <div className='mb-8'>
                 <button
                   type="button"
-                  className="flex items-center justify-between w-full mb-4"
+                  className="flex justify-between items-center mb-4 w-full"
                   onClick={() => toggleCollapse('size')}
                 >
-                  <h3 className="text-black dark:text-white font-semibold">Size</h3>
+                  <h3 className="font-semibold text-black dark:text-white">Size</h3>
                   <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.size ? 'rotate-180' : ''}`} />
                 </button>
                 <div
@@ -344,139 +403,265 @@ const ProductsPage = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Season */}
-              <div className="">
-                <button
-                  type="button"
-                  className="flex items-center justify-between w-full mb-4"
-                  onClick={() => toggleCollapse('season' as any)}
-                >
-                  <h3 className="text-black dark:text-white font-semibold">Season</h3>
-                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.season ? 'rotate-180' : ''}`} />
-                </button>
-                <div
-                  className={`transition-all duration-500 ease overflow-hidden ${collapsed.season ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[100px] opacity-100 pointer-events-auto'}`}
-                >
-                  <div className="space-y-2">
-                    <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
-                      <input
-                        type="checkbox"
-                        className="mr-2 bg-zinc-700 border-zinc-600"
-                        checked={filters.seasons.includes('summer')}
-                        onChange={() => handleFilterChange('seasons', 'summer')}
-                      />
-                      Summer
-                    </label>
-                    <label className="flex items-center text-zinc-900 dark:text-zinc-300 ml-4">
-                      <input
-                        type="checkbox"
-                        className="mr-2 bg-zinc-700 border-zinc-600"
-                        checked={filters.seasons.includes('winter')}
-                        onChange={() => handleFilterChange('seasons', 'winter')}
-                      />
-                      Winter
-                    </label>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Products Grid and Top Row */}
-          <div className="lg:w-3/4">
-            <div className="flex justify-between items-center mb-6 backdrop-blur-xl bg-white/20 dark:bg-black/20 rounded-lg p-6 border border-zinc-400/50 dark:border-zinc-700/50">
+          {/* Products List */}
+          <div className="flex-1">
+            <div className="flex justify-between items-center p-6 mb-6 rounded-lg border backdrop-blur-xl bg-white/20 dark:bg-black/20 border-zinc-400/50 dark:border-zinc-700/50">
               <span className="text-zinc-900 dark:text-zinc-300">{loading || error ? 0 : filteredProducts.length} products</span>
-              <select 
-                className="bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white text-black dark:text-white pl-4 md:pr-6 max-md:w-28 py-2 rounded-md border border-zinc-600/40"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="no-sort">No Sort</option>
-                <option value="featured">Featured</option>
-                <option value="top-selling">Top Selling</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest</option>
-              </select>
             </div>
             {loading ? (
-              <div className="text-center text-zinc-500 py-20">Loading products...</div>
+              <div className="py-20 text-center text-zinc-500">Loading products...</div>
             ) : error ? (
-              <div className="text-center text-red-500 py-20">{error}</div>
+              <div className="py-20 text-center text-red-500">{error}</div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 md:gap-6 gap-4">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="backdrop-blur-xl bg-white/50 dark:bg-black/20 border-2 border-zinc-500/50 dark:border-zinc-300/50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-transform">
-                    <Link to={`/products/${product.id}`}>
-                      <div className="h-64 bg-zinc-600 flex items-center justify-center">
-                        <span className="text-zinc-400">Product Image</span>
-                      </div>
-                    </Link>
-                    
-                    <div className="p-4">
-                      <Link to={`/products/${product.id}`}>
-                        <h3 className="text-black dark:text-white font-semibold mb-2 hover:text-[#059669] transition-colors">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      
-                      <div className="flex items-center mb-2">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < Math.floor(product.rating || 0) ? 'dark:text-yellow-400 text-yellow-500 fill-current' : 'text-zinc-600 dark:text-zinc-400'}`}
-                          />
-                        ))}
-                        <span className="text-zinc-700 dark:text-zinc-400 text-sm ml-2">({product.rating || 0})</span>
-                      </div>
-                      
-                      <div className="flex flex-col md:flex-row gap-5 max-lg:my-4 justify-between items-center">
-                        <span className="text-black dark:text-white font-bold">{getDisplayPrice(Number(product.price))}</span>
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                          <button
-                            className="p-2 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
-                            title={isInWishlist(product) ? 'Already in wishlist' : 'Add to wishlist'}
-                            onClick={() => handleQuickWishlist(product)}
-                            disabled={isInWishlist(product)}
-                            type="button"
-                          >
-                            <Heart className={`w-4 h-4 ${isInWishlist(product) ? 'text-[#1fffb8] fill-[#1fffb8]' : 'text-zinc-500'}`} fill={isInWishlist(product) ? '#1fffb8' : 'none'} />
-                          </button>
-                          <button
-                            className="bg-[#059669] text-white px-4 py-2 rounded hover:bg-[#059669]/90 transition-colors disabled:opacity-50 max-md:w-full"
-                            onClick={() => handleQuickAdd(product)}
-                            disabled={!product.in_stock}
-                          >
-                            Quick add
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {!product.in_stock && (
-                        <div className="text-red-500 text-xs mt-2">Out of stock</div>
-                      )}
-                      
-                      {/* Color variants */}
-                      {product.colors && (
-                        <div className="flex space-x-2 mt-10">
-                          {product.colors.map((color: string, index: number) => (
-                            <div
-                              key={index}
-                              className={`w-6 h-6 rounded-full border-2 border-zinc-600`}
-                              style={{ backgroundColor: color }}
-                            ></div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-6 sm:grid-cols-2">
+                {filteredProducts.map((product: ProductWithSizes) => (
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Mobile sidebar overlay */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-[120] flex">
+          <div className="overflow-y-auto p-6 w-4/5 max-w-xs h-full bg-white border-r shadow-2xl dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-black dark:text-white">Filter</h2>
+              <button
+                className="text-black dark:text-white hover:text-[#059669] text-2xl"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                &times;
+              </button>
+            </div>
+            {/* Sort By Dropdown (mobile only) */}
+            <div className="mb-8">
+              <label htmlFor="sortByMobile" className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">Sort By</label>
+              <select
+                id="sortByMobile"
+                className="px-3 py-2 w-full text-black rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 dark:text-white"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="no-sort">No Sort</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="newest">Newest</option>
+                <option value="featured">Featured</option>
+                <option value="top-selling">Top Selling</option>
+              </select>
+            </div>
+            {/* Filters content (same as desktop) */}
+            {/* Category (with color/size for each) - Mobile */}
+            <div className="mb-8">
+              <button
+                type="button"
+                className="flex justify-between items-center mb-4 w-full"
+                onClick={() => toggleCollapse('category')}
+              >
+                <h3 className="font-semibold text-black dark:text-white">Category</h3>
+                <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.category ? 'rotate-180' : ''}`} />
+              </button>
+              <div
+                className={`transition-all duration-500 ease overflow-hidden ${collapsed.category ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[500px] opacity-100 pointer-events-auto'}`}
+              >
+                <div className="space-y-6">
+                  {/* T-Shirts */}
+                  <div>
+                    <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
+                      <input
+                        type="checkbox"
+                        className="mr-2 bg-zinc-700 border-zinc-600"
+                        checked={filters.categories[0] === 'tshirts'}
+                        onChange={() => handleCategorySelect('tshirts')}
+                      />
+                      T-Shirts
+                    </label>
+                    {filters.categories[0] === 'tshirts' && (
+                      <>
+                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                          {getUniqueColorsForCategory('tshirts').map(color => (
+                            <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                              <input
+                                type="checkbox"
+                                className="mr-1 bg-zinc-700 border-zinc-600"
+                                checked={filters.colors?.includes(color)}
+                                onChange={() => handleFilterChange('colors', color)}
+                              />
+                              <span className="capitalize">{color}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                          {getUniqueSizesForCategory('tshirts').map(size => (
+                            <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                              <input
+                                type="checkbox"
+                                className="mr-1 bg-zinc-700 border-zinc-600"
+                                checked={filters.sizes?.includes(size)}
+                                onChange={() => handleFilterChange('sizes', size)}
+                              />
+                              <span>{size}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {/* Basic Tops */}
+                  <div>
+                    <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
+                      <input
+                        type="checkbox"
+                        className="mr-2 bg-zinc-700 border-zinc-600"
+                        checked={filters.categories[0] === 'basictop'}
+                        onChange={() => handleCategorySelect('basictop')}
+                      />
+                      Basic Tops
+                    </label>
+                    {filters.categories[0] === 'basictop' && (
+                      <>
+                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                          {getUniqueColorsForCategory('basictop').map(color => (
+                            <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                              <input
+                                type="checkbox"
+                                className="mr-1 bg-zinc-700 border-zinc-600"
+                                checked={filters.colors?.includes(color)}
+                                onChange={() => handleFilterChange('colors', color)}
+                              />
+                              <span className="capitalize">{color}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                          {getUniqueSizesForCategory('basictop').map(size => (
+                            <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                              <input
+                                type="checkbox"
+                                className="mr-1 bg-zinc-700 border-zinc-600"
+                                checked={filters.sizes?.includes(size)}
+                                onChange={() => handleFilterChange('sizes', size)}
+                              />
+                              <span>{size}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {/* Sets */}
+                  <div>
+                    <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
+                      <input
+                        type="checkbox"
+                        className="mr-2 bg-zinc-700 border-zinc-600"
+                        checked={filters.categories[0] === 'sets'}
+                        onChange={() => handleCategorySelect('sets')}
+                      />
+                      Sets
+                    </label>
+                    {filters.categories[0] === 'sets' && (
+                      <>
+                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                          {getUniqueColorsForCategory('sets').map(color => (
+                            <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                              <input
+                                type="checkbox"
+                                className="mr-1 bg-zinc-700 border-zinc-600"
+                                checked={filters.colors?.includes(color)}
+                                onChange={() => handleFilterChange('colors', color)}
+                              />
+                              <span className="capitalize">{color}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                          {getUniqueSizesForCategory('sets').map(size => (
+                            <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                              <input
+                                type="checkbox"
+                                className="mr-1 bg-zinc-700 border-zinc-600"
+                                checked={filters.sizes?.includes(size)}
+                                onChange={() => handleFilterChange('sizes', size)}
+                              />
+                              <span>{size}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Price filter for mobile */}
+            <div className="mb-8">
+              <button
+                type="button"
+                className="flex justify-between items-center mb-4 w-full"
+                onClick={() => toggleCollapse('price')}
+              >
+                <h3 className="font-semibold text-black dark:text-white">Price</h3>
+                <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.price ? 'rotate-180' : ''}`} />
+              </button>
+              <div className={`transition-all duration-500 ease overflow-hidden ${collapsed.price ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[100px] opacity-100 pointer-events-auto'}`}>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    className="px-3 py-2 w-20 text-black rounded border bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white dark:text-white border-zinc-600/50 dark:border-zinc-500"
+                    value={filters.priceMin}
+                    onChange={(e) => setFilters(prev => ({ ...prev, priceMin: e.target.value }))}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    className="px-3 py-2 w-20 text-black rounded border bg-zinc-100 dark:bg-zinc-700 placeholder:text-black dark:placeholder:text-white dark:text-white border-zinc-600/50 dark:border-zinc-500"
+                    value={filters.priceMax}
+                    onChange={(e) => setFilters(prev => ({ ...prev, priceMax: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+            {/* Size filter for mobile, only show if a category is selected */}
+            {filters.categories.length > 0 && (
+              <div className="mb-8">
+                <button
+                  type="button"
+                  className="flex justify-between items-center mb-4 w-full"
+                  onClick={() => toggleCollapse('size')}
+                >
+                  <h3 className="font-semibold text-black dark:text-white">Size</h3>
+                  <ChevronDown className={`h-5 w-5 text-zinc-900 dark:text-zinc-300 transition-transform ${collapsed.size ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`transition-all duration-500 ease overflow-hidden ${collapsed.size ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[200px] opacity-100 pointer-events-auto'}`}>
+                  <div className="space-y-2">
+                    {getUniqueSizesForCategory(filters.categories[0]).map(size => (
+                      <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
+                          checked={filters.sizes?.includes(size)}
+                          onChange={() => handleFilterChange('sizes', size)}
+                        />
+                        {size}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Overlay click to close */}
+          <div className="flex-1 h-full bg-black bg-opacity-40" onClick={() => setShowMobileFilters(false)} />
+        </div>
+      )}
     </div>
   );
 };

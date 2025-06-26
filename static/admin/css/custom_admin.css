@@ -1,0 +1,43 @@
+/* Custom Django Admin Dark Theme */
+
+body, .module caption, .module h2, .breadcrumbs, .grp-module-title {
+    background: #18181b !important;
+    color: #fff !important;
+}
+
+input, select, textarea {
+    border: 1px solid #059669 !important;
+    background: #23272e !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+label, .form-row label, .grp-label {
+    color: #fff !important;
+}
+
+.module, .grp-module {
+    background: #23272e !important;
+    border-color: #059669 !important;
+}
+
+button, input[type="submit"], .button {
+    background: #059669 !important;
+    color: #fff !important;
+    border: 1px solid #059669 !important;
+}
+
+select:focus, input:focus, textarea:focus {
+    border-color: #34d399 !important;
+    outline: none !important;
+}
+
+tr, th, td {
+    background: #23272e !important;
+    color: #fff !important;
+}
+
+/* Make links more visible */
+a, .grp-link {
+    color: #34d399 !important;
+} 

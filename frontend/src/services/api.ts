@@ -8,7 +8,7 @@ import axios, {
 // Create axios instance with base URL from environment variables
 const api: AxiosInstance = axios.create({
   // We point to the Django host root; individual service files will prefix their calls with `/api`.
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -45,7 +45,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refresh_token');
         if (!refreshToken) throw new Error('No refresh token');
         
-        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/token/refresh/`, {
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/token/refresh/`, {
           refresh: refreshToken
         });
         
@@ -56,10 +56,9 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${access}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, clear tokens and redirect to login
+        // If refresh fails, clear tokens but do not redirect
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

@@ -9,6 +9,8 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import json
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 from .forms import CustomUserRegistrationForm, CustomAuthenticationForm, EmailVerificationForm
 from .models import User
@@ -138,27 +140,21 @@ def profile_view(request):
 
 
 def send_verification_email(user):
-    """Send verification email to user"""
+    """Send verification email to user with HTML template and logo"""
     subject = 'Shortcut Store - Verify Your Email Address'
-    message = f"""
-    Welcome to Shortcut Store!
-
-    Your verification code is: {user.email_verification_code}
-
-    This code will expire in 15 minutes.
-
-    If you didn't create an account with Shortcut Store, please ignore this email.
-
-    Best regards,
-    Shortcut Store Team
-    """
-
+    context = {
+        'user': user,
+        'verification_code': user.email_verification_code,
+        'site_logo_url': 'http://192.168.1.4:8000/media/site-logo.svg',
+    }
+    message = render_to_string('emails/verification_email.html', context)
     try:
         send_mail(
             subject,
-            message,
+            strip_tags(message),  # fallback plain text
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
+            html_message=message,
             fail_silently=False,
         )
     except Exception as e:

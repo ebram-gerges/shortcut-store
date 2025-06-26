@@ -9,11 +9,11 @@ export const navLinks = [
     },
     {
         name: 'Summer Collection',
-        href: '/products'
+        href: '/products?season=summer'
     },
     {
         name: 'Top Selling',
-        href: '/products'
+        href: '/products?sort=top'
     },   
 ]
 export const footerLinks = [

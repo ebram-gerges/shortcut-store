@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { getProductById } from '../services/productService';
+import { Product } from '../types/product';
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -11,6 +13,36 @@ interface CartSidebarProps {
 const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   const { items, updateQuantity, removeItem, getTotalPrice } = useCart();
   const navigate = useNavigate();
+  const [productCache, setProductCache] = useState<{ [id: number]: Product }>({});
+  const [loadingProducts, setLoadingProducts] = useState<{ [id: number]: boolean }>({});
+
+  // Fetch product data for items in cart if not already cached
+  useEffect(() => {
+    items.forEach((item) => {
+      if (!productCache[item.id] && !loadingProducts[item.id]) {
+        setLoadingProducts((prev) => ({ ...prev, [item.id]: true }));
+        getProductById(item.id)
+          .then((product) => {
+            setProductCache((prev) => ({ ...prev, [item.id]: product }));
+          })
+          .finally(() => {
+            setLoadingProducts((prev) => ({ ...prev, [item.id]: false }));
+          });
+      }
+    });
+    // eslint-disable-next-line
+  }, [items]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [isOpen]);
 
   const handleCheckout = () => {
     onClose();
@@ -18,7 +50,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? '' : 'pointer-events-none'}`}>
+    <div className={`fixed inset-0 z-[200] overflow-hidden ${isOpen ? '' : 'pointer-events-none'}`}>
       <div className={`absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}></div>
       <div
         className={`absolute right-0 top-0 h-full w-[80vw] max-w-xs sm:w-full sm:max-w-md bg-white/50 dark:bg-zinc-900/30 backdrop-blur-xl shadow-xl transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
@@ -46,50 +78,69 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
               </div>
             ) : (
               <div className="space-y-4">
-                {items.map((item) => (
-                  <div key={`${item.id}-${item.color}-${item.size}`} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center">
-                        <span className="text-zinc-400 text-xs">IMG</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-black dark:text-white font-medium">{item.name}</h3>
-                        <p className="text-zinc-400 text-sm">
-                          {item.color} • {item.size}
-                        </p>
-                        <p className="text-[#059669] font-semibold">LE {item.price}</p>
-                      </div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-zinc-400 hover:text-red-400 transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center space-x-2">
+                {items.map((item) => {
+                  const product = productCache[item.id];
+                  let imageUrl: string | undefined = undefined;
+                  if (product && product.color_variants) {
+                    const colorVariant = product.color_variants.find(cv => cv.color === item.color);
+                    if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
+                      const primaryImg = colorVariant.images.find(img => img.is_primary) || colorVariant.images[0];
+                      imageUrl = primaryImg.image;
+                    } else if (product.image) {
+                      imageUrl = product.image;
+                    }
+                  }
+                  return (
+                    <div key={`${item.id}-${item.color}-${item.size}`} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center overflow-hidden">
+                          {imageUrl ? (
+                            <img src={imageUrl} alt={item.name} className="object-contain w-full h-full" />
+                          ) : loadingProducts[item.id] ? (
+                            <span className="text-zinc-400 text-xs animate-pulse">Loading...</span>
+                          ) : (
+                            <span className="text-zinc-400 text-xs">IMG</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-black dark:text-white font-medium">{item.name}</h3>
+                          <p className="text-zinc-400 text-sm">
+                            {item.color} • {item.size}
+                          </p>
+                          <p className="text-[#059669] font-semibold">LE {item.price}</p>
+                        </div>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
+                          onClick={() => removeItem(item.id)}
+                          className="text-zinc-400 hover:text-red-400 transition-colors"
                         >
-                          <Minus className="h-3 w-3" />
+                          <X className="h-4 w-4" />
                         </button>
-                        <span className="text-white px-3 py-1 bg-zinc-700 rounded min-w-[2rem] text-center">
-                          {item.quantity}
+                      </div>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="text-white px-3 py-1 bg-zinc-700 rounded min-w-[2rem] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <span className="text-black dark:text-white font-semibold">
+                          LE {(item.price * item.quantity).toFixed(2)}
                         </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
                       </div>
-                      <span className="text-black dark:text-white font-semibold">
-                        LE {(item.price * item.quantity).toFixed(2)}
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

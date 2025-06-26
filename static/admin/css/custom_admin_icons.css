@@ -1,0 +1,16 @@
+/* Sidebar icons only, with cool hover effects */
+.sidebar .app-label, .sidebar .model-label {
+    display: none !important;
+}
+.sidebar .icon, .sidebar .fa, .sidebar .fas, .sidebar .far, .sidebar .fab {
+    font-size: 2rem !important;
+    margin: 0.5rem 0 !important;
+    color: #34d399 !important;
+    transition: transform 0.2s, color 0.2s;
+    display: block !important;
+    text-align: center;
+}
+.sidebar .icon:hover, .sidebar .fa:hover, .sidebar .fas:hover, .sidebar .far:hover, .sidebar .fab:hover {
+    transform: scale(1.25) rotate(-10deg);
+    color: #059669 !important;
+} 

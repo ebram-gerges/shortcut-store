@@ -1,0 +1,48 @@
+/* Unfold global dark theme override */
+body, .unfold-main, .unfold-content, .content, .change-form, .module, .unfold-dashboard, .unfold-app, .unfold-page {
+    background-color: #022c22 !important;
+    color: #e5e7eb !important; /* Tailwind gray-200 for good contrast */
+}
+
+.unfold-sidebar, .sidebar, .unfold-navbar, .navbar {
+    background-color: #064e3b !important;
+}
+
+/* Ensure form fields, cards, and popups are dark too */
+input, select, textarea, .card, .popup, .module, .unfold-card {
+    background-color: #1a2e25 !important;
+    color: #e5e7eb !important;
+    border-color: #065f46 !important;
+}
+
+/* Links and buttons */
+a, .button, button, .unfold-btn {
+    color: #34d399 !important;
+}
+
+/* Remove white backgrounds from tables and lists */
+table, th, td, .unfold-table, .unfold-list {
+    background-color: #022c22 !important;
+    color: #e5e7eb !important;
+}
+
+/* Fix for modals/dialogs */
+.unfold-modal, .modal {
+    background-color: #1a2e25 !important;
+    color: #e5e7eb !important;
+}
+
+/* Modern dark borders and fields for all input fields */
+input, select, textarea {
+    border: 2px solid #23272b !important; /* Very dark gray border */
+    border-radius: 6px !important;
+    background-color: #18181b !important; /* Dark field background */
+    color: #e5e7eb !important;
+    box-shadow: 0 2px 8px 0 #00000033;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #3f3f46 !important; /* Slightly lighter dark on focus */
+    box-shadow: 0 0 0 2px #23272b99, 0 2px 8px 0 #00000033;
+    outline: none !important;
+} 

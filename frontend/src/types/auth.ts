@@ -14,3 +14,16 @@ export interface AuthContextType {
 export interface AuthProviderProps {
   children: React.ReactNode;
 }
+
+export interface AuthResponse {
+  access: string;
+  refresh: string;
+  user: User;
+  access_token: string;
+}
+
+export interface LoginCredentials {
+  email?: string;
+  username?: string;
+  password?: string;
+}

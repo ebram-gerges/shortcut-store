@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +15,10 @@ const LoginPage = () => {
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the redirect path from location state, default to home
+  const from = (location.state as { from?: string })?.from || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,15 +30,20 @@ const LoginPage = () => {
         username: formData.email,
         password: formData.password,
       });
-      navigate('/');
+      navigate(from);
     } catch (err) {
       // Axios wraps errors, so we can inspect the response
-      const error = err as any;
-      if (error.response && error.response.status === 401) {
+      const error = err as { response?: { data?: { non_field_errors?: string[] }, status?: number } };
+      if (error.response && error.response.data && error.response.data.non_field_errors) {
+        setError(error.response.data.non_field_errors[0] || 'Login failed');
+      } else if (error.response && error.response.status === 401) {
         setError('Invalid credentials. Please try again.');
       } else {
         setError('An unexpected error occurred. Please try again.');
       }
+      // Clear only the password field on error
+      setFormData(prev => ({ ...prev, password: '' }));
+      // Do NOT refresh or navigate
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +52,7 @@ const LoginPage = () => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     setError('Google sign-in is not yet implemented.');
-    setIsGoogleLoading(false);
+      setIsGoogleLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +63,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen relative z-20 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 pt-[125px] max-md:mt-[70px]">
+    <div className="min-h-screen relative z-20 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 pt-0">
       <div className="max-w-md w-full p-5 backdrop-blur-lg dark:bg-zinc-800/30 bg-white/50 border border-zinc-700 rounded-xl space-y-8">
         <div className="text-center">
           <p className="mt-6 text-3xl font-bold dark:text-white text-black">

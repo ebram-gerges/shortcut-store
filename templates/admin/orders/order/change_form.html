@@ -1,0 +1,12 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools %}
+  {{ block.super }}
+  {% if original and original.id %}
+    <li>
+      <a class="button" href="{% url 'admin:orders_order_download_pdf' original.id %}" target="_blank">
+        Download Order PDF
+      </a>
+    </li>
+  {% endif %}
+{% endblock %} 

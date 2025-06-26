@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Your Email - Shortcut Store</title>
+    <style>
+        body { background: #f7f7f7; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 480px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px #0001; padding: 32px 24px; }
+        .logo { display: block; margin: 0 auto 24px auto; height: 48px; }
+        h1 { color: #059669; font-size: 1.6rem; margin-bottom: 8px; text-align: center; }
+        .code { font-size: 2.2rem; font-weight: bold; letter-spacing: 8px; color: #059669; background: #f0fdf4; border-radius: 8px; padding: 16px 0; text-align: center; margin: 24px 0; }
+        p { color: #222; font-size: 1rem; line-height: 1.6; text-align: center; }
+        .footer { color: #888; font-size: 0.95rem; text-align: center; margin-top: 32px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ site_logo_url }}" alt="Shortcut Store Logo" class="logo" />
+        <h1>Verify Your Email</h1>
+        <p>Welcome to Shortcut Store!</p>
+        <p>Your verification code is:</p>
+        <div class="code">{{ verification_code }}</div>
+        <p>This code will expire in 15 minutes.<br>If you didn't create an account, you can safely ignore this email.</p>
+        <div class="footer">&mdash; The Shortcut Store Team</div>
+    </div>
+</body>
+</html> 

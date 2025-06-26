@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import api from '../services/api';
 
 interface WishlistItem {
   id: number;
@@ -44,7 +45,9 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
   };
 
   const removeItem = (id: number) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
+    setItems(prevItems => {
+      return prevItems.filter(item => item.id !== id);
+    });
   };
 
   const isInWishlist = (id: number) => {
@@ -55,12 +58,47 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
     return items.length;
   };
 
-  const value: WishlistContextType = {
+  // Sync wishlist with backend after login
+  const syncWishlistWithBackend = async () => {
+    try {
+      // Send local wishlist items to backend
+      for (const item of items) {
+        await api.post('/products/add-to-wishlist/', {
+          product_id: item.id,
+          action: 'add',
+        });
+      }
+      // Fetch merged wishlist from backend
+      const res = await api.get('/products/get-wishlist/');
+      if (res.data && res.data.wishlist_items) {
+        setItems(
+          res.data.wishlist_items.map((i: {
+            id: number;
+            name: string;
+            price: number;
+            color: string;
+            size: string;
+          }): WishlistItem => ({
+            id: i.id,
+            name: i.name,
+            price: i.price,
+            color: i.color,
+            size: i.size,
+          }))
+        );
+      }
+    } catch {
+      // Ignore errors for now
+    }
+  };
+
+  const value: WishlistContextType & { syncWishlistWithBackend: () => Promise<void> } = {
     items,
     addItem,
     removeItem,
     isInWishlist,
     getTotalItems,
+    syncWishlistWithBackend,
   };
 
   return (

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Heart, ShoppingCart, Check } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
-import { useState } from 'react';
 import { mockProducts } from '../data/mockData';
+import { getProductById } from '../services/productService';
+import { Product } from '../types/product';
 
 interface WishlistSidebarProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
 
   // Track which wishlist items are in the cart
   const [addedIds, setAddedIds] = useState<{[key: string]: boolean}>({});
+  const [productCache, setProductCache] = useState<{ [id: number]: Product }>({});
+  const [loadingProducts, setLoadingProducts] = useState<{ [id: number]: boolean }>({});
 
   const isInCart = (item: any) =>
     cartItems.some(
@@ -29,6 +32,19 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
       removeCartItem(item.id);
       setAddedIds((prev) => ({ ...prev, [key]: false }));
     } else {
+      // Get the image for this item
+      const product = productCache[item.id];
+      let imageUrl: string | undefined = undefined;
+      if (product && product.color_variants) {
+        const colorVariant = product.color_variants.find(cv => cv.color === item.color);
+        if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
+          const primaryImg = colorVariant.images.find(img => img.is_primary) || colorVariant.images[0];
+          imageUrl = primaryImg.image;
+        } else if (product.image) {
+          imageUrl = product.image;
+        }
+      }
+      
       // Add to cart
       addItem({
         id: item.id,
@@ -36,13 +52,54 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
         price: item.price,
         color: item.color,
         size: item.size,
+        image: imageUrl || '',
       });
       setAddedIds((prev) => ({ ...prev, [key]: true }));
     }
   };
 
+  // Fetch product data for items in wishlist if not already cached
+  useEffect(() => {
+    items.forEach((item) => {
+      if (!productCache[item.id] && !loadingProducts[item.id]) {
+        setLoadingProducts((prev) => ({ ...prev, [item.id]: true }));
+        getProductById(item.id)
+          .then((product) => {
+            setProductCache((prev) => ({ ...prev, [item.id]: product }));
+          })
+          .finally(() => {
+            setLoadingProducts((prev) => ({ ...prev, [item.id]: false }));
+          });
+      }
+    });
+    // eslint-disable-next-line
+  }, [items]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [isOpen]);
+
+  // Always render when open, only delay unmounting on close for slide-out
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    } else {
+      const timeout = setTimeout(() => setShouldRender(false), 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen]);
+  if (!isOpen && !shouldRender) return null;
+
   return (
-    <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? '' : 'pointer-events-none'}`}>
+    <div className={`fixed inset-0 z-[200] overflow-hidden ${isOpen ? '' : 'pointer-events-none'}`}>
       <div className={`absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}></div>
       <div
         className={`absolute right-0 top-0 h-full w-[80vw] max-w-xs sm:w-full sm:max-w-md bg-white/50 dark:bg-zinc-900/30 backdrop-blur-xl shadow-xl transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
@@ -71,14 +128,30 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
             ) : (
               <div className="space-y-4">
                 {items.map((item) => {
+                  const product = productCache[item.id];
+                  let imageUrl: string | undefined = undefined;
+                  if (product && product.color_variants) {
+                    const colorVariant = product.color_variants.find(cv => cv.color === item.color);
+                    if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
+                      const primaryImg = colorVariant.images.find(img => img.is_primary) || colorVariant.images[0];
+                      imageUrl = primaryImg.image;
+                    } else if (product.image) {
+                      imageUrl = product.image;
+                    }
+                  }
                   // Fallback to mockProducts for inStock
-                  const product = mockProducts.find(p => p.id === item.id);
-                  const inStock = product?.inStock;
+                  const inStock = product?.in_stock;
                   return (
-                    <div key={item.id} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
+                    <div key={`${item.id}-${item.color}-${item.size}`} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
                       <div className="flex items-start space-x-4">
-                        <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center">
-                          <span className="text-zinc-400 text-xs">IMG</span>
+                        <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center overflow-hidden">
+                          {imageUrl ? (
+                            <img src={imageUrl} alt={item.name} className="object-contain w-full h-full" />
+                          ) : loadingProducts[item.id] ? (
+                            <span className="text-zinc-400 text-xs animate-pulse">Loading...</span>
+                          ) : (
+                            <span className="text-zinc-400 text-xs">IMG</span>
+                          )}
                         </div>
                         <div className="flex-1">
                           <h3 className="text-white font-medium">{item.name}</h3>

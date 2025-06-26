@@ -6,20 +6,35 @@ from django.utils import timezone
 
 
 class CollectionImage(models.Model):
-    """Model for storing hero section collection images"""
-    image = models.ImageField(upload_to='collections/', help_text="Hero section image")
-    title = models.CharField(max_length=200, blank=True, null=True, help_text="Descriptive title for the image")
-    is_active = models.BooleanField(default=True, help_text="Enable/disable this image")
+    """Model for storing hero section collection (gallery)"""
+    title = models.CharField(max_length=200, blank=True, null=True, help_text="Descriptive title for the collection")
+    # image = models.ImageField(upload_to='collections/main/', blank=True, null=True, help_text="Main image for this collection (used in hero section)")
+    is_active = models.BooleanField(default=True, help_text="Enable/disable this collection")
     order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['order', 'created_at']
-        verbose_name = "Collection Image"
-        verbose_name_plural = "Collection Images"
+        verbose_name = "Collection"
+        verbose_name_plural = "Collections"
 
     def __str__(self):
-        return f"{self.title or 'Collection Image'} (Order: {self.order})"
+        return f"{self.title or 'Collection'} (Order: {self.order})"
+
+
+class CollectionGalleryImage(models.Model):
+    collection = models.ForeignKey(CollectionImage, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='collections/gallery/', help_text="Gallery image for this collection")
+    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Collection Gallery Image"
+        verbose_name_plural = "Collection Gallery Images"
+
+    def __str__(self):
+        return f"{self.collection.title or 'Collection'} - Image {self.order}"
 
 
 class SizeChoices(models.TextChoices):
@@ -49,7 +64,6 @@ class ColorChoices(models.TextChoices):
     OTHER = 'Other', _('Other')
 
 class Product(models.Model):
-    # Use Django's default id as the product ID
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, help_text="Product description")
     price = models.DecimalField(max_digits=8, decimal_places=2)
@@ -59,46 +73,60 @@ class Product(models.Model):
         null=True,
         help_text="Admin-only field: discount percent (0-100)"
     )
-    stock = models.PositiveIntegerField(default=0, help_text="Number of products in stock")
-    image = models.ImageField(upload_to='products/', blank=True, null=True, help_text="Main product image")
+    indoor_image = models.ImageField(upload_to='products/indoor/', blank=True, null=True, help_text="Indoor image for product card (main image)")
+    outdoor_image = models.ImageField(upload_to='products/outdoor/', blank=True, null=True, help_text="Outdoor/hover image for product card")
     created_at = models.DateTimeField(auto_now_add=True)
     CATEGORY_CHOICES = [
         ('tshirts', 'T-Shirts'),
-        ('basictop', 'Basic Top'),
+        ('basictop', 'Basic Tops'),
         ('shoes', 'Shoes'),
-        ('bottoms', 'Bottoms'),
         ('sets', 'Sets'),
-        ('shorts', 'Shorts'),
-        ('sweatpants', 'Sweatpants'),
     ]
-    category = models.CharField(max_length=32, choices=CATEGORY_CHOICES, default='tshirts')
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, blank=True)
 
     @property
     def discounted_price(self):
-        """Calculate price after discount if applicable and return as float"""
         if self.sale_percent is not None and self.sale_percent > 0:
             return float(self.price) * (1 - float(self.sale_percent) / 100)
         return float(self.price)
 
     @property
     def available_colors(self):
-        """Get all available colors for this product"""
         return self.color_variants.values_list('color', flat=True).distinct()
 
     @property
     def available_sizes(self):
-        """Get all available sizes for this product"""
-        return self.variants.values_list('size', flat=True).distinct()
+        size_order = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+        sizes = list(set(self.color_variants.values_list('size_variants__size', flat=True)))
+        sizes.sort(key=lambda x: size_order.index(x) if x in size_order else 100 + ord(x[0]))
+        return sizes
+
+    @property
+    def rating(self):
+        try:
+            from reviews.models import ProductReview
+        except ImportError:
+            return 0.0
+        reviews = ProductReview.objects.filter(product=self)
+        if not reviews.exists():
+            return 0.0
+        return round(sum(r.rating for r in reviews) / reviews.count(), 1)
+
+    @property
+    def review_count(self):
+        try:
+            from reviews.models import ProductReview
+        except ImportError:
+            return 0
+        return ProductReview.objects.filter(product=self).count()
 
     def __str__(self):
         return self.name
 
 class ProductColorVariant(models.Model):
-    """Represents a color variant of a product"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='color_variants')
     color = models.CharField(max_length=20, choices=ColorChoices.choices)
     color_hex = models.CharField(max_length=7, blank=True, help_text="Hex color code (e.g., #000000)")
-    stock = models.PositiveIntegerField(default=0, help_text="Stock for this color variant")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -109,49 +137,55 @@ class ProductColorVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.color}"
 
+# Images now linked to color variant (not size)
 class ProductColorVariantImage(models.Model):
-    """Multiple images for each color variant"""
     color_variant = models.ForeignKey(ProductColorVariant, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='color_variants/')
+    image = models.ImageField(upload_to='color_variant_images/')
     alt_text = models.CharField(max_length=200, blank=True)
-    is_primary = models.BooleanField(default=False, help_text="Primary image for this color variant")
-    order = models.PositiveIntegerField(default=0, help_text="Display order")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['order', 'created_at']
+        ordering = ['created_at']
 
     def __str__(self):
-        return f"{self.color_variant} - Image {self.order}"
+        return f"{self.color_variant} - Image"
 
-    def save(self, *args, **kwargs):
-        # If this is set as primary, unset other primary images for this color variant
-        if self.is_primary:
-            ProductColorVariantImage.objects.filter(
-                color_variant=self.color_variant,
-                is_primary=True
-            ).exclude(pk=self.pk).update(is_primary=False)
-        super().save(*args, **kwargs)
-
-class ProductVariant(models.Model):
-    """Represents size variants for products"""
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
+class ProductSizeVariant(models.Model):
+    color_variant = models.ForeignKey(ProductColorVariant, on_delete=models.CASCADE, related_name='size_variants')
     size = models.CharField(max_length=10, choices=SizeChoices.choices)
-    stock = models.PositiveIntegerField(default=0, help_text="Stock for this size")
+    stock = models.PositiveIntegerField(default=0, help_text="Stock for this size under this color")
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        unique_together = ('product', 'size')
+        unique_together = ('color_variant', 'size')
         ordering = ['size']
 
     def __str__(self):
-        return f"{self.product.name} - {self.size}"
+        return f"{self.color_variant} - {self.size}"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Sync stock to ProductStock
+        from .models import ProductStock  # avoid circular import
+        product = self.color_variant.product
+        stock_obj, created = ProductStock.objects.get_or_create(
+            product=product,
+            size_variant=self,
+            defaults={
+                'quantity': self.stock,
+                'reserved_quantity': 0,
+                'is_active': self.is_active
+            }
+        )
+        if not created:
+            stock_obj.quantity = self.stock
+            stock_obj.is_active = self.is_active
+            stock_obj.save()
+
+# Stock is managed at the size+color level (can be merged with ProductSizeVariant, but kept for extensibility)
 class ProductStock(models.Model):
-    """Represents stock for specific color-size combinations"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_items')
-    color_variant = models.ForeignKey(ProductColorVariant, on_delete=models.CASCADE)
-    size = models.CharField(max_length=10, choices=SizeChoices.choices)
+    size_variant = models.ForeignKey(ProductSizeVariant, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=0, help_text="Available stock quantity")
     reserved_quantity = models.PositiveIntegerField(default=0, help_text="Reserved for pending orders")
     is_active = models.BooleanField(default=True)
@@ -159,20 +193,18 @@ class ProductStock(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('product', 'color_variant', 'size')
-        ordering = ['color_variant__color', 'size']
+        unique_together = ('product', 'size_variant')
+        ordering = ['size_variant__color_variant__color', 'size_variant__size']
 
     def __str__(self):
-        return f"{self.product.name} - {self.color_variant.color} {self.size}: {self.available_quantity}"
+        return f"{self.product.name} - {self.size_variant.color_variant.color} {self.size_variant.size}: {self.available_quantity}"
 
     @property
     def available_quantity(self):
-        """Returns the actual available quantity (total - reserved)"""
         return max(0, self.quantity - self.reserved_quantity)
 
     @property
     def stock_status(self):
-        """Returns stock status: 'in_stock', 'low_stock', or 'out_of_stock'"""
         available = self.available_quantity
         if available == 0:
             return 'out_of_stock'
@@ -183,7 +215,6 @@ class ProductStock(models.Model):
 
     @property
     def stock_display(self):
-        """Returns formatted stock display text"""
         available = self.available_quantity
         if available == 0:
             return "Out of Stock"
@@ -193,11 +224,9 @@ class ProductStock(models.Model):
             return f"In Stock ({available} available)"
 
     def can_reserve(self, quantity):
-        """Check if we can reserve the specified quantity"""
         return self.available_quantity >= quantity
 
     def reserve_stock(self, quantity):
-        """Reserve stock for an order"""
         if self.can_reserve(quantity):
             self.reserved_quantity += quantity
             self.save()
@@ -205,15 +234,34 @@ class ProductStock(models.Model):
         return False
 
     def release_stock(self, quantity):
-        """Release reserved stock"""
         self.reserved_quantity = max(0, self.reserved_quantity - quantity)
         self.save()
 
     def reduce_stock(self, quantity):
-        """Reduce actual stock quantity (when order is completed)"""
-        if self.quantity >= quantity:
+        if self.available_quantity >= quantity:
             self.quantity -= quantity
-            self.reserved_quantity = max(0, self.reserved_quantity - quantity)
             self.save()
             return True
         return False
+
+class CategoryImage(models.Model):
+    CATEGORY_CHOICES = [
+        ('tshirts', 'T-Shirts'),
+        ('basictop', 'Basic Top'),
+        ('sets', 'Suits'),
+    ]
+    category = models.CharField(max_length=32, choices=CATEGORY_CHOICES, unique=True)
+    image = models.ImageField(upload_to='category_images/', help_text="Image for this category card")
+    title = models.CharField(max_length=100, blank=True, null=True)
+    description = models.CharField(max_length=200, blank=True, null=True)
+    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Category Image"
+        verbose_name_plural = "Category Images"
+
+    def __str__(self):
+        return f"{self.get_category_display()}"

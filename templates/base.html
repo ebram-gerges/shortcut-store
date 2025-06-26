@@ -15,11 +15,6 @@
 </head>
 <body style="background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;" data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
 
-  <!-- Universal Navbar -->
-  {% block navbar %}
-    {% include 'components/navbar.html' %}
-  {% endblock %}
-
   <!-- Page Content -->
   {% block content %}{% endblock %}
 

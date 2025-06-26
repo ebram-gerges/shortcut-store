@@ -7,12 +7,40 @@ export interface ProductVariant {
   images: string[];
 }
 
+export interface ProductColorVariantImage {
+  id: number;
+  image: string;
+  alt_text?: string;
+  is_primary?: boolean;
+  order?: number;
+}
+
+export interface ProductColorVariant {
+  id: number;
+  color: string;
+  color_hex?: string;
+  is_active?: boolean;
+  images?: ProductColorVariantImage[];
+}
+
+export interface ProductStockItem {
+  id: number;
+  color_variant?: ProductColorVariant;
+  size?: string;
+  quantity?: number;
+  reserved_quantity?: number;
+  available_quantity?: number;
+  stock_status?: string;
+  is_active?: boolean;
+}
+
 export interface Product {
   id: number;
   name: string;
   description: string;
   price: string;
-  image?: string;
+  indoor_image?: string;
+  outdoor_image?: string;
   category?: string;
   created_at: string;
   updated_at: string;
@@ -24,6 +52,10 @@ export interface Product {
   sale_price?: string;
   colors?: string[];
   sizes?: string[];
+  color_variants?: ProductColorVariant[];
+  stock_items?: ProductStockItem[];
+  available_colors?: string[];
+  available_sizes?: string[];
 }
 
 export interface ProductFilters {
