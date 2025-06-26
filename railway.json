@@ -8,5 +8,8 @@
     "healthcheckPath": "/admin/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "on_failure"
+  },
+  "variables": {
+    "DJANGO_SETTINGS_MODULE": "shortcut.settings_production"
   }
 } 

@@ -43,4 +43,7 @@ Thumbs.db
 *.temp
 .env
 .env.local
-.env.production 
+.env.production
+
+# Exclude frontend from Railway's automatic npm detection
+frontend/ 
