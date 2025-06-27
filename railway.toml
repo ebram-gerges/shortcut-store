@@ -1,5 +1,5 @@
 [deploy]
-healthcheckPath = "/admin/"
+healthcheckPath = "/healthz/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
