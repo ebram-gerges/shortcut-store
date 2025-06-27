@@ -12,6 +12,7 @@ setup(
         "gunicorn>=21.2.0",
         "whitenoise>=6.6.0",
         "PyMySQL>=1.1.0",
+        "requests>=2.31.0",
     ],
     python_requires=">=3.9",
 ) 
