@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: shortcut-store-backend
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      cd frontend && npm install && npm run build && cd ..
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: gunicorn shortcut.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: shortcut.settings_production
+      - key: SECRET_KEY
+        value: )5npnaf#!vmxg)+rqm3^=m-^qb^cr2pmc30nh#zt!8s6vhv-8x
+      - key: ALLOWED_HOSTS
+        value: 0.0.0.0,localhost
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USE_TLS
+        value: 'True'
+      - key: EMAIL_HOST_USER
+        value: shortcut756@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        value: wijpdbtlxdfseuxq
+      - key: ADMIN_EMAIL
+        value: admin@shortcut.com
+      - key: ADMIN_PASSWORD
+        value: admin123
+      - key: CORS_ALLOWED_ORIGINS
+        value: http://localhost:3000,http://localhost:5173
+      - key: CSRF_TRUSTED_ORIGINS
+        value: http://localhost:3000,http://localhost:5173
+    autoDeploy: false
+
+  - type: pserv
+    name: shortcut-store-mysql
+    env: mysql
+    plan: free
+    envVars:
+      - key: MYSQL_DATABASE
+        value: shortcut_store
+      - key: MYSQL_USER
+        value: shortcut_admin
+      - key: MYSQL_PASSWORD
+        value: ShortcutTest2024!
+      - key: MYSQL_ROOT_PASSWORD
+        value: ShortcutTest2024! 
