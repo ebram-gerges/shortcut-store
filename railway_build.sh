@@ -4,7 +4,7 @@ echo "🚀 Railway Build Script Starting..."
 
 # Install Python dependencies
 echo "🐍 Installing Python dependencies..."
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 
 # Build React frontend
 echo "📦 Building React frontend..."
