@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from rest_framework_simplejwt.views import TokenRefreshView
 from accounts.api_views import MyTokenObtainPairView
+from core.healthcheck import healthcheck
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('api/token/', MyTokenObtainPairView.as_view(), name='jwt_token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='jwt_token_refresh'),
 
+    path('healthz/', healthcheck, name='healthcheck'),
     path('', include('landing.urls')),  # If you have a landing app
 ]
 
