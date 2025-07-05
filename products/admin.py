@@ -474,20 +474,12 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
 
 @admin.register(ProductColorVariant)
 class ProductColorVariantAdmin(django_admin.ModelAdmin):
-    form = ProductColorVariantAdminForm
     list_display = ('product', 'color', 'is_active', 'created_at')
     search_fields = ('product__name', 'color')
     list_filter = ('color', 'is_active', 'created_at')
     
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('product', 'color', 'color_hex', 'is_active')
-        }),
-        ('Size & Stock Management', {
-            'fields': ('sizes', 'stock_M', 'stock_L', 'stock_XL', 'stock_2XL'),
-            'description': 'Configure available sizes and their stock levels.'
-        }),
-    )
+    # Use basic fields only - no custom form for now
+    fields = ('product', 'color', 'color_hex', 'is_active')
     
     def changelist_view(self, request, extra_context=None):
         """Add bulk upload button to the changelist view"""
