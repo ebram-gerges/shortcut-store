@@ -2,12 +2,8 @@
 Production settings for shortcut project.
 """
 import os
-import pymysql
 from pathlib import Path
 from .settings import *
-
-# Configure PyMySQL to work with Django
-pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,24 +14,51 @@ DEBUG = False
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-b^lazyv&dao&g79==@g#(m-ekmq6!pfmonptv8205opyqnu$3@')
 
-# Allow all hosts, Railway domains, and localhost by default, or use env var if set
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*,.railway.app,localhost,127.0.0.1").split(",")
+# Security settings for production
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-# Database - MySQL Configuration with PyMySQL
+# HTTPS Security Settings
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Database - PostgreSQL Configuration
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'shortcut_store'),
-        'USER': os.environ.get('DB_USER', 'root'),
+        'USER': os.environ.get('DB_USER', 'shortcut_user'),
         'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'PORT': os.environ.get('DB_PORT', '5432'),
+        'CONN_MAX_AGE': 60,
     }
 }
+
+# Redis cache configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# Celery configuration
+CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -48,12 +71,10 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Add whitenoise middleware for static files
-MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+# Security middleware and settings
+MIDDLEWARE.insert(1, 'django.middleware.security.SecurityMiddleware')
 
-# Security settings for production
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+# Enhanced security settings
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
@@ -82,20 +103,44 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'shortcut756@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'wijpdbtlxdfseuxq')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# Logging configuration
+# Enhanced logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
         },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'file'],
         'level': 'INFO',
     },
+    'loggers': {
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+    },
 }
+
+# Password hashing
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+]
 
 # Disable Django's debug toolbar in production
 if 'debug_toolbar' in INSTALLED_APPS:

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
-import { getProductById } from '../services/productService';
+import { getProductBySlug } from '../services/productService';
 import { Product } from '../types/product';
+import Skeleton from './ui/Skeleton';
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -13,20 +14,20 @@ interface CartSidebarProps {
 const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   const { items, updateQuantity, removeItem, getTotalPrice } = useCart();
   const navigate = useNavigate();
-  const [productCache, setProductCache] = useState<{ [id: number]: Product }>({});
-  const [loadingProducts, setLoadingProducts] = useState<{ [id: number]: boolean }>({});
+  const [productCache, setProductCache] = useState<{ [slug: string]: Product }>({});
+  const [loadingProducts, setLoadingProducts] = useState<{ [slug: string]: boolean }>({});
 
   // Fetch product data for items in cart if not already cached
   useEffect(() => {
     items.forEach((item) => {
-      if (!productCache[item.id] && !loadingProducts[item.id]) {
-        setLoadingProducts((prev) => ({ ...prev, [item.id]: true }));
-        getProductById(item.id)
+      if (!productCache[item.slug] && !loadingProducts[item.slug]) {
+        setLoadingProducts((prev) => ({ ...prev, [item.slug]: true }));
+        getProductBySlug(item.slug)
           .then((product) => {
-            setProductCache((prev) => ({ ...prev, [item.id]: product }));
+            setProductCache((prev) => ({ ...prev, [item.slug]: product }));
           })
           .finally(() => {
-            setLoadingProducts((prev) => ({ ...prev, [item.id]: false }));
+            setLoadingProducts((prev) => ({ ...prev, [item.slug]: false }));
           });
       }
     });
@@ -79,65 +80,79 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
             ) : (
               <div className="space-y-4">
                 {items.map((item) => {
-                  const product = productCache[item.id];
-                  let imageUrl: string | undefined = undefined;
-                  if (product && product.color_variants) {
+                  const product = productCache[item.slug];
+                  const loading = loadingProducts[item.slug] || !product;
+                  const imageUrl = !loading && product && product.color_variants ? (() => {
                     const colorVariant = product.color_variants.find(cv => cv.color === item.color);
                     if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
                       const primaryImg = colorVariant.images.find(img => img.is_primary) || colorVariant.images[0];
-                      imageUrl = primaryImg.image;
-                    } else if (product.image) {
-                      imageUrl = product.image;
+                      return primaryImg.image;
+                    } else if (product.indoor_image) {
+                      return product.indoor_image;
+                    } else if (product.outdoor_image) {
+                      return product.outdoor_image;
                     }
-                  }
+                    return undefined;
+                  })() : undefined;
                   return (
                     <div key={`${item.id}-${item.color}-${item.size}`} className="bg-zinc-300/50 dark:bg-zinc-800/60 border border-zinc-600/50 dark:border-zinc-400/30 backdrop-blur-xl rounded-lg p-4">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center overflow-hidden">
-                          {imageUrl ? (
-                            <img src={imageUrl} alt={item.name} className="object-contain w-full h-full" />
-                          ) : loadingProducts[item.id] ? (
-                            <span className="text-zinc-400 text-xs animate-pulse">Loading...</span>
-                          ) : (
-                            <span className="text-zinc-400 text-xs">IMG</span>
-                          )}
+                      {loading ? (
+                        <div className="flex items-start space-x-4">
+                          <Skeleton className="w-16 h-16 rounded-lg" />
+                          <div className="flex-1">
+                            <Skeleton className="h-5 w-1/2 mb-2" />
+                            <Skeleton className="h-4 w-1/3 mb-2" />
+                            <Skeleton className="h-4 w-1/4" />
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-black dark:text-white font-medium">{item.name}</h3>
-                          <p className="text-zinc-400 text-sm">
-                            {item.color} • {item.size}
-                          </p>
-                          <p className="text-[#059669] font-semibold">LE {item.price}</p>
-                        </div>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="text-zinc-400 hover:text-red-400 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="text-white px-3 py-1 bg-zinc-700 rounded min-w-[2rem] text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                        <span className="text-black dark:text-white font-semibold">
-                          LE {(item.price * item.quantity).toFixed(2)}
-                        </span>
-                      </div>
+                      ) : (
+                        <>
+                          <div className="flex items-start space-x-4">
+                            <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center overflow-hidden">
+                              {imageUrl ? (
+                                <img src={imageUrl} alt={item.name} className="object-contain w-full h-full" />
+                              ) : (
+                                <span className="text-zinc-400 text-xs">IMG</span>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-black dark:text-white font-medium">{item.name}</h3>
+                              <p className="text-zinc-400 text-sm">
+                                {item.color} • {item.size}
+                              </p>
+                              <p className="text-[#059669] font-semibold">LE {item.price}</p>
+                            </div>
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              className="text-zinc-400 hover:text-red-400 transition-colors"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between mt-3">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="text-white px-3 py-1 bg-zinc-700 rounded min-w-[2rem] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                className="bg-zinc-700 text-white p-1 rounded hover:bg-zinc-600 transition-colors"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <span className="text-black dark:text-white font-semibold">
+                              LE {(item.price * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 })}

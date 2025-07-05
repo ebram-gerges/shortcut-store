@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { X, Heart, ShoppingCart, Check } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
-import { mockProducts } from '../data/mockData';
-import { getProductById } from '../services/productService';
+import { getProductBySlug } from '../services/productService';
 import { Product } from '../types/product';
+import { Link } from 'react-router-dom';
 
 interface WishlistSidebarProps {
   isOpen: boolean;
@@ -15,24 +15,18 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
   const { items, removeItem } = useWishlist();
   const { addItem, removeItem: removeCartItem, items: cartItems } = useCart();
 
-  // Track which wishlist items are in the cart
-  const [addedIds, setAddedIds] = useState<{[key: string]: boolean}>({});
   const [productCache, setProductCache] = useState<{ [id: number]: Product }>({});
   const [loadingProducts, setLoadingProducts] = useState<{ [id: number]: boolean }>({});
 
-  const isInCart = (item: any) =>
+  const isInCart = (item: {id: number; color: string; size: string}) =>
     cartItems.some(
       (cartItem) => cartItem.id === item.id && cartItem.color === item.color && cartItem.size === item.size
     );
 
-  const handleToggleCart = (item: any) => {
-    const key = `${item.id}-${item.color}-${item.size}`;
+  const handleToggleCart = (item: {id: number; name: string; price: number; color: string; size: string}) => {
     if (isInCart(item)) {
-      // Remove from cart
       removeCartItem(item.id);
-      setAddedIds((prev) => ({ ...prev, [key]: false }));
     } else {
-      // Get the image for this item
       const product = productCache[item.id];
       let imageUrl: string | undefined = undefined;
       if (product && product.color_variants) {
@@ -40,12 +34,10 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
         if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
           const primaryImg = colorVariant.images.find(img => img.is_primary) || colorVariant.images[0];
           imageUrl = primaryImg.image;
-        } else if (product.image) {
-          imageUrl = product.image;
+        } else if (product && product.indoor_image) {
+          imageUrl = product.indoor_image;
         }
       }
-      
-      // Add to cart
       addItem({
         id: item.id,
         name: item.name,
@@ -54,16 +46,15 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
         size: item.size,
         image: imageUrl || '',
       });
-      setAddedIds((prev) => ({ ...prev, [key]: true }));
     }
   };
 
   // Fetch product data for items in wishlist if not already cached
   useEffect(() => {
     items.forEach((item) => {
-      if (!productCache[item.id] && !loadingProducts[item.id]) {
+      if (item.slug && !productCache[item.id] && !loadingProducts[item.id]) {
         setLoadingProducts((prev) => ({ ...prev, [item.id]: true }));
-        getProductById(item.id)
+        getProductBySlug(item.slug)
           .then((product) => {
             setProductCache((prev) => ({ ...prev, [item.id]: product }));
           })
@@ -135,9 +126,11 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
                     if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
                       const primaryImg = colorVariant.images.find(img => img.is_primary) || colorVariant.images[0];
                       imageUrl = primaryImg.image;
-                    } else if (product.image) {
-                      imageUrl = product.image;
+                    } else if (product && product.indoor_image) {
+                      imageUrl = product.indoor_image;
                     }
+                  } else if (product && product.indoor_image) {
+                    imageUrl = product.indoor_image;
                   }
                   // Fallback to mockProducts for inStock
                   const inStock = product?.in_stock;
@@ -154,7 +147,9 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
                           )}
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-white font-medium">{item.name}</h3>
+                          <Link to={`/products/${product?.slug || item.slug}`} className="text-white font-medium hover:underline">
+                            {item.name}
+                          </Link>
                           <p className="text-zinc-400 text-sm">
                             {item.color} • {item.size}
                           </p>

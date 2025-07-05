@@ -8,6 +8,7 @@ from accounts.api_views import MyTokenObtainPairView
 from core.healthcheck import healthcheck
 
 urlpatterns = [
+    path('admin/django_attach/', include('django_attach.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),  # Allauth URLs
     path('accounts/', include('accounts.urls')),
@@ -43,4 +44,8 @@ if not settings.DEBUG:
     ]
 
 if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

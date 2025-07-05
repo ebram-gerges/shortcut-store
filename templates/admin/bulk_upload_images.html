@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <h1>Bulk Upload Images to Color Variants</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="apply" value="1">
+    <button type="submit" class="default">Upload Images</button>
+  </form>
+  <p>Selected color variants:</p>
+  <ul>
+    {% for variant in variants %}
+      <li>{{ variant }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %} 

@@ -1,16 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getCollectionImages, CollectionImage, getCategoryImages, CategoryImage as CategoryImageType, getProducts, Product } from '../services/productService';
-import ReviewSummary from '../components/ReviewSummary';
-import ProductCard from '../components/ProductCard';
+import { getCollectionImages, CollectionImage, getProducts, getCategories, Category } from '../services/productService';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
-const CATEGORY_CARDS = [
-  { key: 'tshirts', label: 'T-Shirts', desc: 'Explore our collection' },
-  { key: 'basictop', label: 'Basic Top', desc: 'Minimalist essentials' },
-  { key: 'sets', label: 'Suits', desc: 'Complete your look' },
-];
+// This will be replaced with dynamic categories from the API
 
 {/*
   body::before {
@@ -40,6 +34,54 @@ const CATEGORY_CARDS = [
 }
 */}
 
+// Add MarqueeBanner component
+
+/*
+const getAnimationDuration = () => {
+  // Optionally scale animation duration as well, or keep it fixed
+  return typeof window !== 'undefined' && window.innerWidth < 640 ? 9000 : 30000;
+};
+*/
+
+/*
+const MarqueeBanner: React.FC = () => {
+  const [message, setMessage] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [animationDuration, setAnimationDuration] = useState(getAnimationDuration());
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/site-announcement/`)
+      .then(res => res.json())
+      .then(data => setMessage(data.message || ''));
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setAnimationDuration(getAnimationDuration());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (!message) return null;
+  return (
+    <div className="marquee-container" ref={containerRef}>
+      <div
+        className="marquee-row"
+        style={{
+          animationDuration: `${animationDuration / 1000}s`,
+        }}
+      >
+        <span className="inline-block px-8 font-bold whitespace-nowrap">{message}</span>
+        <span className="inline-block px-8 font-bold whitespace-nowrap">{message}</span>
+      </div>
+    </div>
+  );
+};
+*/
+
+// Add marquee animation to index.css or here via style tag if not present
+
 const HomePage = () => {
   // Animation for 'Shop by Categories' section
   const categoriesRef = useRef<HTMLDivElement | null>(null);
@@ -47,11 +89,9 @@ const HomePage = () => {
 
   // Animation for 'All Products' section
   const productsRef = useRef<HTMLDivElement | null>(null);
-  const [productsInView, setProductsInView] = useState(false);
 
   // Animation for 'About' section
   const aboutRef = useRef<HTMLDivElement | null>(null);
-  const [aboutInView, setAboutInView] = useState(false);
 
   // Hero carousel state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -61,11 +101,18 @@ const HomePage = () => {
   useEffect(() => {
     (async () => {
       const collections: CollectionImage[] = await getCollectionImages();
-      const galleryImages: string[] = collections
-        .flatMap(col => col.images)
-        .map(img => img.image.startsWith('http') ? img.image : `${apiBaseUrl}${img.image}`);
-      if (galleryImages.length > 0) {
+      // Use main image if available, otherwise fallback to gallery images
+      const heroImgs: string[] = collections
+        .map(col => col.image ? (col.image.startsWith('http') ? col.image : `${apiBaseUrl}${col.image}`) : null)
+        .filter((img): img is string => !!img);
+      // If no main images, fallback to gallery images
+      if (heroImgs.length === 0) {
+        const galleryImages: string[] = collections
+          .flatMap(col => col.images)
+          .map(img => img.image.startsWith('http') ? img.image : `${apiBaseUrl}${img.image}`);
         setHeroImages(galleryImages);
+      } else {
+        setHeroImages(heroImgs);
       }
     })();
   }, []);
@@ -73,13 +120,10 @@ const HomePage = () => {
   // Hero button animation state
   const [buttonVisible, setButtonVisible] = useState(false);
 
-  // Get all products in stock (replacing summer collection)
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-
   useEffect(() => {
     (async () => {
-      const products = await getProducts({ ordering: '-created_at' });
-      setAllProducts(products);
+      await getProducts({ ordering: '-created_at' });
+      // setAllProducts(products); // This line was removed as per the edit hint
     })();
   }, []);
 
@@ -123,7 +167,7 @@ const HomePage = () => {
     const observer = new window.IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setProductsInView(true);
+          // setProductsInView(true); // This line was removed as per the edit hint
           observer.disconnect();
         }
       },
@@ -139,7 +183,7 @@ const HomePage = () => {
     const observer = new window.IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setAboutInView(true);
+          // setAboutInView(true); // This line was removed as per the edit hint
           observer.disconnect();
         }
       },
@@ -149,19 +193,13 @@ const HomePage = () => {
     return () => observer.disconnect();
   }, []);
 
-  const [categoryImages, setCategoryImages] = useState<Record<string, string>>({});
+  const [categories, setCategories] = useState<Category[]>([]);
+  // Remove categoryImages state
 
   useEffect(() => {
     (async () => {
-      const imagesArr: CategoryImageType[] = await getCategoryImages();
-      const images: Record<string, string> = {};
-      for (const cat of CATEGORY_CARDS) {
-        const found = imagesArr.find(img => img.category === cat.key);
-        if (found && found.image) {
-          images[cat.key] = found.image.startsWith('http') ? found.image : `${apiBaseUrl}${found.image}`;
-        }
-      }
-      setCategoryImages(images);
+      const categoriesData = await getCategories();
+      setCategories(categoriesData);
     })();
   }, []);
 
@@ -230,6 +268,10 @@ const HomePage = () => {
             />
           ))}
         </div>
+        {/* Marquee Banner at the bottom of the hero section */}
+        {/** <div className="absolute bottom-0 left-0 z-30 w-full">
+          <MarqueeBanner />
+        </div> **/}
       </section>
 
       <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto mt-10" />
@@ -246,13 +288,13 @@ const HomePage = () => {
               Shop by Categories
             </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {CATEGORY_CARDS.map(cat => (
-                <Link to={`/products?category=${cat.key}`} className="cursor-pointer group" key={cat.key}>
+              {categories.map(cat => (
+                <Link to={`/products?category=${cat.slug}`} className="cursor-pointer group" key={cat.id}>
                   <div className="overflow-hidden relative w-full rounded-xl shadow-md transition-transform duration-300 aspect-square group-hover:scale-105">
-                    {categoryImages[cat.key] ? (
+                    {cat.image ? (
                       <img
-                        src={categoryImages[cat.key]}
-                        alt={cat.label}
+                        src={cat.image.startsWith('http') ? cat.image : `${apiBaseUrl}${cat.image}`}
+                        alt={cat.name}
                         className="object-cover absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-110"
                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
@@ -260,60 +302,14 @@ const HomePage = () => {
                       <div className="flex absolute inset-0 justify-center items-center w-full h-full text-2xl bg-zinc-200 text-zinc-400">No Image</div>
                     )}
                     <div className="flex absolute bottom-0 left-0 flex-col items-start p-4 w-full bg-gradient-to-t from-black/80 to-black/0">
-                      <h3 className="mb-1 text-lg font-bold text-white">{cat.label}</h3>
-                      <p className="text-sm text-white/80">{cat.desc}</p>
+                      <h3 className="mb-1 text-lg font-bold text-white">{cat.name}</h3>
+                      <p className="text-sm text-white/80">{cat.description || 'Explore our collection'}</p>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
           </div>
-        </section>
-        <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto my-10" />
-
-        {/* All Products Collection */}
-        <section
-          ref={productsRef}
-          className={`py-20 transition-all duration-1000 ease-out transform
-            ${productsInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}
-          `}
-        >
-          <div className="px-4 mx-auto max-w-7xl lg:px-8">
-            <h2 className="mb-8 text-3xl font-bold text-red-700 dark:text-red-400">Discover Latest Releases</h2>
-            <p className="mb-8 text-zinc-800 dark:text-white">
-              The newest arrivals from <span className="font-semibold text-black dark:text-white">Shortcut Store</span>
-            </p>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {allProducts.map((item) => (
-                <ProductCard product={item} key={item.id} />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto my-10" />
-
-        {/* Review Summary */}
-        <ReviewSummary />
-
-        <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto my-10" />
-
-        {/* About Section */}
-        <section
-          ref={aboutRef}
-          className={`max-w-3xl mx-auto px-4 lg:px-8 py-20 text-center transition-all duration-1000 ease-out transform
-            ${aboutInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}
-          `}
-        >
-            <h3 className="mb-8 text-3xl font-bold text-black dark:text-white">ABOUT SHORTCUT STORE</h3>
-            <p className="mb-8 text-lg text-zinc-700 dark:text-zinc-400">
-              We are a clothing brand designed for tech enthusiasts and gamers who value simplicity.
-              Our products blend comfort with minimalist design, offering a style that celebrates
-              individuality in the digital age.
-            </p>
-            <Link to="/products" className="border border-[#059669] text-[#059669] px-6 py-2 rounded hover:bg-[#059669] hover:text-white transition-colors">
-              Discover Products
-            </Link>
         </section>
       </div>
     </div>

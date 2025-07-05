@@ -1,12 +1,25 @@
 import api from './api';
 
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  is_active: boolean;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Product {
   id: number;
+  slug: string;
   name: string;
   description: string;
   price: string;
   image?: string;
-  category?: string;
+  category?: Category;
   created_at: string;
   updated_at: string;
   variants?: ProductVariant[];
@@ -35,6 +48,7 @@ export interface CollectionGalleryImage {
 export interface CollectionImage {
   id: number;
   title: string;
+  image?: string;
   order: number;
   is_active: boolean;
   created_at: string;
@@ -43,7 +57,7 @@ export interface CollectionImage {
 
 export interface CategoryImage {
   id: number;
-  category: string;
+  category: Category;
   image: string;
   title?: string;
   description?: string;
@@ -63,12 +77,12 @@ export const getProducts = async (params = {}): Promise<Product[]> => {
   }
 };
 
-export const getProductById = async (id: number): Promise<Product> => {
+export const getProductBySlug = async (slug: string): Promise<Product> => {
   try {
-    const response = await api.get(`/api/products/${id}/`);
+    const response = await api.get(`/api/products/${slug}/`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching product ${id}:`, error);
+    console.error(`Error fetching product with slug ${slug}:`, error);
     throw error;
   }
 };
@@ -99,6 +113,16 @@ export const getCollectionImages = async (): Promise<CollectionImage[]> => {
     return response.data;
   } catch (error) {
     console.error('Error fetching collection images:', error);
+    return [];
+  }
+};
+
+export const getCategories = async (): Promise<Category[]> => {
+  try {
+    const response = await api.get('/api/products/categories/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
     return [];
   }
 };

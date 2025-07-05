@@ -7,10 +7,11 @@ import { ProductPhoto } from '../types/review';
 
 interface ProductPhotosProps {
   productId: number;
+  productSlug: string;
   productName: string;
 }
 
-const ProductPhotos: React.FC<ProductPhotosProps> = ({ productId, productName }) => {
+const ProductPhotos: React.FC<ProductPhotosProps> = ({ productId, productSlug, productName }) => {
   const { user } = useAuth();
   const [photos, setPhotos] = useState<ProductPhoto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +109,7 @@ const ProductPhotos: React.FC<ProductPhotosProps> = ({ productId, productName })
           </p>
           {user && (
             <Link
-              to={`/products/${productId}/upload-photo`}
+              to={`/products/${productSlug}/upload-photo`}
               className="inline-flex items-center px-4 py-2 bg-[#059669] text-white font-medium rounded-lg hover:bg-[#059669]/90 transition-colors"
             >
               Be the First to Share a Photo

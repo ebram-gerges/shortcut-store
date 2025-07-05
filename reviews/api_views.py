@@ -8,7 +8,7 @@ from products.models import Product
 from rest_framework import serializers
 
 class ProductReviewViewSet(viewsets.ModelViewSet):
-    queryset = ProductReview.objects.all()
+    queryset = ProductReview.objects.select_related('user', 'product').all()
     serializer_class = ProductReviewSerializer
     
     def get_permissions(self):
@@ -21,24 +21,17 @@ class ProductReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         product_id = self.request.query_params.get('product_id')
         if product_id:
-            return ProductReview.objects.filter(product_id=product_id)
-        return ProductReview.objects.all()
+            return ProductReview.objects.select_related('user', 'product').filter(product_id=product_id)
+        return ProductReview.objects.select_related('user', 'product').all()
 
     def perform_create(self, serializer):
         product_id = self.request.data.get('product')
         product = get_object_or_404(Product, id=product_id)
-        review_id = self.request.data.get('review')
-        review = None
-        if review_id:
-            try:
-                review = ProductReview.objects.get(id=review_id)
-            except ProductReview.DoesNotExist:
-                raise serializers.ValidationError(f"Review with ID {review_id} does not exist")
-        serializer.save(user=self.request.user, product=product, review=review)
+        serializer.save(user=self.request.user, product=product)
 
     @action(detail=False, methods=['get'])
     def my_reviews(self, request):
-        reviews = ProductReview.objects.filter(user=request.user)
+        reviews = ProductReview.objects.select_related('user', 'product').filter(user=request.user)
         serializer = self.get_serializer(reviews, many=True)
         return Response(serializer.data)
 
@@ -55,7 +48,7 @@ class ProductReviewViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class WebsiteReviewViewSet(viewsets.ModelViewSet):
-    queryset = WebsiteReview.objects.all()
+    queryset = WebsiteReview.objects.select_related('user').all()
     serializer_class = WebsiteReviewSerializer
     
     def get_permissions(self):
@@ -70,7 +63,7 @@ class WebsiteReviewViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def my_reviews(self, request):
-        reviews = WebsiteReview.objects.filter(user=request.user)
+        reviews = WebsiteReview.objects.select_related('user').filter(user=request.user)
         serializer = self.get_serializer(reviews, many=True)
         return Response(serializer.data)
 
@@ -87,7 +80,7 @@ class WebsiteReviewViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProductPhotoViewSet(viewsets.ModelViewSet):
-    queryset = ProductPhoto.objects.filter(is_approved=True)
+    queryset = ProductPhoto.objects.select_related('user', 'product').filter(is_approved=True)
     serializer_class = ProductPhotoSerializer
     
     def get_permissions(self):
@@ -100,24 +93,17 @@ class ProductPhotoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         product_id = self.request.query_params.get('product_id')
         if product_id:
-            return ProductPhoto.objects.filter(product_id=product_id, is_approved=True)
-        return ProductPhoto.objects.filter(is_approved=True)
+            return ProductPhoto.objects.select_related('user', 'product').filter(product_id=product_id, is_approved=True)
+        return ProductPhoto.objects.select_related('user', 'product').filter(is_approved=True)
 
     def perform_create(self, serializer):
         product_id = self.request.data.get('product')
         product = get_object_or_404(Product, id=product_id)
-        review_id = self.request.data.get('review')
-        review = None
-        if review_id:
-            try:
-                review = ProductReview.objects.get(id=review_id)
-            except ProductReview.DoesNotExist:
-                raise serializers.ValidationError(f"Review with ID {review_id} does not exist")
-        serializer.save(user=self.request.user, product=product, review=review)
+        serializer.save(user=self.request.user, product=product)
 
     @action(detail=False, methods=['get'])
     def my_photos(self, request):
-        photos = ProductPhoto.objects.filter(user=request.user)
+        photos = ProductPhoto.objects.select_related('user', 'product').filter(user=request.user)
         serializer = self.get_serializer(photos, many=True)
         return Response(serializer.data)
 

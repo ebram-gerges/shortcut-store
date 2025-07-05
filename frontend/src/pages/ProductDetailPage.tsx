@@ -5,17 +5,18 @@ import { Heart, Plus, Minus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
-import { getProductById } from '../services/productService';
+import { getProductBySlug } from '../services/productService';
 import { Product as ProductType } from '../types/product';
 import ProductReviews from '../components/ProductReviews';
 import Slider from 'react-slick';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import NotFoundPage from './NotFoundPage';
 
 type ProductWithSale = ProductType & { sale_percent?: number };
 
 const ProductDetailPage = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [product, setProduct] = useState<ProductWithSale | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +39,10 @@ const ProductDetailPage = () => {
   const SLIDE_DURATION = 600; // ms
 
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
     setLoading(true);
     setError(null);
-    getProductById(Number(id))
+    getProductBySlug(slug)
       .then((data) => {
         setProduct(data);
         setSelectedColor(Array.isArray(data.colors) && data.colors.length > 0 ? data.colors[0] : '');
@@ -52,7 +53,7 @@ const ProductDetailPage = () => {
         setError('Product not found');
         setLoading(false);
       });
-  }, [id]);
+  }, [slug]);
 
   // Auto-select the first available color and the smallest available size variant when product or options change
   useEffect(() => {
@@ -147,7 +148,7 @@ const ProductDetailPage = () => {
     return <div className="text-white text-center py-20">Loading product...</div>;
   }
   if (error || !product) {
-    return <div className="text-white text-center py-20">{error || 'Product not found'}</div>;
+    return <NotFoundPage />;
   }
 
   const handleAddToCart = () => {
@@ -484,7 +485,7 @@ const ProductDetailPage = () => {
                 {/* Add Review Button */}
                 <div className="flex justify-end mb-6">
                   <Link
-                    to={`/products/${product.id}/review`}
+                    to={`/products/${product.slug}/review`}
                     className="inline-flex items-center px-6 py-3 bg-[#059669] text-white font-semibold rounded-lg shadow hover:bg-[#059669]/90 transition-colors"
                   >
                     Add a review to {product.name}

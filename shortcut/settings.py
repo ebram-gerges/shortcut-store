@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
+    'django_attach.apps.DjangoAttachConfig',
 ]
 
 MIDDLEWARE = [
@@ -229,15 +230,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Allauth settings
-# Minimal working configuration
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_LOGOUT_ON_GET = True
-ACCOUNT_RATE_LIMITS = {'login_failed': '5/m'}
-ACCOUNT_SESSION_REMEMBER = True
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 

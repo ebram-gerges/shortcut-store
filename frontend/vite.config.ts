@@ -8,8 +8,8 @@ export default defineConfig({
       '/api': 'http://localhost:8000',
       // '/static': 'http://localhost:8001', // Uncomment if you need static proxy
     },
+    host: '0.0.0.0', // Allow access from LAN
+    // allowedHosts: ['1b35-196-131-168-107.ngrok-free.app'], // Remove ngrok for local
   },
-  // Removed lucide-react from optimizeDeps.exclude to fix icon loading
-  // To set the API base URL for the frontend, use a .env file with:
-  // VITE_API_BASE_URL=http://localhost:8000
+  // Use import.meta.env.VITE_API_BASE_URL for all API calls in the frontend
 });

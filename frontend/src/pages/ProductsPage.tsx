@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ChevronDown, Menu } from 'lucide-react';
 // import { mockProducts } from '../data/mockData';
-import { useCurrency } from '../context/CurrencyContext';
-import { useCart } from '../context/CartContext';
-import { useWishlist } from '../context/WishlistContext';
-import { getProducts, Product } from '../services/productService';
+// import { useCurrency } from '../context/CurrencyContext';
+// import { useCart } from '../context/CartContext';
+// import { useWishlist } from '../context/WishlistContext';
+import { getProducts, Product, getCategories, Category } from '../services/productService';
+// @ts-expect-error: ProductCard is a JS file with no type declaration
 import ProductCard from '../components/ProductCard';
+import Skeleton from '../components/ui/Skeleton';
 
 function getQueryParams(search: string) {
   const params = new URLSearchParams(search);
@@ -42,28 +44,36 @@ const ProductsPage = () => {
     season: true,
   });
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const { currency } = useCurrency();
-  const conversionRate = 50; // 1 USD = 50 EGP
-  const { addItem } = useCart();
-  const { items: wishlistItems, addItem: addWishlistItem } = useWishlist();
+  // const { currency } = useCurrency();
+  // const conversionRate = 50; // 1 USD = 50 EGP
+  // const { addItem } = useCart();
+  // const { items: wishlistItems, addItem: addWishlistItem } = useWishlist();
 
   // Fetch products from API
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    getProducts()
-      .then((data) => {
-        setProducts(data);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [fetchedProducts, fetchedCategories] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setProducts(fetchedProducts);
+        setCategories(fetchedCategories);
+      } catch {
+        setError('Failed to load data.');
+      } finally {
         setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load products.');
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
   // Set initial filters from query params
@@ -98,9 +108,9 @@ const ProductsPage = () => {
   const filteredProducts = products
     .filter(product => {
       // Category filter
-      if (filters.categories.length > 0 && !filters.categories.includes(product.category ? product.category : '')) return false;
+      if (filters.categories.length > 0 && !filters.categories.includes(product.category?.slug || '')) return false;
       // Season filter
-      if (filters.seasons.length > 0 && !filters.seasons.includes((product as { season?: string }).season)) return false;
+      if (filters.seasons.length > 0 && !filters.seasons.includes((product as { season?: string }).season || '')) return false;
       // Availability filter
       if (filters.availability.length > 0) {
         if (filters.availability.includes('in-stock') && !product.in_stock) return false;
@@ -127,21 +137,6 @@ const ProductsPage = () => {
       return 0; // 'no-sort' or default
     });
 
-  const handleQuickWishlist = (product: Product) => {
-    addWishlistItem({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      color: Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : '',
-      size: Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : '',
-    });
-  };
-
-  const isInWishlist = (product: Product) =>
-    wishlistItems.some(
-      (item) => item.id === product.id && item.color === (Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : '') && item.size === (Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : '')
-    );
-
   // Prevent body scroll when filters sidebar is open
   useEffect(() => {
     if (showMobileFilters) {
@@ -155,16 +150,16 @@ const ProductsPage = () => {
   }, [showMobileFilters]);
 
   // Helper: Get unique colors and sizes for a given category from products
-  const getUniqueColorsForCategory = (category: string) => {
+  const getUniqueColorsForCategory = (categorySlug: string) => {
     const colors = new Set<string>();
-    products.filter(p => p.category === category).forEach(p => {
+    products.filter(p => p.category?.slug === categorySlug).forEach(p => {
       (p.colors || []).forEach(c => colors.add(c));
     });
     return Array.from(colors);
   };
-  const getUniqueSizesForCategory = (category: string) => {
+  const getUniqueSizesForCategory = (categorySlug: string) => {
     const sizes = new Set<string>();
-    products.filter(p => p.category === category).forEach(p => {
+    products.filter(p => p.category?.slug === categorySlug).forEach(p => {
       (p.sizes || []).forEach(s => sizes.add(s));
     });
     return Array.from(sizes);
@@ -178,6 +173,43 @@ const ProductsPage = () => {
       sizes: [],
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="relative z-20 min-h-screen pt-4 sm:pt-8 pb-8">
+        <div className="px-4 mx-auto max-w-7xl lg:px-8">
+          <div className="flex flex-col gap-8 lg:flex-row">
+            {/* Sidebar skeleton */}
+            <div className="hidden lg:block lg:w-1/4">
+              <div className="p-6 pb-4 rounded-lg border backdrop-blur-xl bg-white/20 dark:bg-black/20 border-zinc-400/50 dark:border-zinc-700/50">
+                <Skeleton className="h-8 w-1/2 mb-8" />
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="mb-8">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Product grid skeleton */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="rounded-2xl shadow-xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 pb-12 w-full mx-auto min-h-[320px] sm:min-h-[340px]">
+                  <Skeleton className="w-full aspect-[4/5] rounded-t-2xl mb-4" />
+                  <div className="p-2 sm:p-4">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-2" />
+                    <Skeleton className="h-4 w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative z-20 min-h-screen pt-4 sm:pt-8 pb-8">
@@ -214,132 +246,49 @@ const ProductsPage = () => {
                   className={`transition-all duration-500 ease overflow-hidden ${collapsed.category ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[500px] opacity-100 pointer-events-auto'}`}
                 >
                   <div className="space-y-6">
-                    {/* T-Shirts */}
-                    <div>
-                      <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
-                        <input
-                          type="checkbox"
-                          className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories[0] === 'tshirts'}
-                          onChange={() => handleCategorySelect('tshirts')}
-                        />
-                        T-Shirts
-                      </label>
-                      {filters.categories[0] === 'tshirts' && (
-                        <>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueColorsForCategory('tshirts').map(color => (
-                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.colors?.includes(color)}
-                                  onChange={() => handleFilterChange('colors', color)}
-                                />
-                                <span className="capitalize">{color}</span>
-                              </label>
-                            ))}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueSizesForCategory('tshirts').map(size => (
-                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.sizes?.includes(size)}
-                                  onChange={() => handleFilterChange('sizes', size)}
-                                />
-                                <span>{size}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    {/* Basic Tops */}
-                    <div>
-                      <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
-                        <input
-                          type="checkbox"
-                          className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories[0] === 'basictop'}
-                          onChange={() => handleCategorySelect('basictop')}
-                        />
-                        Basic Tops
-                      </label>
-                      {filters.categories[0] === 'basictop' && (
-                        <>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueColorsForCategory('basictop').map(color => (
-                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.colors?.includes(color)}
-                                  onChange={() => handleFilterChange('colors', color)}
-                                />
-                                <span className="capitalize">{color}</span>
-                              </label>
-                            ))}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueSizesForCategory('basictop').map(size => (
-                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.sizes?.includes(size)}
-                                  onChange={() => handleFilterChange('sizes', size)}
-                                />
-                                <span>{size}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    {/* Sets */}
-                    <div>
-                      <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
-                        <input
-                          type="checkbox"
-                          className="mr-2 bg-zinc-700 border-zinc-600"
-                          checked={filters.categories[0] === 'sets'}
-                          onChange={() => handleCategorySelect('sets')}
-                        />
-                        Sets
-                      </label>
-                      {filters.categories[0] === 'sets' && (
-                        <>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueColorsForCategory('sets').map(color => (
-                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.colors?.includes(color)}
-                                  onChange={() => handleFilterChange('colors', color)}
-                                />
-                                <span className="capitalize">{color}</span>
-                              </label>
-                            ))}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueSizesForCategory('sets').map(size => (
-                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.sizes?.includes(size)}
-                                  onChange={() => handleFilterChange('sizes', size)}
-                                />
-                                <span>{size}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    {categories.map(category => (
+                      <div key={category.id}>
+                        <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
+                          <input
+                            type="checkbox"
+                            className="mr-2 bg-zinc-700 border-zinc-600"
+                            checked={filters.categories[0] === category.slug}
+                            onChange={() => handleCategorySelect(category.slug)}
+                          />
+                          {category.name}
+                        </label>
+                        {filters.categories[0] === category.slug && (
+                          <>
+                            <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                              {getUniqueColorsForCategory(category.slug).map(color => (
+                                <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                  <input
+                                    type="checkbox"
+                                    className="mr-1 bg-zinc-700 border-zinc-600"
+                                    checked={filters.colors?.includes(color)}
+                                    onChange={() => handleFilterChange('colors', color)}
+                                  />
+                                  <span className="capitalize">{color}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                              {getUniqueSizesForCategory(category.slug).map(size => (
+                                <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                  <input
+                                    type="checkbox"
+                                    className="mr-1 bg-zinc-700 border-zinc-600"
+                                    checked={filters.sizes?.includes(size)}
+                                    onChange={() => handleFilterChange('sizes', size)}
+                                  />
+                                  <span>{size}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -471,132 +420,49 @@ const ProductsPage = () => {
                 className={`transition-all duration-500 ease overflow-hidden ${collapsed.category ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[500px] opacity-100 pointer-events-auto'}`}
               >
                 <div className="space-y-6">
-                  {/* T-Shirts */}
-                  <div>
-                    <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
-                      <input
-                        type="checkbox"
-                        className="mr-2 bg-zinc-700 border-zinc-600"
-                        checked={filters.categories[0] === 'tshirts'}
-                        onChange={() => handleCategorySelect('tshirts')}
-                      />
-                      T-Shirts
-                    </label>
-                    {filters.categories[0] === 'tshirts' && (
-                      <>
-                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                          {getUniqueColorsForCategory('tshirts').map(color => (
-                            <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                              <input
-                                type="checkbox"
-                                className="mr-1 bg-zinc-700 border-zinc-600"
-                                checked={filters.colors?.includes(color)}
-                                onChange={() => handleFilterChange('colors', color)}
-                              />
-                              <span className="capitalize">{color}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                          {getUniqueSizesForCategory('tshirts').map(size => (
-                            <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                              <input
-                                type="checkbox"
-                                className="mr-1 bg-zinc-700 border-zinc-600"
-                                checked={filters.sizes?.includes(size)}
-                                onChange={() => handleFilterChange('sizes', size)}
-                              />
-                              <span>{size}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {/* Basic Tops */}
-                  <div>
-                    <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
-                      <input
-                        type="checkbox"
-                        className="mr-2 bg-zinc-700 border-zinc-600"
-                        checked={filters.categories[0] === 'basictop'}
-                        onChange={() => handleCategorySelect('basictop')}
-                      />
-                      Basic Tops
-                    </label>
-                    {filters.categories[0] === 'basictop' && (
-                      <>
-                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                          {getUniqueColorsForCategory('basictop').map(color => (
-                            <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                              <input
-                                type="checkbox"
-                                className="mr-1 bg-zinc-700 border-zinc-600"
-                                checked={filters.colors?.includes(color)}
-                                onChange={() => handleFilterChange('colors', color)}
-                              />
-                              <span className="capitalize">{color}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                          {getUniqueSizesForCategory('basictop').map(size => (
-                            <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                              <input
-                                type="checkbox"
-                                className="mr-1 bg-zinc-700 border-zinc-600"
-                                checked={filters.sizes?.includes(size)}
-                                onChange={() => handleFilterChange('sizes', size)}
-                              />
-                              <span>{size}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {/* Sets */}
-                  <div>
-                    <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
-                      <input
-                        type="checkbox"
-                        className="mr-2 bg-zinc-700 border-zinc-600"
-                        checked={filters.categories[0] === 'sets'}
-                        onChange={() => handleCategorySelect('sets')}
-                      />
-                      Sets
-                    </label>
-                    {filters.categories[0] === 'sets' && (
-                      <>
-                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                          {getUniqueColorsForCategory('sets').map(color => (
-                            <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                              <input
-                                type="checkbox"
-                                className="mr-1 bg-zinc-700 border-zinc-600"
-                                checked={filters.colors?.includes(color)}
-                                onChange={() => handleFilterChange('colors', color)}
-                              />
-                              <span className="capitalize">{color}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                          {getUniqueSizesForCategory('sets').map(size => (
-                            <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                              <input
-                                type="checkbox"
-                                className="mr-1 bg-zinc-700 border-zinc-600"
-                                checked={filters.sizes?.includes(size)}
-                                onChange={() => handleFilterChange('sizes', size)}
-                              />
-                              <span>{size}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  {categories.map(category => (
+                    <div key={category.id}>
+                      <label className="flex items-center font-semibold text-zinc-900 dark:text-zinc-200">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
+                          checked={filters.categories[0] === category.slug}
+                          onChange={() => handleCategorySelect(category.slug)}
+                        />
+                        {category.name}
+                      </label>
+                      {filters.categories[0] === category.slug && (
+                        <>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueColorsForCategory(category.slug).map(color => (
+                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.colors?.includes(color)}
+                                  onChange={() => handleFilterChange('colors', color)}
+                                />
+                                <span className="capitalize">{color}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                            {getUniqueSizesForCategory(category.slug).map(size => (
+                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  className="mr-1 bg-zinc-700 border-zinc-600"
+                                  checked={filters.sizes?.includes(size)}
+                                  onChange={() => handleFilterChange('sizes', size)}
+                                />
+                                <span>{size}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

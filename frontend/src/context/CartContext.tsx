@@ -3,6 +3,7 @@ import { getCart, addToCart } from '../services/cartService';
 
 interface CartItem {
   id: number;
+  slug: string;
   name: string;
   price: number;
   quantity: number;
@@ -109,6 +110,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             variant?: { color?: string; size?: string };
           }): CartItem => ({
             id: i.product.id,
+            slug: '', // TODO: set slug if available from backend
             name: i.product.name,
             price: Number(i.product.price),
             quantity: i.quantity,

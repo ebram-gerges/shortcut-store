@@ -12,6 +12,10 @@ const VerifyEmailPage: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [email, setEmail] = useState(() => localStorage.getItem('pending_verification_email') || '');
+  const [resendMessage, setResendMessage] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, ''); // Only digits
@@ -56,6 +60,35 @@ const VerifyEmailPage: React.FC = () => {
       inputRef.current?.focus();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) {
+      setResendMessage('Please enter your email to resend the code.');
+      return;
+    }
+    setResendLoading(true);
+    setResendMessage('');
+    try {
+      await axios.post('/api/accounts/resend-verification/', { email });
+      setResendMessage('Verification code sent! Check your email.');
+      setResendDisabled(true);
+      setResendTimer(60);
+      const interval = setInterval(() => {
+        setResendTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setResendDisabled(false);
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      setResendMessage('Failed to resend code. Try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -124,6 +157,15 @@ const VerifyEmailPage: React.FC = () => {
           >
             Cancel &amp; Log Out
             </button>
+          <button
+            type="button"
+            className="py-2 mt-2 w-full text-sm rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200"
+            onClick={handleResend}
+            disabled={resendLoading || resendDisabled}
+          >
+            {resendLoading ? 'Sending...' : resendDisabled ? `Resend available in ${resendTimer}s` : 'Resend Code'}
+          </button>
+          {resendMessage && <div className="text-sm text-center text-green-400 mt-2">{resendMessage}</div>}
         </form>
       </div>
     </div>

@@ -8,10 +8,11 @@ import { FaStarHalfAlt } from 'react-icons/fa';
 
 interface ProductReviewsProps {
   productId: number;
+  productSlug: string;
   productName: string;
 }
 
-const ProductReviews: React.FC<ProductReviewsProps> = ({ productId, productName }) => {
+const ProductReviews: React.FC<ProductReviewsProps> = ({ productId, productSlug, productName }) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,7 +169,7 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ productId, productName 
           </p>
           {user && (
             <Link
-              to={`/products/${productId}/review`}
+              to={`/products/${productSlug}/review`}
               className="inline-flex items-center px-4 py-2 bg-[#059669] text-white font-medium rounded-lg hover:bg-[#059669]/90 transition-colors"
             >
               Be the First to Review

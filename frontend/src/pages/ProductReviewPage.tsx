@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Star, ArrowLeft, Send, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { reviewService } from '../services/reviewService';
-import { getProductById } from '../services/productService';
+import { getProductBySlug } from '../services/productService';
 import { ProductReview } from '../types/review';
 import { Product } from '../types/product';
 
 const ProductReviewPage = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
@@ -26,24 +26,21 @@ const ProductReviewPage = () => {
   // Check authentication
   useEffect(() => {
     if (!user) {
-      navigate('/login', { state: { from: `/products/${id}/review` } });
+      navigate('/login', { state: { from: `/products/${slug}/review` } });
       return;
     }
-  }, [user, navigate, id]);
+  }, [user, navigate, slug]);
 
   useEffect(() => {
-    if (!id || !user) return;
-    
+    if (!slug || !user) return;
     const fetchData = async () => {
       try {
         setLoading(true);
         const [productData, reviews] = await Promise.all([
-          getProductById(Number(id)),
-          reviewService.getProductReviews(Number(id))
+          getProductBySlug(slug),
+          reviewService.getProductReviews(slug)
         ]);
-        
         setProduct(productData);
-        
         // Check if user has already reviewed this product
         const userReview = reviews.find((review: ProductReview) => review.user.id === user?.id);
         if (userReview) {
@@ -57,9 +54,8 @@ const ProductReviewPage = () => {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [id, user?.id]);
+  }, [slug, user?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +89,7 @@ const ProductReviewPage = () => {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/products/${product.id}`);
+        navigate(`/products/${product.slug}`);
       }, 2000);
     } catch {
       setError('Failed to submit review. Please try again.');
@@ -124,7 +120,7 @@ const ProductReviewPage = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate(`/products/${product.id}`)}
+            onClick={() => navigate(`/products/${product.slug}`)}
             className="inline-flex items-center text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

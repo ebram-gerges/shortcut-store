@@ -3,12 +3,47 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django_attach.models import Attachment
+from django.contrib.contenttypes.fields import GenericRelation
 
+
+class Category(models.Model):
+    """Model for product categories"""
+    name = models.CharField(max_length=100, unique=True, db_index=True)
+    slug = models.SlugField(max_length=100, unique=True, db_index=True)
+    description = models.TextField(blank=True, help_text="Category description")
+    image = models.ImageField(upload_to='categories/', blank=True, null=True, help_text="Category image")
+    is_active = models.BooleanField(default=True, help_text="Enable/disable this category")
+    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+        indexes = [
+            models.Index(fields=['name', 'is_active']),
+            models.Index(fields=['slug', 'is_active']),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    @property
+    def product_count(self):
+        return self.products.count()
 
 class CollectionImage(models.Model):
     """Model for storing hero section collection (gallery)"""
     title = models.CharField(max_length=200, blank=True, null=True, help_text="Descriptive title for the collection")
-    # image = models.ImageField(upload_to='collections/main/', blank=True, null=True, help_text="Main image for this collection (used in hero section)")
+    image = models.ImageField(upload_to='collections/main/', blank=True, null=True, help_text="Main image for this collection (used in hero section)")
     is_active = models.BooleanField(default=True, help_text="Enable/disable this collection")
     order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -64,25 +99,42 @@ class ColorChoices(models.TextChoices):
     OTHER = 'Other', _('Other')
 
 class Product(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, db_index=True)
+    slug = models.SlugField(max_length=220, unique=True, db_index=True, blank=True)
     description = models.TextField(blank=True, help_text="Product description")
-    price = models.DecimalField(max_digits=8, decimal_places=2)
+    price = models.DecimalField(max_digits=8, decimal_places=2, db_index=True)
     sale_percent = models.PositiveIntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         blank=True,
         null=True,
-        help_text="Admin-only field: discount percent (0-100)"
+        help_text="Admin-only field: discount percent (0-100)",
+        db_index=True
     )
     indoor_image = models.ImageField(upload_to='products/indoor/', blank=True, null=True, help_text="Indoor image for product card (main image)")
     outdoor_image = models.ImageField(upload_to='products/outdoor/', blank=True, null=True, help_text="Outdoor/hover image for product card")
-    created_at = models.DateTimeField(auto_now_add=True)
-    CATEGORY_CHOICES = [
-        ('tshirts', 'T-Shirts'),
-        ('basictop', 'Basic Tops'),
-        ('shoes', 'Shoes'),
-        ('sets', 'Sets'),
-    ]
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='products', db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['category', 'sale_percent']),
+            models.Index(fields=['price', 'created_at']),
+            models.Index(fields=['category', 'price']),
+            models.Index(fields=['name', 'category']),
+            models.Index(fields=['slug']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            slug = base_slug
+            n = 1
+            while Product.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{n}"
+                n += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
     @property
     def discounted_price(self):
@@ -129,6 +181,7 @@ class ProductColorVariant(models.Model):
     color_hex = models.CharField(max_length=7, blank=True, help_text="Hex color code (e.g., #000000)")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    attachments = GenericRelation(Attachment)
 
     class Meta:
         unique_together = ('product', 'color')
@@ -244,24 +297,15 @@ class ProductStock(models.Model):
             return True
         return False
 
-class CategoryImage(models.Model):
-    CATEGORY_CHOICES = [
-        ('tshirts', 'T-Shirts'),
-        ('basictop', 'Basic Top'),
-        ('sets', 'Suits'),
-    ]
-    category = models.CharField(max_length=32, choices=CATEGORY_CHOICES, unique=True)
-    image = models.ImageField(upload_to='category_images/', help_text="Image for this category card")
-    title = models.CharField(max_length=100, blank=True, null=True)
-    description = models.CharField(max_length=200, blank=True, null=True)
-    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
+class SiteAnnouncement(models.Model):
+    message = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['order', 'created_at']
-        verbose_name = "Category Image"
-        verbose_name_plural = "Category Images"
+        verbose_name = 'Site Announcement'
+        verbose_name_plural = 'Site Announcements'
 
     def __str__(self):
-        return f"{self.get_category_display()}"
+        return self.message

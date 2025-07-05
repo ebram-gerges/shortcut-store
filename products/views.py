@@ -8,6 +8,9 @@ import json
 from .models import Product, ProductColorVariant, ProductStock
 from cart.models import CartItem
 from wishlist.models import WishlistItem
+from django.contrib.admin.views.decorators import staff_member_required
+from .forms import ProductColorVariantBulkImageUploadForm
+from .models import ProductColorVariantImage, ProductColorVariant
 
 def product_list(request):
     # Filtering logic
@@ -569,3 +572,22 @@ def update_cart_quantity(request):
         return JsonResponse({'error': 'Invalid quantity value'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@staff_member_required
+def bulk_upload_color_variant_images(request):
+    if request.method == 'POST':
+        form = ProductColorVariantBulkImageUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            color_variant = form.cleaned_data['color_variant']
+            images = request.FILES.getlist('images')
+            for img in images:
+                ProductColorVariantImage.objects.create(color_variant=color_variant, image=img)
+            return render(request, 'admin/bulk_upload_color_variant_images.html', {
+                'form': ProductColorVariantBulkImageUploadForm(),
+                'success': True,
+                'color_variant': color_variant,
+                'uploaded_count': len(images),
+            })
+    else:
+        form = ProductColorVariantBulkImageUploadForm()
+    return render(request, 'admin/bulk_upload_color_variant_images.html', {'form': form})

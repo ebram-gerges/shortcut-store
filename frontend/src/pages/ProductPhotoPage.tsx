@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Camera, CheckCircle, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { reviewService } from '../services/reviewService';
-import { getProductById } from '../services/productService';
+import { getProductBySlug } from '../services/productService';
 import { ProductPhoto, CreateProductPhotoRequest } from '../types/review';
 import { Product } from '../types/product';
 
 const ProductPhotoPage = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,26 +27,23 @@ const ProductPhotoPage = () => {
   // Check authentication
   useEffect(() => {
     if (!user) {
-      navigate('/login', { state: { from: `/products/${id}/upload-photo` } });
+      navigate('/login', { state: { from: `/products/${slug}/upload-photo` } });
       return;
     }
-  }, [user, navigate, id]);
+  }, [user, navigate, slug]);
 
   useEffect(() => {
-    if (!id || !user) return;
-    
+    if (!slug || !user) return;
     const fetchData = async () => {
       try {
         setLoading(true);
         const [productData, photos] = await Promise.all([
-          getProductById(Number(id)),
+          getProductBySlug(slug),
           reviewService.getMyProductPhotos()
         ]);
-        
         setProduct(productData);
-        
         // Check if user has already uploaded a photo for this product
-        const userPhoto = photos.find((photo: ProductPhoto) => photo.product === Number(id));
+        const userPhoto = photos.find((photo: ProductPhoto) => photo.product === productData.id);
         if (userPhoto) {
           setExistingPhoto(userPhoto);
           setCaption(userPhoto.caption || '');
@@ -58,9 +55,8 @@ const ProductPhotoPage = () => {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [id]);
+  }, [slug, user]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -126,7 +122,7 @@ const ProductPhotoPage = () => {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/products/${product.id}`);
+        navigate(`/products/${product.slug}`);
       }, 2000);
     } catch {
       setError('Failed to upload photo. Please try again.');
@@ -157,7 +153,7 @@ const ProductPhotoPage = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate(`/products/${product.id}`)}
+            onClick={() => navigate(`/products/${product.slug}`)}
             className="inline-flex items-center text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

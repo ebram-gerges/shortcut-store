@@ -21,6 +21,7 @@ import { Toaster } from 'react-hot-toast';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import Header from './components/Header';
 import OrderDetailPage from './pages/OrderDetailPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Suppress React Router future flag warnings
 const originalWarn = console.warn;
@@ -117,8 +118,8 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Layout toggleTheme={toggleTheme} theme={theme}><HomePage /></Layout>} />
                     <Route path="/products" element={<Layout toggleTheme={toggleTheme} theme={theme}><ProductsPage /></Layout>} />
-                    <Route path="/products/:id" element={<Layout toggleTheme={toggleTheme} theme={theme}><ProductDetailPage /></Layout>} />
-                    <Route path="/products/:id/review" element={<Layout toggleTheme={toggleTheme} theme={theme}><ProductReviewPage /></Layout>} />
+                    <Route path="/products/:slug" element={<Layout toggleTheme={toggleTheme} theme={theme}><ProductDetailPage /></Layout>} />
+                    <Route path="/products/:slug/review" element={<Layout toggleTheme={toggleTheme} theme={theme}><ProductReviewPage /></Layout>} />
                     <Route path="/review-website" element={<Layout toggleTheme={toggleTheme} theme={theme}><WebsiteReviewPage /></Layout>} />
                     <Route path="/login" element={<Layout toggleTheme={toggleTheme} theme={theme}><LoginPage /></Layout>} />
                     <Route path="/signup" element={<Layout toggleTheme={toggleTheme} theme={theme}><SignupPage /></Layout>} />
@@ -129,6 +130,7 @@ function App() {
                     <Route path="/orders" element={<Layout toggleTheme={toggleTheme} theme={theme}><OrdersPage /></Layout>} />
                     <Route path="/track-order" element={<Layout toggleTheme={toggleTheme} theme={theme}><OrderTrackingPage /></Layout>} />
                     <Route path="/order/:id" element={<Layout toggleTheme={toggleTheme} theme={theme}><OrderDetailPage /></Layout>} />
+                    <Route path="*" element={<Layout toggleTheme={toggleTheme} theme={theme}><NotFoundPage /></Layout>} />
                   </Routes>
                 </BrowserRouter>
               </ErrorBoundary>

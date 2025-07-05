@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Heart, ShoppingCart, ChevronDown, LogOut, Sun, Moon, Menu, X as Close, Home, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { getCategories, Category } from '../services/productService';
 import { useAuth } from '../context/AuthContext';
 import CartSidebar from './CartSidebar';
 import WishlistSidebar from './WishlistSidebar';
@@ -15,22 +16,20 @@ const getInitials = (name: string) => {
 };
 
 const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState<string | null>(null);
-  const [isCartOpen, setIsCartOpenRaw] = useState(false);
-  const [isWishlistOpen, setIsWishlistOpenRaw] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBottomNav, setShowBottomNav] = useState(false);
   const [navbarVisible, setNavbarVisible] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
   const { getTotalItems: getCartTotalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const { user, logout } = useAuth();
-
-  const toggleDropdown = (dropdown: string) => {
-    setIsDropdownOpen(isDropdownOpen === dropdown ? null : dropdown);
-  };
 
   const handleLogout = () => {
     logout();
@@ -60,25 +59,63 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await getCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   // Only allow one sidebar open at a time
-  const setIsCartOpen = (open: boolean) => {
-    if (open) setIsWishlistOpenRaw(false);
-    setIsCartOpenRaw(open);
+  const handleSetIsCartOpen = (open: boolean) => {
+    if (open) setIsWishlistOpen(false);
+    setIsCartOpen(open);
   };
-  const setIsWishlistOpen = (open: boolean) => {
-    if (open) setIsCartOpenRaw(false);
-    setIsWishlistOpenRaw(open);
+  const handleSetIsWishlistOpen = (open: boolean) => {
+    if (open) setIsCartOpen(false);
+    setIsWishlistOpen(open);
   };
+
+  // Always show bottom nav on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      setShowBottomNav(window.innerWidth < 1024); // lg breakpoint
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close user menu on outside click or route change
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+    function handleClick(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [isUserMenuOpen]);
+  useEffect(() => {
+    setIsUserMenuOpen(false);
+  }, [location]);
 
   return (
     <>
-      <div className={`fixed top-0 z-50 w-full border-b backdrop-blur-lg transition-transform duration-300 bg-white/60 dark:bg-black/60 border-zinc-200 dark:border-zinc-500 ${navbarVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-0 z-50 w-full border-b border-zinc-200 dark:border-zinc-700 bg-white/60 dark:bg-black/60 backdrop-blur-xl shadow-[0_2px_16px_0_rgba(0,0,0,0.08)] transition-transform duration-300 ${navbarVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Main navigation (always visible) */}
         <div className="px-4">
           <div className="flex relative justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="whitespace-nowrap flex items-center text-xl font-bold text-black dark:text-white hover:text-[#059669] transition-colors">
-              <img src="http://192.168.1.4:8000/media/site-logo.svg" alt="Shortcut Store Logo" style={{ height: 40, width: 'auto' }} className="mr-2" />
+              <img src={import.meta.env.VITE_API_BASE_URL + "/media/site-logo.svg"} alt="Shortcut Store Logo" style={{ height: 40, width: 'auto' }} className="mr-2" />
             </Link>
 
             {/* Desktop Navigation (lg and up) */}
@@ -96,62 +133,19 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   </Link>
                 </div>
               ))}
-              <div key="nav-tshirts-dropdown" className="inline-block relative align-middle group">
-                <button
-                  onClick={() => toggleDropdown('tshirts')}
-                  className="whitespace-nowrap flex items-center text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
-                >
-                  T-Shirts <ChevronDown className="ml-1 w-4 h-4" />
-                  <span
-                    className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
-                  ></span>
-                </button>
-                {isDropdownOpen === 'tshirts' && (
-                  <div className="absolute left-0 top-full z-10 py-2 mt-2 w-48 rounded-lg shadow-lg bg-zinc-800">
-                    <Link to="/products?category=tshirts" className="block px-4 py-2 text-white hover:bg-zinc-700">
-                      All T-Shirts
-                    </Link>
-                    <Link to="/products?category=tshirts-graphic" className="block px-4 py-2 text-white hover:bg-zinc-700">
-                      Graphic Tees
-                    </Link>
-                    <Link to="/products?category=tshirts-basic" className="block px-4 py-2 text-white hover:bg-zinc-700">
-                      Basic Tees
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <div key="nav-bottoms-dropdown" className="inline-block relative align-middle group">
-                <button
-                  onClick={() => toggleDropdown('bottoms')}
-                  className="whitespace-nowrap flex items-center text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
-                >
-                  Bottoms <ChevronDown className="ml-1 w-4 h-4" />
-                  <span
-                    className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
-                  ></span>
-                </button>
-                {isDropdownOpen === 'bottoms' && (
-                  <div className="absolute left-0 top-full z-10 py-2 mt-2 w-48 rounded-lg shadow-lg bg-zinc-800">
-                    <Link to="/products?category=bottoms-pants" className="block px-4 py-2 text-white hover:bg-zinc-700">
-                      Pants
-                    </Link>
-                    <Link to="/products?category=bottoms-shorts" className="block px-4 py-2 text-white hover:bg-zinc-700">
-                      Shorts
-                    </Link>
-                    <Link to="/products?category=bottoms-jeans" className="block px-4 py-2 text-white hover:bg-zinc-700">
-                      Jeans
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <div key="nav-shoes" className="inline-block relative align-middle group">
-                <Link to="/products?category=shoes" className="whitespace-nowrap block text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1">
-                  Shoes
-                  <span
-                    className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
-                  ></span>
-                </Link>
-              </div>
+              {categories.map(category => (
+                <div key={`nav-${category.slug}`} className="inline-block relative align-middle group">
+                  <Link
+                    to={`/products?category=${category.slug}`}
+                    className="whitespace-nowrap block text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
+                  >
+                    {category.name}
+                    <span
+                      className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
+                    ></span>
+                  </Link>
+                </div>
+              ))}
               <div key="nav-customer-service" className="inline-block relative align-middle group">
                 <Link to="/products" className="whitespace-nowrap block text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1">
                   Customer Service
@@ -173,10 +167,13 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               </button>
 
               {user ? (
-                <div className="relative">
+                <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center space-x-2 text-black rounded-lg transition-colors dark:text-white"
+                    aria-haspopup="true"
+                    aria-expanded={isUserMenuOpen}
+                    aria-controls="user-menu-dropdown"
                   >
                     <div
                       className="flex justify-center items-center w-8 h-8 text-sm font-bold text-white rounded-full"
@@ -188,7 +185,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                     <ChevronDown className="w-4 h-4" />
                   </button>
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 top-full z-20 py-2 mt-2 w-48 bg-white rounded-lg shadow-lg dark:bg-zinc-800">
+                    <div id="user-menu-dropdown" className="absolute right-0 top-full z-20 py-2 mt-2 w-48 bg-white rounded-lg shadow-lg dark:bg-zinc-800">
                       <Link to="/profile" className="block px-4 py-2 text-black transition-colors dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700">
                         Profile
                       </Link>
@@ -217,7 +214,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               <div className="flex items-center space-x-4">
                 {/* Cart Icon */}
                 <button
-                  onClick={() => setIsCartOpen(true)}
+                  onClick={() => handleSetIsCartOpen(true)}
                   className="relative group"
                   aria-label="Open cart"
                 >
@@ -230,7 +227,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                 </button>
                 {/* Wishlist Icon */}
                 <button
-                  onClick={() => setIsWishlistOpen(true)}
+                  onClick={() => handleSetIsWishlistOpen(true)}
                   className="relative group"
                   aria-label="Open wishlist"
                 >
@@ -263,7 +260,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               )}
               {/* Cart Icon */}
               <button
-                onClick={() => setIsCartOpen(true)}
+                onClick={() => handleSetIsCartOpen(true)}
                 className="relative group"
                 aria-label="Open cart"
               >
@@ -276,7 +273,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
               </button>
               {/* Wishlist Icon */}
               <button
-                onClick={() => setIsWishlistOpen(true)}
+                onClick={() => handleSetIsWishlistOpen(true)}
                 className="relative group"
                 aria-label="Open wishlist"
               >
@@ -351,12 +348,12 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
             <User className="mb-1 w-7 h-7" />
             Account
           </button>
-          <button onClick={() => setIsWishlistOpen(true)} className="flex relative flex-col items-center text-xs text-zinc-700 dark:text-zinc-200">
+          <button onClick={() => handleSetIsWishlistOpen(true)} className="flex relative flex-col items-center text-xs text-zinc-700 dark:text-zinc-200">
             <Heart className="mb-1 w-7 h-7" />
             Wishlist
             {wishlistItems.length > 0 && <span className="absolute top-0 right-0 bg-[#059669] text-white text-xs rounded-full px-1">{wishlistItems.length}</span>}
           </button>
-          <button onClick={() => setIsCartOpen(true)} className="flex relative flex-col items-center text-xs text-zinc-700 dark:text-zinc-200">
+          <button onClick={() => handleSetIsCartOpen(true)} className="flex relative flex-col items-center text-xs text-zinc-700 dark:text-zinc-200">
             <ShoppingCart className="mb-1 w-7 h-7" />
             Cart
             {getCartTotalItems() > 0 && <span className="absolute top-0 right-0 bg-[#059669] text-white text-xs rounded-full px-1">{getCartTotalItems()}</span>}

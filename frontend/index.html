@@ -3,8 +3,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="http://192.168.1.4:8000/media/site-logo-32.png" />
-    <link rel="icon" type="image/svg+xml" href="http://192.168.1.4:8000/media/site-logo.svg" />
+    <script>
+      window.VITE_API_BASE_URL = '%VITE_API_BASE_URL%';
+    </script>
+    <script>
+      // Dynamically set favicon URLs using VITE_API_BASE_URL
+      const apiBaseUrl = (window.VITE_API_BASE_URL || import.meta.env ? import.meta.env.VITE_API_BASE_URL : undefined) || '';
+      if (apiBaseUrl) {
+        const setFavicon = (type, href) => {
+          let link = document.querySelector(`link[rel='icon'][type='${type}']`);
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            link.type = type;
+            document.head.appendChild(link);
+          }
+          link.href = href;
+        };
+        setFavicon('image/png', apiBaseUrl + '/media/site-logo-32.png');
+        setFavicon('image/svg+xml', apiBaseUrl + '/media/site-logo.svg');
+      }
+    </script>
+    <!-- Fallback favicon for build tools -->
+    <link rel="icon" type="image/png" href="/media/site-logo-32.png" />
+    <link rel="icon" type="image/svg+xml" href="/media/site-logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Shortcut Store - Premium Tech Apparel</title>
   </head>

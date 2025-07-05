@@ -13,4 +13,5 @@ urlpatterns = [
     path('get-cart/', views.get_cart, name='get_cart'),
     path('remove-from-cart/', views.remove_from_cart, name='remove_from_cart'),
     path('update-cart-quantity/', views.update_cart_quantity, name='update_cart_quantity'),
+    path('admin/bulk-upload-color-variant-images/', views.bulk_upload_color_variant_images, name='bulk_upload_color_variant_images'),
 ]

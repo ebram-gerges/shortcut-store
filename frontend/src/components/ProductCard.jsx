@@ -73,7 +73,7 @@ const ProductCard = ({ product }) => {
       onMouseEnter={() => !isMobile() && setHovered(true)}
       onMouseLeave={() => !isMobile() && setHovered(false)}
     >
-      <Link to={`/products/${product.id}`} className="block">
+      <Link to={`/products/${product.slug}`} className="block">
         <div className="relative">
           <div className="w-full aspect-[4/5] rounded-t-2xl overflow-hidden relative bg-zinc-100">
             {hasOutdoor ? (
@@ -170,7 +170,7 @@ const ProductCard = ({ product }) => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => addToCart(product)}
+          onClick={() => addToCart({ ...product, slug: product.slug })}
           className="w-full py-2 px-2 sm:px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-2xl shadow-emerald-200/40 dark:shadow-emerald-400/20 backdrop-blur-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:focus:ring-emerald-300 text-sm sm:text-base"
         >
           Add to Cart

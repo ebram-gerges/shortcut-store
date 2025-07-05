@@ -11,6 +11,7 @@ import random
 from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError as DjangoValidationError
 import logging
+from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 
@@ -42,18 +43,26 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 def send_verification_email(user: User) -> None:
-    """Send the email-verification code to the user's email (console backend)."""
+    """Send the email-verification code to the user's email (HTML premium template)."""
     if not user.email_verification_code:
         return
 
     subject = 'Verify your Shortcut Store account'
-    message = (
-        f"Hello {user.get_full_name() or user.username},\n\n"
-        f"Thank you for registering at Shortcut Store.\n"
-        f"Your verification code is: {user.email_verification_code}\n\n"
-        "If you did not create an account, you can safely ignore this email."
+    # Build absolute logo URL (assuming static/media is served at /media/)
+    site_logo_url = 'https://shortcut-store.ngrok.io/media/site-logo.svg'  # Change to your public URL or use settings
+    html_message = render_to_string('emails/verification_email.html', {
+        'verification_code': user.email_verification_code,
+        'site_logo_url': site_logo_url,
+    })
+    message = f"Hello {user.get_full_name() or user.username},\n\nYour verification code is: {user.email_verification_code}"
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_message,
+        fail_silently=True
     )
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
 
 
 @api_view(['POST'])
@@ -181,25 +190,30 @@ def verify_email_view(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def resend_verification_view(request):
-    """Resend email verification code"""
-    user = request.user
-    
+    """Resend email verification code (by email or for logged-in user)"""
+    email = request.data.get('email')
+    user = None
+    if request.user.is_authenticated:
+        user = request.user
+    elif email:
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'detail': 'User not found.'}, status=404)
+    else:
+        return Response({'detail': 'Email is required.'}, status=400)
+
     if user.email_verified:
-        return Response({
-            'message': 'Email is already verified'
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
+        return Response({'message': 'Email is already verified'}, status=status.HTTP_400_BAD_REQUEST)
+
     # Generate new verification code and email again
     user.generate_verification_code()
     user.save(update_fields=['email_verification_code', 'email_verification_code_created'])
-
     send_verification_email(user)
-    
-    return Response({
-        'message': 'Verification code sent successfully'
-    }, status=status.HTTP_200_OK)
+    return Response({'message': 'Verification code sent successfully'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

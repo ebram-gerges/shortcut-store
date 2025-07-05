@@ -295,7 +295,9 @@ def order_summary(request, order_id):
     user_orders = list(Order.objects.filter(user=request.user).values_list('id', flat=True))
     print(f"[DEBUG] All order IDs for user {request.user}: {user_orders}")
     try:
-        order = Order.objects.prefetch_related('items__product').get(id=order_id, user=request.user)
+        order = Order.objects.select_related('user').prefetch_related(
+            'items__product__color_variants__images'
+        ).get(id=order_id, user=request.user)
         
         # Return JSON data for API calls
         data = {
@@ -336,7 +338,9 @@ def order_summary(request, order_id):
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def user_orders(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at').prefetch_related('items__product')
+    orders = Order.objects.select_related('user').prefetch_related(
+        'items__product__color_variants__images'
+    ).filter(user=request.user).order_by('-created_at')
     data = []
     for order in orders:
         data.append({
@@ -375,7 +379,9 @@ def order_by_serial(request):
     if not serial:
         return JsonResponse({'error': 'Serial is required'}, status=400)
     try:
-        order = Order.objects.prefetch_related('items__product').get(serial=serial)
+        order = Order.objects.select_related('user').prefetch_related(
+            'items__product__color_variants__images'
+        ).get(serial=serial)
         data = {
             'id': order.id,
             'serial': order.serial,

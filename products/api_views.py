@@ -4,27 +4,27 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
-from .models import Product, ProductColorVariant, ProductStock, CollectionImage, CategoryImage
+from .models import Product, ProductColorVariant, ProductStock, CollectionImage, Category, SiteAnnouncement
 from .serializers import (
     ProductListSerializer, 
     ProductDetailSerializer, 
     ProductCreateUpdateSerializer,
     ProductColorVariantSerializer,
     ProductStockSerializer,
-    CollectionImageSerializer,
-    CategoryImageSerializer
+    CollectionImageSerializer
 )
 import logging
 
 logger = logging.getLogger(__name__)
 
 class ProductViewSet(viewsets.ModelViewSet):
+    lookup_field = 'slug'
     """
     ViewSet for Product CRUD operations
     """
-    queryset = Product.objects.all().prefetch_related(
+    queryset = Product.objects.all().select_related('category').prefetch_related(
         'color_variants__images', 'stock_items'
-    )
+    ).only('id', 'name', 'description', 'price', 'sale_percent', 'category', 'created_at', 'indoor_image', 'outdoor_image')
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'sale_percent']
     search_fields = ['name', 'description']
@@ -67,10 +67,10 @@ class ProductViewSet(viewsets.ModelViewSet):
             except ValueError:
                 pass
         
-        # Filter by availability
+        # Filter by availability - use exists() for better performance
         in_stock = self.request.query_params.get('in_stock')
         if in_stock and in_stock.lower() == 'true':
-            queryset = queryset.filter(stock__gt=0)
+            queryset = queryset.filter(stock_items__quantity__gt=0).distinct()
         
         return queryset
     
@@ -78,7 +78,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def variants(self, request, pk=None):
         """Get all color variants for a product"""
         product = self.get_object()
-        variants = product.color_variants.all()
+        variants = product.color_variants.select_related('product').prefetch_related('images').all()
         serializer = ProductColorVariantSerializer(variants, many=True)
         return Response(serializer.data)
     
@@ -86,7 +86,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def stock(self, request, pk=None):
         """Get stock information for a product"""
         product = self.get_object()
-        stock_items = product.stock_items.all()
+        stock_items = product.stock_items.select_related('product', 'size_variant__color_variant').all()
         serializer = ProductStockSerializer(stock_items, many=True)
         return Response(serializer.data)
     
@@ -96,8 +96,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         product = self.get_object()
         
         try:
-            color_variant = product.color_variants.get(color=color)
-            stock_item = ProductStock.objects.get(
+            color_variant = product.color_variants.select_related('product').get(color=color)
+            stock_item = ProductStock.objects.select_related('product', 'size_variant__color_variant').get(
                 product=product,
                 color_variant=color_variant,
                 size=size
@@ -134,8 +134,20 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def categories(self, request):
         """Get all available categories"""
-        categories = Product.CATEGORY_CHOICES
-        return Response([{'value': value, 'label': label} for value, label in categories])
+        categories = Category.objects.filter(is_active=True)
+        data = []
+        for cat in categories:
+            image_url = cat.image.url if cat.image else None
+            if image_url and not image_url.startswith('http'):
+                image_url = request.build_absolute_uri(image_url)
+            data.append({
+                'id': cat.id,
+                'name': cat.name,
+                'slug': cat.slug,
+                'image': image_url,
+                'description': cat.description,
+            })
+        return Response(data)
     
     @action(detail=False, methods=['get'])
     def featured(self, request):
@@ -162,7 +174,10 @@ def collection_images_list(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
-def category_images_list(request):
-    images = CategoryImage.objects.filter(is_active=True).order_by('order', 'created_at')
-    serializer = CategoryImageSerializer(images, many=True)
-    return Response(serializer.data)
+def get_site_announcement(request):
+    announcement = SiteAnnouncement.objects.filter(is_active=True).order_by('-updated_at').first()
+    return Response({
+        'message': announcement.message if announcement else '',
+        'id': announcement.id if announcement else None,
+        'updated_at': announcement.updated_at if announcement else None,
+    })

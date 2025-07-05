@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <h1>Bulk Upload Images to Product Color Variant</h1>
+  {% if success %}
+    <div class="success" style="background:#e6ffe6;padding:12px 18px;border-radius:8px;margin-bottom:18px;">
+      <strong>Success!</strong> Uploaded {{ uploaded_count }} image{{ uploaded_count|pluralize }} to <b>{{ color_variant }}</b>.
+    </div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" style="margin-bottom:24px;">
+    {% csrf_token %}
+    {{ form.color_variant.label_tag }} {{ form.color_variant }}<br><br>
+    <label for="multi-upload-input">Images:</label>
+    <input type="file" id="multi-upload-input" name="images" multiple accept="image/*"><br><br>
+    <button type="submit" class="default">Upload Images</button>
+  </form>
+  <div class="custom-upload-area" style="margin-top:18px;padding:24px;border:2px dashed #1976d2;border-radius:10px;background:#f0f6ff;text-align:center;cursor:pointer;">
+    <span style="font-size:16px;color:#1976d2;">Drag & Drop or Click to Upload Images</span>
+    <input type="file" id="multi-upload-input-dnd" name="images" style="display:none;" multiple accept="image/*">
+  </div>
+  <script>
+    // Drag-and-drop and click-to-upload logic
+    const area = document.querySelector('.custom-upload-area');
+    const input = document.getElementById('multi-upload-input-dnd');
+    area.addEventListener('click', function(e) {
+      input.click();
+    });
+    area.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      area.classList.add('dragover');
+    });
+    area.addEventListener('dragleave', function(e) {
+      area.classList.remove('dragover');
+    });
+    area.addEventListener('drop', function(e) {
+      e.preventDefault();
+      area.classList.remove('dragover');
+      input.files = e.dataTransfer.files;
+      // Optionally auto-submit the form here if desired
+    });
+    input.addEventListener('change', function(e) {
+      // Optionally auto-submit the form here if desired
+    });
+  </script>
+{% endblock %} 

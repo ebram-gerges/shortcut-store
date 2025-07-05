@@ -24,9 +24,9 @@ ALLOWED_HOSTS = ['*']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'shortcut_store'),
+        'NAME': os.environ.get('DB_NAME', 'shortcut_store12'),
         'USER': os.environ.get('DB_USER', 'shortcut_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'your_password'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'shortcut_store12'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '3306'),
         'OPTIONS': {
@@ -53,6 +53,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://1b35-196-131-168-107.ngrok-free.app",  # ngrok frontend
 ]
 
 # CSRF Trusted Origins
@@ -61,7 +62,14 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://1b35-196-131-168-107.ngrok-free.app",  # ngrok frontend
 ]
 
 # Email configuration for development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Print emails to console 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'shortcut756@gmail.com'
+EMAIL_HOST_PASSWORD = 'wijpdbtlxdfseuxq'  # App password
+DEFAULT_FROM_EMAIL = 'shortcut756@gmail.com' 

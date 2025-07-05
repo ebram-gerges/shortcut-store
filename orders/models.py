@@ -10,18 +10,18 @@ from django.utils.html import strip_tags
 User = get_user_model()
 
 class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     voucher = models.ForeignKey(Voucher, on_delete=models.SET_NULL, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
         ('shipped', 'Shipped'),
         ('delivered', 'Delivered'),
     ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    serial = models.CharField(max_length=32, unique=True, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
+    serial = models.CharField(max_length=32, unique=True, blank=True, null=True, db_index=True)
     
     # Shipping information
     shipping_first_name = models.CharField(max_length=100, blank=True)
@@ -31,6 +31,14 @@ class Order(models.Model):
     shipping_city = models.CharField(max_length=100, blank=True)
     shipping_governorate = models.CharField(max_length=100, blank=True)
     shipping_phone = models.CharField(max_length=20, blank=True)
+    notification_sent = models.BooleanField(default=False, help_text="Whether order notification has been sent")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['user', 'status']),
+        ]
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding

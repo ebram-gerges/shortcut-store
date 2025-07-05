@@ -1,2 +1,6 @@
 {% extends "admin/base.html" %}
+{% load static %}
 {% block title %}{{ title }} | Shortcut Store Admin{% endblock %}
+{% block extrahead %}
+  <script src="{% static 'js/admin-productcolorvariant-images.js' %}"></script>
+{% endblock %}

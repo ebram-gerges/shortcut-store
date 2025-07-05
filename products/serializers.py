@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, ProductColorVariant, ProductSizeVariant, ProductStock, ProductColorVariantImage, CollectionImage, CollectionGalleryImage, CategoryImage
+from .models import Product, ProductColorVariant, ProductSizeVariant, ProductStock, ProductColorVariantImage, CollectionImage, CollectionGalleryImage, Category
 
 
 class ProductColorVariantImageSerializer(serializers.ModelSerializer):
@@ -47,6 +47,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     outdoor_image = serializers.ImageField(read_only=True)
     color_variants = ProductColorVariantSerializer(many=True, read_only=True)
     rating = serializers.FloatField(read_only=True)
+    slug = serializers.SlugField(read_only=True)
 
     def get_in_stock(self, obj):
         # Consider in stock if any stock_items have available_quantity > 0
@@ -55,7 +56,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'price', 'discounted_price', 'sale_percent',
+            'id', 'name', 'slug', 'price', 'discounted_price', 'sale_percent',
             'indoor_image', 'outdoor_image', 'category', 'created_at', 'available_colors', 'available_sizes', 'in_stock', 'color_variants', 'rating'
         ]
 
@@ -71,6 +72,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     indoor_image = serializers.ImageField(read_only=True)
     outdoor_image = serializers.ImageField(read_only=True)
     rating = serializers.FloatField(read_only=True)
+    slug = serializers.SlugField(read_only=True)
 
     def get_in_stock(self, obj):
         return obj.stock_items.filter(quantity__gt=0).exists()
@@ -78,7 +80,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'description', 'price', 'discounted_price', 'sale_percent',
+            'id', 'name', 'slug', 'description', 'price', 'discounted_price', 'sale_percent',
             'indoor_image', 'outdoor_image', 'category', 'created_at', 'available_colors', 
             'available_sizes', 'color_variants', 'stock_items', 'in_stock', 'rating'
         ]
@@ -110,10 +112,4 @@ class CollectionImageSerializer(serializers.ModelSerializer):
     images = CollectionGalleryImageSerializer(many=True, read_only=True)
     class Meta:
         model = CollectionImage
-        fields = ['id', 'title', 'order', 'is_active', 'created_at', 'images']
-
-
-class CategoryImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CategoryImage
-        fields = ['id', 'category', 'image', 'title', 'description', 'order', 'is_active', 'created_at']
+        fields = ['id', 'title', 'image', 'order', 'is_active', 'created_at', 'images']

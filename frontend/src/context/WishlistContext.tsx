@@ -3,6 +3,7 @@ import api from '../services/api';
 
 interface WishlistItem {
   id: number;
+  slug: string;
   name: string;
   price: number;
   color: string;
@@ -36,7 +37,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
 
   const addItem = (newItem: WishlistItem) => {
     setItems(prevItems => {
-      const exists = prevItems.find(item => item.id === newItem.id);
+      const exists = prevItems.find(item => item.id === newItem.id && item.slug === newItem.slug);
       if (!exists) {
         return [...prevItems, newItem];
       }
@@ -74,12 +75,14 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
         setItems(
           res.data.wishlist_items.map((i: {
             id: number;
+            slug: string;
             name: string;
             price: number;
             color: string;
             size: string;
           }): WishlistItem => ({
             id: i.id,
+            slug: i.slug,
             name: i.name,
             price: i.price,
             color: i.color,

@@ -92,3 +92,10 @@ export const fetchUserProfile = async (token: string) => {
     });
     return response.data;
 };
+
+export const resendVerificationCode = async (token: string) => {
+  const response = await api.post('/api/accounts/resend-verification/', {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};

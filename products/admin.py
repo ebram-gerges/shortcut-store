@@ -3,7 +3,7 @@ from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.admin import ModelAdmin, TabularInline, StackedInline
-from .models import Product, ProductColorVariant, ProductColorVariantImage, ProductSizeVariant, ProductStock, CollectionImage, CollectionGalleryImage, CategoryImage
+from .models import Product, ProductColorVariant, ProductColorVariantImage, ProductSizeVariant, ProductStock, CollectionImage, CollectionGalleryImage, Category, SiteAnnouncement
 from django.urls import path
 from django.http import JsonResponse
 import logging
@@ -12,13 +12,19 @@ from django.utils.decorators import method_decorator
 from django.contrib.admin import AdminSite
 import nested_admin
 from django.forms.widgets import FileInput
+from .forms import ProductColorVariantAdminForm, ProductColorVariantBulkImageUploadForm
+from django.shortcuts import render, redirect
+from django.urls import path
+from django.contrib import messages
+from django_attach.forms import AttachmentInline
+from django.contrib.admin.views.decorators import staff_member_required
 
 # Nested Inline for images under color variant
 class ProductColorVariantImageInline(nested_admin.NestedTabularInline):
     model = ProductColorVariantImage
-    extra = 1
-    fields = ('image', 'alt_text')
-    ordering_field = None  # Unfold compatibility
+    extra = 0
+    fields = ('image', 'alt_text')  # Restore default fields
+    # Remove any custom save_new_objects or multi_images logic
 
 # Nested Inline for size variants under color variant
 class ProductSizeVariantInline(nested_admin.NestedStackedInline):
@@ -43,15 +49,22 @@ class ProductSizeVariantInline(nested_admin.NestedStackedInline):
 # Nested Inline for color variants under product
 class ProductColorVariantInline(nested_admin.NestedStackedInline):
     model = ProductColorVariant
+    form = ProductColorVariantAdminForm
     extra = 0
-    fieldsets = (
-        ('Color Variant Details', {
-            'fields': ('color', 'color_hex', 'is_active', 'display_images', 'sizes_link'),
-            'description': 'Set the color, hex code, activation, manage images, and sizes for this variant.'
-        }),
-    )
-    readonly_fields = ('display_images', 'sizes_link',)
+    readonly_fields = ('display_images',)
     ordering_field = None  # Unfold compatibility
+    inlines = [ProductColorVariantImageInline]  # Restore default image inline
+
+    def get_fieldsets(self, request, obj=None):
+        return [
+            ('Color Variant Details', {
+                'fields': [
+                    'color', 'color_hex', 'is_active', 'sizes',
+                    'stock_M', 'stock_L', 'stock_XL', 'stock_2XL',
+                ],
+                'description': 'Set the color, hex code, activation, sizes, and stock for this variant.'
+            }),
+        ]
 
     def display_images(self, obj):
         images = obj.images.all() if obj and obj.pk else []
@@ -65,19 +78,18 @@ class ProductColorVariantInline(nested_admin.NestedStackedInline):
             </div>
             '''
         html += '</div>'
+        # Replace the custom-upload-area with a button linking to the bulk upload page
+        html += f'''
+        <div style="margin-top:18px;text-align:center;">
+            <a href="/admin/products/productcolorvariant/action/bulk-upload-images/" target="_blank" style="display:inline-block;font-size:16px;padding:12px 28px;background:#1976d2;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;">Bulk Upload Images</a>
+        </div>
+        '''
         html += '''<style>
-        #existing-image-gallery div[data-image-id]:hover {{
-            box-shadow:0 8px 32px #0004;
-            border-color:#1976d2;
-        }}
-        #existing-image-gallery img:hover {{
-            transform:scale(1.04);
-        }}
-        #existing-image-gallery .delete-image-btn:hover {{
-            background:#b71c1c;
-        }}
+        #existing-image-gallery div[data-image-id]:hover { box-shadow:0 8px 32px #0004; border-color:#1976d2; }
+        #existing-image-gallery img:hover { transform:scale(1.04); }
+        #existing-image-gallery .delete-image-btn:hover { background:#b71c1c; }
         </style>'''
-        return format_html(html) if images else "No images yet."
+        return format_html(html) if images or obj else "No images yet."
     display_images.short_description = 'Image Gallery'
 
     def sizes_link(self, obj):
@@ -93,6 +105,25 @@ class ProductColorVariantInline(nested_admin.NestedStackedInline):
 
     class Media:
         js = ('js/admin-productcolorvariant-images.js',)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('upload-images/<int:variant_id>/', self.admin_site.admin_view(self.upload_images_view), name='productcolorvariant_upload_images'),
+        ]
+        return custom_urls + urls
+
+    @method_decorator(csrf_exempt)
+    def upload_images_view(self, request, variant_id):
+        if request.method == 'POST':
+            try:
+                variant = ProductColorVariant.objects.get(pk=variant_id)
+                for file in request.FILES.getlist('images'):
+                    ProductColorVariantImage.objects.create(color_variant=variant, image=file)
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 # Stock inline for size+color
 class ProductStockInline(TabularInline):
@@ -145,24 +176,30 @@ class ProductColorVariantForm(forms.ModelForm):
 from django.contrib import admin as django_admin
 @django_admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ('name', 'category', 'price', 'created_at')
-    search_fields = ('name', 'description')
+    list_display = ('name', 'slug', 'category', 'price', 'created_at')
+    list_filter = ('category', 'created_at')
+    search_fields = ('name', 'slug', 'description')
+    prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductColorVariantInline]
     fieldsets = (
         (None, {
-            'fields': ('name', 'description', 'category', 'price', 'sale_percent', 'indoor_image', 'outdoor_image')
+            'fields': ('name', 'slug', 'description', 'category', 'price', 'sale_percent')
+        }),
+        ('Product Images', {
+            'fields': ('indoor_image', 'outdoor_image'),
+            'description': 'Upload indoor and outdoor images for the product.'
         }),
     )
 
 @admin.register(ProductColorVariant)
 class ProductColorVariantAdmin(django_admin.ModelAdmin):
-    form = ProductColorVariantForm
+    form = ProductColorVariantAdminForm
     list_display = ('product', 'color', 'is_active', 'created_at')
     search_fields = ('product__name', 'color')
     readonly_fields = ('display_images',)
     fieldsets = (
         (None, {
-            'fields': ('product', 'color', 'color_hex', 'is_active', 'images')
+            'fields': ('product', 'color', 'color_hex', 'is_active', 'sizes', 'stock_M', 'stock_L', 'stock_XL', 'stock_2XL', 'images')
         }),
         ('Existing Images', {
             'fields': ('display_images',),
@@ -170,6 +207,7 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
     )
     class Media:
         js = ('js/admin-productcolorvariant-images.js',)
+    inlines = [AttachmentInline]
     def display_images(self, obj):
         images = obj.images.all()
         html = '<div id="existing-image-gallery" style="display:flex;flex-wrap:wrap;gap:10px;">'
@@ -186,6 +224,54 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
         super().save_model(request, obj, form, change)
         for image_file in request.FILES.getlist('images'):
             ProductColorVariantImage.objects.create(color_variant=obj, image=image_file)
+
+    actions = ['bulk_upload_images']
+
+    def get_urls(self):
+        urls = super().get_urls()
+        from django.urls import path
+        custom_urls = [
+            path('action/bulk-upload-images/', self.admin_site.admin_view(self.bulk_upload_color_variant_images), name='productcolorvariant_bulk_upload_images'),
+        ]
+        return custom_urls + urls
+
+    @staff_member_required
+    def bulk_upload_color_variant_images(self, request):
+        if request.method == 'POST':
+            form = ProductColorVariantBulkImageUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                color_variant = form.cleaned_data['color_variant']
+                images = request.FILES.getlist('images')
+                for img in images:
+                    ProductColorVariantImage.objects.create(color_variant=color_variant, image=img)
+                return render(request, 'admin/bulk_upload_color_variant_images.html', {
+                    'form': ProductColorVariantBulkImageUploadForm(),
+                    'success': True,
+                    'color_variant': color_variant,
+                    'uploaded_count': len(images),
+                })
+        else:
+            form = ProductColorVariantBulkImageUploadForm()
+        return render(request, 'admin/bulk_upload_color_variant_images.html', {'form': form})
+
+    def bulk_upload_images(self, request, queryset):
+        if 'apply' in request.POST:
+            form = BulkImageUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                images = request.FILES.getlist('images')
+                for variant in queryset:
+                    for img in images:
+                        ProductColorVariantImage.objects.create(color_variant=variant, image=img)
+                self.message_user(request, f"Uploaded {len(images)} images to {queryset.count()} color variant(s).", messages.SUCCESS)
+                return redirect(request.get_full_path())
+        else:
+            form = BulkImageUploadForm()
+        return render(request, 'admin/bulk_upload_images.html', context={
+            'form': form,
+            'variants': queryset,
+            'action_checkbox_name': admin.helpers.ACTION_CHECKBOX_NAME,
+        })
+    bulk_upload_images.short_description = "Bulk upload images to selected color variants"
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -305,21 +391,31 @@ class CollectionImageAdmin(admin.ModelAdmin):
         return ""
     image_preview.short_description = 'Main Image Preview'
 
-@admin.register(CategoryImage)
-class CategoryImageAdmin(admin.ModelAdmin):
-    list_display = ('category', 'title', 'order', 'is_active', 'created_at', 'image_preview')
-    list_filter = ('is_active',)
-    search_fields = ('title', 'category')
-    ordering = ('order', 'created_at')
-    readonly_fields = ('image_preview',)
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'product_count', 'is_active', 'order', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'description')
+    prepopulated_fields = {'slug': ('name',)}
+    ordering = ('order', 'name')
+    readonly_fields = ('product_count', 'created_at', 'updated_at')
     fieldsets = (
         (None, {
-            'fields': ('category', 'image', 'title', 'description', 'is_active', 'order', 'image_preview')
+            'fields': ('name', 'slug', 'description', 'image', 'is_active', 'order')
+        }),
+        ('Statistics', {
+            'fields': ('product_count', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
         }),
     )
 
-    def image_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" style="max-height:60px;max-width:100px;object-fit:cover;" />', obj.image.url)
-        return ""
-    image_preview.short_description = 'Image Preview'
+    def product_count(self, obj):
+        return obj.product_count
+    product_count.short_description = 'Products'
+
+@admin.register(SiteAnnouncement)
+class SiteAnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('message', 'is_active', 'created_at', 'updated_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('message',)
+    ordering = ('-created_at',)

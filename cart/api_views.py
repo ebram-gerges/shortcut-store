@@ -19,7 +19,11 @@ def get_cart_view(request):
     """Get user's cart items"""
     cart_items = CartItem.objects.filter(user=request.user).select_related(
         'product', 'color_variant'
-    ).prefetch_related('color_variant__images')
+    ).prefetch_related('color_variant__images').only(
+        'id', 'quantity', 'size', 'total_price', 'created_at',
+        'product__id', 'product__name', 'product__price', 'product__sale_percent', 'product__indoor_image',
+        'color_variant__id', 'color_variant__color', 'color_variant__color_hex'
+    )
     
     serializer = CartSummarySerializer(cart_items)
     return Response(serializer.data)
