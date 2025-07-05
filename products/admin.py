@@ -453,6 +453,19 @@ class ProductStockInline(TabularInline):
 
 # Removed unused ProductColorVariantForm class - using ProductColorVariantAdminForm instead
 
+# NEW: Inline for managing color variant images in Product admin
+class ProductColorVariantImageInline(admin.TabularInline):
+    model = ProductColorVariantImage
+    extra = 0
+    fields = ('color_variant', 'image', 'alt_text', 'image_preview')
+    readonly_fields = ('image_preview',)
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height:60px;max-width:100px;object-fit:cover;" />', obj.image.url)
+        return ""
+    image_preview.short_description = 'Preview'
+
 # Register Product with nested-admin (default Django admin)
 from django.contrib import admin as django_admin
 @django_admin.register(Product)
@@ -461,16 +474,305 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
     list_filter = ('category', 'created_at')
     search_fields = ('name', 'slug', 'description')
     prepopulated_fields = {'slug': ('name',)}
-    inlines = [ProductColorVariantInline]
-    fieldsets = (
-        (None, {
-            'fields': ('name', 'slug', 'description', 'category', 'price', 'sale_percent')
-        }),
-        ('Product Images', {
-            'fields': ('indoor_image', 'outdoor_image'),
-            'description': 'Upload indoor and outdoor images for the product.'
-        }),
-    )
+    inlines = [ProductColorVariantInline, ProductColorVariantImageInline]
+    
+    # NEW: Add custom fieldsets with new tab for color variant images
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = [
+            ('General', {
+                'fields': ('name', 'slug', 'description', 'category', 'price', 'sale_percent')
+            }),
+            ('Product Images', {
+                'fields': ('indoor_image', 'outdoor_image'),
+                'description': 'Upload indoor and outdoor images for the product.'
+            }),
+        ]
+        
+        # Add color variant images tab if object exists
+        if obj:
+            fieldsets.append(
+                ('Product Images for Colors', {
+                    'fields': ('color_variant_images_management',),
+                    'description': 'Manage images for each color variant of this product.',
+                    'classes': ('collapse',)
+                })
+            )
+        
+        return fieldsets
+    
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = []
+        if obj:  # Only show for existing products
+            readonly_fields.append('color_variant_images_management')
+        return readonly_fields
+    
+    def color_variant_images_management(self, obj):
+        """Custom field for managing color variant images with bulk upload"""
+        if not obj:
+            return "Save the product first to manage color variant images."
+        
+        # Get all color variants for this product
+        color_variants = obj.color_variants.all()
+        
+        if not color_variants.exists():
+            return format_html(
+                '<div style="padding:20px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;">'
+                '<h3 style="margin-top:0;color:#666;">No Color Variants</h3>'
+                '<p>Add color variants first in the "Product Color Variants" section above.</p>'
+                '</div>'
+            )
+        
+        html = f'''
+        <div style="margin:20px 0;">
+            <!-- Bulk Upload Section -->
+            <div style="background:#e3f2fd;border:1px solid #1976d2;border-radius:8px;padding:20px;margin-bottom:30px;">
+                <h3 style="margin-top:0;color:#1976d2;"><i class="fas fa-upload"></i> Bulk Upload Images</h3>
+                <p style="margin:10px 0;color:#333;">Upload multiple images to any color variant quickly and securely.</p>
+                
+                                 <form id="bulk-upload-form" method="post" enctype="multipart/form-data" style="margin:15px 0;">
+                     <input type="hidden" name="csrfmiddlewaretoken" value="">
+                     <input type="hidden" name="product_id" value="{obj.id}">
+                    
+                    <div style="margin:15px 0;">
+                        <label for="bulk_color_variant" style="font-weight:bold;display:block;margin-bottom:5px;">Select Color Variant:</label>
+                        <select name="bulk_color_variant" id="bulk_color_variant" style="width:100%;max-width:300px;padding:8px;border:1px solid #ddd;border-radius:4px;">
+                            <option value="">Choose a color variant...</option>
+        '''
+        
+        for variant in color_variants:
+            html += f'<option value="{variant.id}">{variant.color}</option>'
+        
+        html += f'''
+                        </select>
+                    </div>
+                    
+                    <div style="margin:15px 0;">
+                        <label for="bulk_images" style="font-weight:bold;display:block;margin-bottom:5px;">Select Images:</label>
+                        <input type="file" name="bulk_images" id="bulk_images" multiple accept="image/*" 
+                               style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+                        <small style="color:#666;">Max 10 images, 5MB each. Supports JPG, PNG, GIF, WebP.</small>
+                    </div>
+                    
+                    <button type="button" onclick="handleBulkUpload()" 
+                            style="background:#1976d2;color:white;padding:12px 24px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload Images
+                    </button>
+                </form>
+                
+                <div id="bulk-upload-status" style="margin-top:15px;"></div>
+            </div>
+            
+            <!-- Color Variant Galleries -->
+            <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;">
+                <h3 style="margin-top:0;color:#333;"><i class="fas fa-images"></i> Color Variant Image Galleries</h3>
+        '''
+        
+        for variant in color_variants:
+            images = variant.images.all()
+            image_count = images.count()
+            
+            html += f'''
+                <div style="margin:20px 0;padding:15px;border:1px solid #e0e0e0;border-radius:6px;background:white;">
+                    <h4 style="margin-top:0;color:{variant.color_hex if variant.color_hex else '#333'};">
+                        <span style="display:inline-block;width:20px;height:20px;background-color:{variant.color_hex if variant.color_hex else '#ccc'};border-radius:3px;margin-right:8px;border:1px solid #ddd;"></span>
+                        {variant.color} ({image_count} image{'s' if image_count != 1 else ''})
+                    </h4>
+                    
+                    <!-- Quick Upload for this variant -->
+                                         <form class="quick-upload-form" data-variant-id="{variant.id}" style="margin:10px 0;padding:10px;background:#f0f8ff;border-radius:4px;">
+                         <input type="hidden" name="csrfmiddlewaretoken" value="">
+                        <input type="file" name="quick_images" multiple accept="image/*" 
+                               style="width:calc(100% - 120px);padding:5px;border:1px solid #ddd;border-radius:3px;margin-right:10px;">
+                        <button type="button" onclick="handleQuickUpload(this, {variant.id})" 
+                                style="background:#4caf50;color:white;padding:6px 12px;border:none;border-radius:3px;cursor:pointer;">
+                            Quick Add
+                        </button>
+                    </form>
+                    
+                    <!-- Image Gallery -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:15px;">
+            '''
+            
+            for image in images:
+                html += f'''
+                    <div style="position:relative;border:1px solid #ddd;border-radius:4px;overflow:hidden;background:#f9f9f9;">
+                        <img src="{image.image.url}" alt="{image.alt_text}" 
+                             style="width:100%;height:100px;object-fit:cover;">
+                        <div style="padding:8px;font-size:12px;">
+                            <div style="margin-bottom:5px;color:#666;">ID: {image.id}</div>
+                            <input type="text" value="{image.alt_text}" 
+                                   onchange="updateAltText({image.id}, this.value)"
+                                   style="width:100%;padding:3px;border:1px solid #ddd;border-radius:2px;font-size:11px;">
+                        </div>
+                        <button onclick="deleteImage({image.id}, {variant.id})" 
+                                style="position:absolute;top:5px;right:5px;background:rgba(220,53,69,0.9);color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:16px;line-height:1;">
+                            ×
+                        </button>
+                    </div>
+                '''
+            
+            if not images.exists():
+                html += '<div style="padding:20px;text-align:center;color:#666;border:2px dashed #ddd;border-radius:4px;">No images yet. Use quick upload above to add some!</div>'
+            
+            html += '</div></div>'
+        
+                 html += '''
+             </div>
+         </div>
+         
+         <script>
+         // Initialize CSRF tokens when the page loads
+         document.addEventListener('DOMContentLoaded', function() {
+             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+             if (csrfToken) {
+                 // Set CSRF token for all forms in this section
+                 const tokenInputs = document.querySelectorAll('#bulk-upload-form [name="csrfmiddlewaretoken"], .quick-upload-form [name="csrfmiddlewaretoken"]');
+                 tokenInputs.forEach(input => {
+                     input.value = csrfToken.value;
+                 });
+             }
+         });
+         
+         function handleBulkUpload() {
+            const form = document.getElementById('bulk-upload-form');
+            const colorVariant = document.getElementById('bulk_color_variant').value;
+            const files = document.getElementById('bulk_images').files;
+            const statusDiv = document.getElementById('bulk-upload-status');
+            
+            if (!colorVariant) {
+                statusDiv.innerHTML = '<div style="background:#ff6b6b;color:white;padding:10px;border-radius:4px;">Please select a color variant.</div>';
+                return;
+            }
+            
+            if (files.length === 0) {
+                statusDiv.innerHTML = '<div style="background:#ff6b6b;color:white;padding:10px;border-radius:4px;">Please select at least one image.</div>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', form.querySelector('[name="csrfmiddlewaretoken"]').value);
+            formData.append('color_variant', colorVariant);
+            
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+            
+            statusDiv.innerHTML = '<div style="background:#4caf50;color:white;padding:10px;border-radius:4px;">Uploading...</div>';
+            
+            fetch('/admin/products/productcolorvariant/action/bulk-upload-images/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = '<div style="background:#4caf50;color:white;padding:10px;border-radius:4px;">Successfully uploaded ' + data.uploaded_count + ' image(s)!</div>';
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    statusDiv.innerHTML = '<div style="background:#ff6b6b;color:white;padding:10px;border-radius:4px;">Error: ' + (data.error || 'Upload failed') + '</div>';
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = '<div style="background:#ff6b6b;color:white;padding:10px;border-radius:4px;">Network error occurred.</div>';
+            });
+        }
+        
+        function handleQuickUpload(button, variantId) {
+            const form = button.closest('.quick-upload-form');
+            const files = form.querySelector('[name="quick_images"]').files;
+            
+            if (files.length === 0) {
+                alert('Please select at least one image');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', form.querySelector('[name="csrfmiddlewaretoken"]').value);
+            
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Uploading...';
+            
+            fetch('/admin/products/productcolorvariant/upload-images/' + variantId + '/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Successfully uploaded ' + data.uploaded_count + ' image(s)!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Upload failed'));
+                }
+                button.disabled = false;
+                button.textContent = 'Quick Add';
+            })
+            .catch(error => {
+                alert('Network error occurred');
+                button.disabled = false;
+                button.textContent = 'Quick Add';
+            });
+        }
+        
+        function deleteImage(imageId, variantId) {
+            if (!confirm('Are you sure you want to delete this image?')) {
+                return;
+            }
+            
+            fetch('/admin/products/productcolorvariantimage/' + imageId + '/delete/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to delete image: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Failed to delete image');
+            });
+        }
+        
+        function updateAltText(imageId, newAltText) {
+            fetch('/admin/products/productcolorvariantimage/' + imageId + '/edit/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    alt_text: newAltText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Failed to update alt text: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Failed to update alt text:', error);
+            });
+        }
+        </script>
+        '''
+        
+        return format_html(html)
+    
+    color_variant_images_management.short_description = 'Manage Color Variant Images'
 
 # Temporarily remove ProductColorVariant admin registration to fix field error
 # We'll add a simpler version
