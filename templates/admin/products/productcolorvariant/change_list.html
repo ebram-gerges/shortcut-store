@@ -1,0 +1,74 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.bulk-upload-button {
+    background: #1976d2;
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    display: inline-block;
+    margin: 10px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: background 0.3s ease;
+}
+
+.bulk-upload-button:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.bulk-upload-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.help-text {
+    color: #666;
+    font-size: 14px;
+    margin-top: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content_title %}
+{{ block.super }}
+
+{% if show_bulk_upload_button %}
+<div class="bulk-upload-section">
+    <h3 style="margin-top: 0; color: #333;">📸 Multi-Image Upload</h3>
+    <p style="margin: 10px 0; color: #666;">Upload multiple images to product color variants quickly and securely</p>
+    
+    <a href="{{ bulk_upload_url }}" class="bulk-upload-button" target="_blank">
+        📁 Bulk Upload Images to Color Variants
+    </a>
+    
+    <div class="help-text">
+        <strong>Quick Guide:</strong><br>
+        • Use the button above for bulk uploads with drag & drop interface<br>
+        • Or edit individual products to use the inline quick upload feature<br>
+        • Supports JPG, PNG, GIF, WebP (max 5MB each, up to 10 images per upload)
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block result_list %}
+{{ block.super }}
+
+{% if show_bulk_upload_button %}
+<div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 4px;">
+    <strong>💡 Tip:</strong> You can also upload images directly when editing products. 
+    Go to <strong>Products → Products</strong>, edit any product, and use the image gallery in each color variant section.
+</div>
+{% endif %}
+{% endblock %}

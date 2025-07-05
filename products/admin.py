@@ -496,6 +496,15 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
     search_fields = ('product__name', 'color')
     list_filter = ('color', 'is_active', 'created_at')
     
+    def changelist_view(self, request, extra_context=None):
+        """Add bulk upload button to the changelist view"""
+        extra_context = extra_context or {}
+        extra_context.update({
+            'bulk_upload_url': '/admin/products/productcolorvariant/action/bulk-upload-images/',
+            'show_bulk_upload_button': True,
+        })
+        return super().changelist_view(request, extra_context)
+    
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
