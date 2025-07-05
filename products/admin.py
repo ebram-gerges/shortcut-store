@@ -480,8 +480,8 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
     search_fields = ('product__name', 'color')
     list_filter = ('color', 'is_active', 'created_at')
     
-    # Explicitly specify which fields to include to avoid FieldError
-    fields = ('product', 'color', 'color_hex', 'is_active')
+    # Exclude the reverse foreign key relationship field that Django admin can't handle
+    exclude = ('images',)
     
     def changelist_view(self, request, extra_context=None):
         """Add bulk upload button to the changelist view"""
