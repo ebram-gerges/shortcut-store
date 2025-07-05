@@ -44,7 +44,7 @@ class ProductSizeVariantInline(nested_admin.NestedStackedInline):
 # Nested Inline for color variants under product
 class ProductColorVariantInline(nested_admin.NestedStackedInline):
     model = ProductColorVariant
-    form = ProductColorVariantAdminForm
+    # Remove form reference to avoid field errors
     extra = 0
     readonly_fields = ('display_images',)
     ordering_field = None  # Unfold compatibility
@@ -472,14 +472,13 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
         }),
     )
 
-@admin.register(ProductColorVariant)
+# Temporarily remove ProductColorVariant admin registration to fix field error
+# We'll add a simpler version
+
 class ProductColorVariantAdmin(django_admin.ModelAdmin):
     list_display = ('product', 'color', 'is_active', 'created_at')
     search_fields = ('product__name', 'color')
     list_filter = ('color', 'is_active', 'created_at')
-    
-    # Use basic fields only - no custom form for now
-    fields = ('product', 'color', 'color_hex', 'is_active')
     
     def changelist_view(self, request, extra_context=None):
         """Add bulk upload button to the changelist view"""
@@ -569,6 +568,9 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
         }
         
         return render(request, 'admin/bulk_upload_color_variant_images.html', context)
+
+# Register the admin manually to avoid conflicts
+admin.site.register(ProductColorVariant, ProductColorVariantAdmin)
 
 @admin.register(ProductColorVariantImage)
 class ProductColorVariantImageAdmin(django_admin.ModelAdmin):
