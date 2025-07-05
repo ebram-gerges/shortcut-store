@@ -20,12 +20,7 @@ from django.contrib import messages
 from django_attach.forms import AttachmentInline
 from django.contrib.admin.views.decorators import staff_member_required
 
-# Nested Inline for images under color variant
-class ProductColorVariantImageInline(nested_admin.NestedTabularInline):
-    model = ProductColorVariantImage
-    extra = 0
-    fields = ('image', 'alt_text')  # Restore default fields
-    # Remove any custom save_new_objects or multi_images logic
+# ProductColorVariantImageInline removed - using custom gallery instead
 
 # Nested Inline for size variants under color variant
 class ProductSizeVariantInline(nested_admin.NestedStackedInline):
@@ -54,7 +49,8 @@ class ProductColorVariantInline(nested_admin.NestedStackedInline):
     extra = 0
     readonly_fields = ('display_images',)
     ordering_field = None  # Unfold compatibility
-    inlines = [ProductColorVariantImageInline]  # Restore default image inline
+    # Remove the image inline - we'll use custom gallery instead
+    inlines = []
 
     def get_fieldsets(self, request, obj=None):
         return [
@@ -65,75 +61,268 @@ class ProductColorVariantInline(nested_admin.NestedStackedInline):
                 ],
                 'description': 'Set the color, hex code, activation, sizes, and stock for this variant.'
             }),
+            ('Image Gallery', {
+                'fields': ['display_images'],
+                'description': 'Manage images for this color variant.'
+            }),
         ]
 
     def display_images(self, obj):
-        images = obj.images.all() if obj and obj.pk else []
-        html = '''<div style="margin-bottom:8px;font-weight:bold;font-size:17px;letter-spacing:0.5px;">Image Gallery</div>'''
-        html += '<div id="existing-image-gallery" style="display:flex;flex-wrap:wrap;gap:18px;">'
-        for img in images:
+        """Display custom image gallery with upload functionality"""
+        if not obj or not obj.pk:
+            return format_html('''
+                <div style="padding:20px;text-align:center;color:#666;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+                    <p style="margin:0;font-size:14px;"><em>Save this color variant first to add images.</em></p>
+                </div>
+            ''')
+        
+        images = obj.images.all()
+        
+        # Generate a unique ID for this variant's gallery
+        gallery_id = f"gallery_{obj.id}"
+        
+        html = f'''
+        <div id="{gallery_id}" style="margin-bottom:20px;">
+            <div style="margin-bottom:12px;font-weight:bold;font-size:17px;letter-spacing:0.5px;color:#333;">
+                Image Gallery ({images.count()} image{'s' if images.count() != 1 else ''})
+            </div>
+        '''
+        
+        # Display images if any exist
+        if images.exists():
             html += f'''
-            <div data-image-id="{img.id}" style="position:relative;display:flex;align-items:center;justify-content:center;transition:box-shadow 0.2s;box-shadow:0 4px 16px #0002;border-radius:12px;border:2px solid #e0e0e0;overflow:hidden;background:#fafbfc;padding:10px;max-width:220px;max-height:220px;">
-                <img src="{img.image.url}" style="display:block;max-width:200px;max-height:200px;width:auto;height:auto;border-radius:8px;transition:transform 0.2s;object-fit:contain;background:#f5f5f5;" alt="{img.alt_text}">
-                <button type="button" class="delete-image-btn" data-image-id="{img.id}" style="position:absolute;top:8px;right:8px;background:#d32f2f;color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;z-index:2;font-size:20px;box-shadow:0 2px 8px #0003;opacity:0.92;">&times;</button>
+            <div id="existing-image-gallery-{obj.id}" style="display:flex;flex-wrap:wrap;gap:15px;margin-bottom:20px;">
+            '''
+            for img in images:
+                html += f'''
+                <div data-image-id="{img.id}" style="position:relative;display:flex;align-items:center;justify-content:center;transition:box-shadow 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.1);border-radius:12px;border:2px solid #e0e0e0;overflow:hidden;background:#fafbfc;padding:10px;max-width:200px;max-height:200px;">
+                    <img src="{img.image.url}" 
+                         style="display:block;max-width:180px;max-height:180px;width:auto;height:auto;border-radius:8px;transition:transform 0.2s;object-fit:contain;background:#f5f5f5;" 
+                         alt="{img.alt_text or 'Product image'}"
+                         title="{img.alt_text or 'Product image'}">
+                    <button type="button" 
+                            class="delete-image-btn" 
+                            data-image-id="{img.id}" 
+                            data-variant-id="{obj.id}"
+                            onclick="deleteImage(this, {img.id}, {obj.id})"
+                            style="position:absolute;top:8px;right:8px;background:#d32f2f;color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;z-index:2;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);opacity:0.9;display:flex;align-items:center;justify-content:center;"
+                            title="Delete image">
+                        ×
+                    </button>
+                </div>
+                '''
+            html += '</div>'
+        else:
+            html += '''
+            <div style="padding:15px;text-align:center;color:#666;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;margin-bottom:20px;">
+                <p style="margin:0;font-size:14px;"><em>No images uploaded yet.</em></p>
             </div>
             '''
-        html += '</div>'
         
-        # Add quick upload and bulk upload buttons
+        # Add upload buttons
         html += f'''
-        <div style="margin-top:18px;text-align:center;display:flex;gap:15px;justify-content:center;flex-wrap:wrap;">
-            <a href="/admin/products/productcolorvariant/action/bulk-upload-images/" target="_blank" 
-               style="display:inline-block;font-size:16px;padding:12px 28px;background:#1976d2;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;transition:background 0.3s;">
-               <i class="fas fa-upload"></i> Bulk Upload Images
-            </a>
-            <button type="button" onclick="toggleQuickUpload('{obj.id if obj else 0}')" 
-                    style="display:inline-block;font-size:16px;padding:12px 28px;background:#28a745;color:#fff;border:none;border-radius:8px;font-weight:bold;box-shadow:0 2px 8px #0002;cursor:pointer;transition:background 0.3s;">
-                <i class="fas fa-plus"></i> Quick Add Images
-            </button>
+        <div style="text-align:center;margin-bottom:20px;">
+            <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;">
+                <a href="/admin/products/productcolorvariant/action/bulk-upload-images/" target="_blank" 
+                   style="display:inline-block;font-size:14px;padding:10px 20px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.2);transition:background 0.3s;">
+                   📁 Bulk Upload Images
+                </a>
+                <button type="button" onclick="toggleQuickUpload({obj.id})" 
+                        style="display:inline-block;font-size:14px;padding:10px 20px;background:#28a745;color:#fff;border:none;border-radius:6px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;transition:background 0.3s;">
+                    ⚡ Quick Add Images
+                </button>
+            </div>
+        </div>
+        
+        <!-- Quick upload form (hidden by default) -->
+        <div id="quick-upload-form-{obj.id}" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+            <h4 style="margin:0 0 15px 0;color:#333;">Quick Upload Images</h4>
+            <form method="post" enctype="multipart/form-data" action="/admin/products/productcolorvariant/upload-images/{obj.id}/" style="margin:0;" onsubmit="return handleQuickUpload(this, {obj.id});">
+                <input type="hidden" name="csrfmiddlewaretoken" value="" class="csrf-token-input">
+                <div style="margin-bottom:15px;">
+                    <input type="file" name="images" multiple accept="image/*" 
+                           style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;"
+                           onchange="previewFiles(this, {obj.id})">
+                    <small style="color:#666;display:block;margin-top:5px;">Select multiple images (JPG, PNG, GIF, WebP - Max 5MB each, up to 10 images)</small>
+                </div>
+                <div id="preview-container-{obj.id}" style="margin-bottom:15px;display:flex;flex-wrap:wrap;gap:10px;"></div>
+                <div style="display:flex;gap:10px;">
+                    <button type="submit" style="background:#007cba;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
+                        Upload Now
+                    </button>
+                    <button type="button" onclick="toggleQuickUpload({obj.id})" 
+                            style="background:#6c757d;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
         </div>
         '''
         
-        # Add quick upload form (hidden by default)
-        if obj and obj.pk:
-            html += f'''
-            <div id="quick-upload-form-{obj.id}" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
-                <h4 style="margin:0 0 15px 0;color:#333;">Quick Upload Images</h4>
-                <form method="post" enctype="multipart/form-data" action="/admin/products/productcolorvariant/upload-images/{obj.id}/" style="margin:0;">
-                    <input type="hidden" name="csrfmiddlewaretoken" value="{{{{ csrf_token }}}}">
-                    <div style="margin-bottom:15px;">
-                        <input type="file" name="images" multiple accept="image/*" 
-                               style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
-                        <small style="color:#666;">Select multiple images (JPG, PNG, GIF, WebP - Max 5MB each)</small>
-                    </div>
-                    <div style="display:flex;gap:10px;">
-                        <button type="submit" style="background:#007cba;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
-                            Upload Now
-                        </button>
-                        <button type="button" onclick="toggleQuickUpload('{obj.id}')" 
-                                style="background:#6c757d;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-            '''
-        
-        html += '''<style>
-        #existing-image-gallery div[data-image-id]:hover { box-shadow:0 8px 32px #0004; border-color:#1976d2; }
-        #existing-image-gallery img:hover { transform:scale(1.04); }
-        #existing-image-gallery .delete-image-btn:hover { background:#b71c1c; }
+        # Add CSS and JavaScript
+        html += '''
+        <style>
+        #existing-image-gallery div[data-image-id]:hover { 
+            box-shadow:0 8px 32px rgba(0,0,0,0.2); 
+            border-color:#1976d2; 
+        }
+        #existing-image-gallery img:hover { 
+            transform:scale(1.04); 
+        }
+        .delete-image-btn:hover { 
+            background:#b71c1c !important; 
+            opacity:1 !important;
+        }
         </style>
+        
         <script>
+        // Set CSRF tokens when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfToken) {
+                const tokenInputs = document.querySelectorAll('.csrf-token-input');
+                tokenInputs.forEach(input => {
+                    input.value = csrfToken.value;
+                });
+            }
+        });
+        
         function toggleQuickUpload(variantId) {
             const form = document.getElementById('quick-upload-form-' + variantId);
             if (form) {
                 form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                
+                // Set CSRF token when showing the form
+                if (form.style.display !== 'none') {
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                    const formCsrfInput = form.querySelector('.csrf-token-input');
+                    if (csrfToken && formCsrfInput) {
+                        formCsrfInput.value = csrfToken.value;
+                    }
+                }
             }
         }
-        </script>'''
         
-        return format_html(html) if images or obj else "No images yet."
+        function previewFiles(input, variantId) {
+            const container = document.getElementById('preview-container-' + variantId);
+            container.innerHTML = '';
+            
+            if (input.files && input.files.length > 0) {
+                for (let i = 0; i < Math.min(input.files.length, 10); i++) {
+                    const file = input.files[i];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const preview = document.createElement('div');
+                        preview.style.cssText = 'position:relative;width:60px;height:60px;border:1px solid #ddd;border-radius:4px;overflow:hidden;';
+                        preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+                        container.appendChild(preview);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+        
+        function deleteImage(button, imageId, variantId) {
+            if (!confirm('Are you sure you want to delete this image?')) return;
+            
+            button.disabled = true;
+            button.innerHTML = '⏳';
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) {
+                alert('CSRF token not found. Please refresh the page.');
+                button.disabled = false;
+                button.innerHTML = '×';
+                return;
+            }
+            
+            fetch('/admin/products/productcolorvariantimage/' + imageId + '/delete/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken.value,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the image element
+                    const imageElement = button.closest('[data-image-id]');
+                    if (imageElement) {
+                        imageElement.remove();
+                    }
+                    // Update the gallery count
+                    const gallery = document.getElementById('gallery_' + variantId);
+                    if (gallery) {
+                        const countElement = gallery.querySelector('div[style*="font-weight:bold"]');
+                        if (countElement) {
+                            const currentCount = parseInt(countElement.textContent.match(/\d+/)[0]) - 1;
+                            countElement.textContent = `Image Gallery (${currentCount} image${currentCount !== 1 ? 's' : ''})`;
+                        }
+                    }
+                } else {
+                    alert('Failed to delete image: ' + (data.error || 'Unknown error'));
+                    button.disabled = false;
+                    button.innerHTML = '×';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete image');
+                button.disabled = false;
+                button.innerHTML = '×';
+            });
+        }
+        
+        function handleQuickUpload(form, variantId) {
+            const formData = new FormData(form);
+            const files = form.querySelector('input[type="file"]').files;
+            
+            if (files.length === 0) {
+                alert('Please select at least one image');
+                return false;
+            }
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Successfully uploaded ' + data.uploaded_count + ' image(s)');
+                    location.reload(); // Refresh to show new images
+                } else {
+                    alert('Upload failed: ' + (data.error || 'Unknown error'));
+                }
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Upload failed');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
+            
+            return false; // Prevent default form submission
+        }
+        </script>
+        '''
+        
+        return format_html(html)
+    
     display_images.short_description = 'Image Gallery'
 
     def sizes_link(self, obj):
@@ -305,40 +494,10 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
     form = ProductColorVariantAdminForm
     list_display = ('product', 'color', 'is_active', 'created_at')
     search_fields = ('product__name', 'color')
-    readonly_fields = ('display_images',)
-    fieldsets = (
-        (None, {
-            'fields': ('product', 'color', 'color_hex', 'is_active', 'sizes', 'stock_M', 'stock_L', 'stock_XL', 'stock_2XL', 'images')
-        }),
-        ('Existing Images', {
-            'fields': ('display_images',),
-        }),
-    )
-    class Media:
-        js = ('js/admin-productcolorvariant-images.js',)
-    inlines = [AttachmentInline]
-    def display_images(self, obj):
-        images = obj.images.all()
-        html = '<div id="existing-image-gallery" style="display:flex;flex-wrap:wrap;gap:10px;">'
-        for img in images:
-            html += f'''<div data-image-id="{img.id}" style="position:relative;display:inline-block;">
-                <input type="checkbox" value="{img.id}" style="position:absolute;top:5px;left:5px;z-index:2;">
-                <img src="{img.image.url}" style="max-height:100px;border-radius:5px;box-shadow:0 2px 8px #0002;">
-                <button type="button" class="delete-image-btn" data-image-id="{img.id}" style="position:absolute;top:5px;right:5px;background:#222;color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;z-index:2;">&times;</button>
-            </div>'''
-        html += '</div>'
-        return format_html(html) if images else "No images yet."
-    display_images.short_description = 'Image Gallery'
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        for image_file in request.FILES.getlist('images'):
-            ProductColorVariantImage.objects.create(color_variant=obj, image=image_file)
-
-    actions = ['bulk_upload_images']
-
+    list_filter = ('color', 'is_active', 'created_at')
+    
     def get_urls(self):
         urls = super().get_urls()
-        from django.urls import path
         custom_urls = [
             path('action/bulk-upload-images/', self.admin_site.admin_view(self.bulk_upload_color_variant_images), name='productcolorvariant_bulk_upload_images'),
         ]
@@ -417,90 +576,97 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
         
         return render(request, 'admin/bulk_upload_color_variant_images.html', context)
 
-    def bulk_upload_images(self, request, queryset):
-        if 'apply' in request.POST:
-            form = BulkImageUploadForm(request.POST, request.FILES)
-            if form.is_valid():
-                images = request.FILES.getlist('images')
-                for variant in queryset:
-                    for img in images:
-                        ProductColorVariantImage.objects.create(color_variant=variant, image=img)
-                self.message_user(request, f"Uploaded {len(images)} images to {queryset.count()} color variant(s).", messages.SUCCESS)
-                return redirect(request.get_full_path())
-        else:
-            form = BulkImageUploadForm()
-        return render(request, 'admin/bulk_upload_images.html', context={
-            'form': form,
-            'variants': queryset,
-            'action_checkbox_name': admin.helpers.ACTION_CHECKBOX_NAME,
-        })
-    bulk_upload_images.short_description = "Bulk upload images to selected color variants"
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path('<path:object_id>/delete/', self.admin_site.admin_view(self.delete_variant_view), name='productcolorvariant_delete'),
-            path('<path:object_id>/edit/', self.admin_site.admin_view(self.edit_variant_view), name='productcolorvariant_edit'),
-        ]
-        return custom_urls + urls
-    @method_decorator(csrf_exempt)
-    def delete_variant_view(self, request, object_id):
-        if request.method == 'POST':
-            try:
-                ProductColorVariant.objects.filter(id=object_id).delete()
-                return JsonResponse({'success': True})
-            except Exception as e:
-                return JsonResponse({'success': False, 'error': str(e)}, status=500)
-        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
-    @method_decorator(csrf_exempt)
-    def edit_variant_view(self, request, object_id):
-        if request.method == 'POST':
-            try:
-                import json
-                data = json.loads(request.body)
-                variant = ProductColorVariant.objects.get(id=object_id)
-                variant.color = data.get('color', variant.color)
-                variant.color_hex = data.get('color_hex', variant.color_hex)
-                variant.is_active = data.get('is_active', variant.is_active)
-                variant.save()
-                return JsonResponse({'success': True})
-            except Exception as e:
-                return JsonResponse({'success': False, 'error': str(e)}, status=500)
-        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
-
 @admin.register(ProductColorVariantImage)
 class ProductColorVariantImageAdmin(django_admin.ModelAdmin):
     list_display = ('id', 'color_variant', 'image', 'alt_text', 'created_at')
     search_fields = ('color_variant__product__name', 'alt_text')
     ordering = ('color_variant', 'created_at')
+    
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('<path:object_id>/delete/', self.admin_site.admin_view(self.delete_image_view), name='productcolorvariantimage_delete'),
-            path('<path:object_id>/edit/', self.admin_site.admin_view(self.edit_image_view), name='productcolorvariantimage_edit'),
+            path('<int:object_id>/delete/', self.admin_site.admin_view(self.delete_image_view), name='productcolorvariantimage_delete'),
+            path('<int:object_id>/edit/', self.admin_site.admin_view(self.edit_image_view), name='productcolorvariantimage_edit'),
         ]
         return custom_urls + urls
-    @method_decorator(csrf_exempt)
+    
     def delete_image_view(self, request, object_id):
+        """Secure image deletion view"""
+        
+        # Check if user has permission to delete ProductColorVariantImage
+        if not request.user.has_perm('products.delete_productcolorvariantimage'):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("You don't have permission to delete images.")
+        
         if request.method == 'POST':
             try:
-                ProductColorVariantImage.objects.filter(id=object_id).delete()
-                return JsonResponse({'success': True})
+                image = ProductColorVariantImage.objects.get(id=object_id)
+                
+                # Log the deletion action
+                from django.contrib.admin.models import LogEntry, DELETION
+                from django.contrib.contenttypes.models import ContentType
+                
+                LogEntry.objects.create(
+                    user=request.user,
+                    content_type=ContentType.objects.get_for_model(ProductColorVariantImage),
+                    object_id=object_id,
+                    object_repr=str(image),
+                    action_flag=DELETION,
+                    change_message="Deleted image from gallery"
+                )
+                
+                # Delete the image
+                image.delete()
+                
+                return JsonResponse({'success': True, 'message': 'Image deleted successfully'})
+                
+            except ProductColorVariantImage.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Image not found'}, status=404)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': str(e)}, status=500)
-        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
-    @method_decorator(csrf_exempt)
+        
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+    
     def edit_image_view(self, request, object_id):
+        """Secure image editing view"""
+        
+        # Check if user has permission to change ProductColorVariantImage
+        if not request.user.has_perm('products.change_productcolorvariantimage'):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("You don't have permission to edit images.")
+        
         if request.method == 'POST':
             try:
                 import json
                 data = json.loads(request.body)
-                img = ProductColorVariantImage.objects.get(id=object_id)
-                img.alt_text = data.get('alt_text', img.alt_text)
-                img.save()
-                return JsonResponse({'success': True})
+                image = ProductColorVariantImage.objects.get(id=object_id)
+                
+                # Update alt text
+                old_alt_text = image.alt_text
+                image.alt_text = data.get('alt_text', image.alt_text)
+                image.save()
+                
+                # Log the edit action
+                from django.contrib.admin.models import LogEntry, CHANGE
+                from django.contrib.contenttypes.models import ContentType
+                
+                LogEntry.objects.create(
+                    user=request.user,
+                    content_type=ContentType.objects.get_for_model(ProductColorVariantImage),
+                    object_id=object_id,
+                    object_repr=str(image),
+                    action_flag=CHANGE,
+                    change_message=f"Changed alt text from '{old_alt_text}' to '{image.alt_text}'"
+                )
+                
+                return JsonResponse({'success': True, 'message': 'Image updated successfully'})
+                
+            except ProductColorVariantImage.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Image not found'}, status=404)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': str(e)}, status=500)
-        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+        
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
 
 @admin.register(ProductSizeVariant)
 class ProductSizeVariantAdmin(django_admin.ModelAdmin):
