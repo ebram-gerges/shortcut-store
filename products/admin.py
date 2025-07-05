@@ -7,6 +7,7 @@ from .models import Product, ProductColorVariant, ProductColorVariantImage, Prod
 from django.urls import path
 from django.http import JsonResponse
 import logging
+import os
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.admin import AdminSite
@@ -73,22 +74,65 @@ class ProductColorVariantInline(nested_admin.NestedStackedInline):
         for img in images:
             html += f'''
             <div data-image-id="{img.id}" style="position:relative;display:flex;align-items:center;justify-content:center;transition:box-shadow 0.2s;box-shadow:0 4px 16px #0002;border-radius:12px;border:2px solid #e0e0e0;overflow:hidden;background:#fafbfc;padding:10px;max-width:220px;max-height:220px;">
-                <img src="{img.image.url}" style="display:block;max-width:200px;max-height:200px;width:auto;height:auto;border-radius:8px;transition:transform 0.2s;object-fit:contain;background:#f5f5f5;">
+                <img src="{img.image.url}" style="display:block;max-width:200px;max-height:200px;width:auto;height:auto;border-radius:8px;transition:transform 0.2s;object-fit:contain;background:#f5f5f5;" alt="{img.alt_text}">
                 <button type="button" class="delete-image-btn" data-image-id="{img.id}" style="position:absolute;top:8px;right:8px;background:#d32f2f;color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;z-index:2;font-size:20px;box-shadow:0 2px 8px #0003;opacity:0.92;">&times;</button>
             </div>
             '''
         html += '</div>'
-        # Replace the custom-upload-area with a button linking to the bulk upload page
+        
+        # Add quick upload and bulk upload buttons
         html += f'''
-        <div style="margin-top:18px;text-align:center;">
-            <a href="/admin/products/productcolorvariant/action/bulk-upload-images/" target="_blank" style="display:inline-block;font-size:16px;padding:12px 28px;background:#1976d2;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;">Bulk Upload Images</a>
+        <div style="margin-top:18px;text-align:center;display:flex;gap:15px;justify-content:center;flex-wrap:wrap;">
+            <a href="/admin/products/productcolorvariant/action/bulk-upload-images/" target="_blank" 
+               style="display:inline-block;font-size:16px;padding:12px 28px;background:#1976d2;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;transition:background 0.3s;">
+               <i class="fas fa-upload"></i> Bulk Upload Images
+            </a>
+            <button type="button" onclick="toggleQuickUpload('{obj.id if obj else 0}')" 
+                    style="display:inline-block;font-size:16px;padding:12px 28px;background:#28a745;color:#fff;border:none;border-radius:8px;font-weight:bold;box-shadow:0 2px 8px #0002;cursor:pointer;transition:background 0.3s;">
+                <i class="fas fa-plus"></i> Quick Add Images
+            </button>
         </div>
         '''
+        
+        # Add quick upload form (hidden by default)
+        if obj and obj.pk:
+            html += f'''
+            <div id="quick-upload-form-{obj.id}" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+                <h4 style="margin:0 0 15px 0;color:#333;">Quick Upload Images</h4>
+                <form method="post" enctype="multipart/form-data" action="/admin/products/productcolorvariant/upload-images/{obj.id}/" style="margin:0;">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{{{ csrf_token }}}}">
+                    <div style="margin-bottom:15px;">
+                        <input type="file" name="images" multiple accept="image/*" 
+                               style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
+                        <small style="color:#666;">Select multiple images (JPG, PNG, GIF, WebP - Max 5MB each)</small>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button type="submit" style="background:#007cba;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
+                            Upload Now
+                        </button>
+                        <button type="button" onclick="toggleQuickUpload('{obj.id}')" 
+                                style="background:#6c757d;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+            '''
+        
         html += '''<style>
         #existing-image-gallery div[data-image-id]:hover { box-shadow:0 8px 32px #0004; border-color:#1976d2; }
         #existing-image-gallery img:hover { transform:scale(1.04); }
         #existing-image-gallery .delete-image-btn:hover { background:#b71c1c; }
-        </style>'''
+        </style>
+        <script>
+        function toggleQuickUpload(variantId) {
+            const form = document.getElementById('quick-upload-form-' + variantId);
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        </script>'''
+        
         return format_html(html) if images or obj else "No images yet."
     display_images.short_description = 'Image Gallery'
 
@@ -113,17 +157,82 @@ class ProductColorVariantInline(nested_admin.NestedStackedInline):
         ]
         return custom_urls + urls
 
-    @method_decorator(csrf_exempt)
     def upload_images_view(self, request, variant_id):
+        """Secure quick upload view for individual color variant images"""
+        
+        # Check if user has permission to add ProductColorVariantImage
+        if not request.user.has_perm('products.add_productcolorvariantimage'):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("You don't have permission to upload images.")
+        
         if request.method == 'POST':
             try:
                 variant = ProductColorVariant.objects.get(pk=variant_id)
-                for file in request.FILES.getlist('images'):
-                    ProductColorVariantImage.objects.create(color_variant=variant, image=file)
-                return JsonResponse({'success': True})
+                files = request.FILES.getlist('images')
+                
+                if not files:
+                    return JsonResponse({'success': False, 'error': 'No files selected'}, status=400)
+                
+                if len(files) > 10:
+                    return JsonResponse({'success': False, 'error': 'Maximum 10 images allowed'}, status=400)
+                
+                # Validate each file
+                valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                max_size = 5 * 1024 * 1024  # 5MB
+                
+                for file in files:
+                    # Check file extension
+                    ext = os.path.splitext(file.name)[1].lower()
+                    if ext not in valid_extensions:
+                        return JsonResponse({
+                            'success': False, 
+                            'error': f'Invalid file type: {file.name}. Only JPG, PNG, GIF, and WebP are allowed.'
+                        }, status=400)
+                    
+                    # Check file size
+                    if file.size > max_size:
+                        return JsonResponse({
+                            'success': False, 
+                            'error': f'File too large: {file.name}. Maximum size is 5MB.'
+                        }, status=400)
+                
+                # Create image records
+                created_images = []
+                for i, file in enumerate(files, 1):
+                    alt_text = f"{variant} - Image {i}"
+                    image = ProductColorVariantImage.objects.create(
+                        color_variant=variant, 
+                        image=file,
+                        alt_text=alt_text
+                    )
+                    created_images.append(image)
+                
+                # Log the upload action
+                from django.contrib.admin.models import LogEntry, ADDITION
+                from django.contrib.contenttypes.models import ContentType
+                
+                LogEntry.objects.create(
+                    user=request.user,
+                    content_type=ContentType.objects.get_for_model(ProductColorVariant),
+                    object_id=variant.id,
+                    object_repr=str(variant),
+                    action_flag=ADDITION,
+                    change_message=f"Quick uploaded {len(created_images)} images"
+                )
+                
+                # Return success response
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Successfully uploaded {len(created_images)} image(s)',
+                    'uploaded_count': len(created_images)
+                })
+                
+            except ProductColorVariant.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Color variant not found'}, status=404)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': str(e)}, status=500)
-        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+        
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
 
 # Stock inline for size+color
 class ProductStockInline(TabularInline):
@@ -237,22 +346,76 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
 
     @staff_member_required
     def bulk_upload_color_variant_images(self, request):
+        """Secure bulk upload view for color variant images"""
+        
+        # Check if user has permission to add ProductColorVariantImage
+        if not request.user.has_perm('products.add_productcolorvariantimage'):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("You don't have permission to upload images.")
+        
+        success_data = {}
+        errors = []
+        
         if request.method == 'POST':
             form = ProductColorVariantBulkImageUploadForm(request.POST, request.FILES)
             if form.is_valid():
-                color_variant = form.cleaned_data['color_variant']
-                images = request.FILES.getlist('images')
-                for img in images:
-                    ProductColorVariantImage.objects.create(color_variant=color_variant, image=img)
-                return render(request, 'admin/bulk_upload_color_variant_images.html', {
-                    'form': ProductColorVariantBulkImageUploadForm(),
-                    'success': True,
-                    'color_variant': color_variant,
-                    'uploaded_count': len(images),
-                })
+                try:
+                    # Save the images using the form's save method
+                    created_images = form.save()
+                    
+                    color_variant = form.cleaned_data['color_variant']
+                    success_data = {
+                        'color_variant': color_variant,
+                        'uploaded_count': len(created_images),
+                        'image_ids': [img.id for img in created_images],
+                    }
+                    
+                    # Log the upload action
+                    from django.contrib.admin.models import LogEntry, ADDITION
+                    from django.contrib.contenttypes.models import ContentType
+                    
+                    LogEntry.objects.create(
+                        user=request.user,
+                        content_type=ContentType.objects.get_for_model(ProductColorVariant),
+                        object_id=color_variant.id,
+                        object_repr=str(color_variant),
+                        action_flag=ADDITION,
+                        change_message=f"Bulk uploaded {len(created_images)} images"
+                    )
+                    
+                    messages.success(
+                        request,
+                        f"Successfully uploaded {len(created_images)} image(s) to {color_variant}."
+                    )
+                    
+                    # Create a new form for the next upload
+                    form = ProductColorVariantBulkImageUploadForm()
+                    
+                except Exception as e:
+                    errors.append(f"Error uploading images: {str(e)}")
+                    messages.error(request, f"Error uploading images: {str(e)}")
+            else:
+                # Collect form errors
+                for field, field_errors in form.errors.items():
+                    for error in field_errors:
+                        errors.append(f"{field}: {error}")
+                
+                # Show error messages
+                for error in errors:
+                    messages.error(request, error)
         else:
             form = ProductColorVariantBulkImageUploadForm()
-        return render(request, 'admin/bulk_upload_color_variant_images.html', {'form': form})
+        
+        context = {
+            'form': form,
+            'title': 'Bulk Upload Images to Product Color Variant',
+            'has_permission': True,
+            'opts': ProductColorVariant._meta,
+            'errors': errors,
+            **success_data
+        }
+        
+        return render(request, 'admin/bulk_upload_color_variant_images.html', context)
 
     def bulk_upload_images(self, request, queryset):
         if 'apply' in request.POST:
