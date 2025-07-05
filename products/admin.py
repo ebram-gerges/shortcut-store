@@ -12,7 +12,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.admin import AdminSite
 import nested_admin
-from django.forms.widgets import FileInput
 from .forms import ProductColorVariantAdminForm, ProductColorVariantBulkImageUploadForm
 from django.shortcuts import render, redirect
 from django.urls import path
@@ -452,23 +451,7 @@ class ProductStockInline(TabularInline):
         return obj.stock_display if obj else 'N/A'
     stock_display.short_description = 'Display'
 
-class MultiFileInput(FileInput):
-    allow_multiple_selected = True
-    def __init__(self, attrs=None):
-        attrs = attrs or {}
-        attrs['multiple'] = True
-        super().__init__(attrs)
-
-class ProductColorVariantForm(forms.ModelForm):
-    images = forms.FileField(
-        widget=MultiFileInput,
-        required=False,
-        help_text="Upload one or more images for this color variant."
-    )
-
-    class Meta:
-        model = ProductColorVariant
-        fields = '__all__'
+# Removed unused ProductColorVariantForm class - using ProductColorVariantAdminForm instead
 
 # Register Product with nested-admin (default Django admin)
 from django.contrib import admin as django_admin

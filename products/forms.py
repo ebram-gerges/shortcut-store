@@ -30,7 +30,7 @@ class ProductColorVariantAdminForm(forms.ModelForm):
 
     class Meta:
         model = ProductColorVariant
-        fields = '__all__'
+        fields = ['product', 'color', 'color_hex', 'is_active']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
