@@ -3,6 +3,7 @@ from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.admin import ModelAdmin, TabularInline, StackedInline
+from django.contrib.admin.views.decorators import staff_member_required
 from .models import Product, ProductColorVariant, ProductColorVariantImage, ProductSizeVariant, ProductStock, CollectionImage, CollectionGalleryImage, Category, SiteAnnouncement
 from django.urls import path
 from django.http import JsonResponse
@@ -16,8 +17,6 @@ from .forms import ProductColorVariantAdminForm, ProductColorVariantBulkImageUpl
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.contrib import messages
-from django_attach.forms import AttachmentInline
-from django.contrib.admin.views.decorators import staff_member_required
 
 # Nested Inline for images under color variant
 class ProductColorVariantImageInline(nested_admin.NestedTabularInline):
@@ -207,7 +206,7 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
     )
     class Media:
         js = ('js/admin-productcolorvariant-images.js',)
-    inlines = [AttachmentInline]
+    inlines = [] # Removed AttachmentInline
     def display_images(self, obj):
         images = obj.images.all()
         html = '<div id="existing-image-gallery" style="display:flex;flex-wrap:wrap;gap:10px;">'

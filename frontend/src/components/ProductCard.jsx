@@ -69,7 +69,7 @@ const ProductCard = ({ product }) => {
         boxShadow: isMobile() && mobileActive ? '0 0 32px 0 #10b98188' : undefined,
       }}
       whileHover={!isMobile() ? { y: -8, scale: 1.06, boxShadow: '0 0 32px 0 #10b98188' } : {}}
-      className="relative transition-transform duration-300 cursor-pointer rounded-2xl shadow-xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 pb-12 w-full mx-auto min-h-[320px] sm:min-h-[340px]"
+      className="relative transition-transform duration-300 cursor-pointer rounded-2xl shadow-xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 pb-12 w-full mx-auto min-h-[320px] sm:min-h-[320px] lg:min-h-[380px] xl:min-h-[400px]"
       onMouseEnter={() => !isMobile() && setHovered(true)}
       onMouseLeave={() => !isMobile() && setHovered(false)}
     >
@@ -123,8 +123,8 @@ const ProductCard = ({ product }) => {
             </motion.div>
           )}
         </div>
-        <div className="p-2 sm:p-4">
-          <h3 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white mb-2 truncate">
+        <div className="p-2 sm:p-4 lg:p-4">
+          <h3 className="text-base sm:text-lg lg:text-lg font-semibold text-zinc-900 dark:text-white mb-2 truncate">
             {product.name}
           </h3>
           {/* Rating Stars */}
@@ -140,7 +140,7 @@ const ProductCard = ({ product }) => {
             })}
             <span className="ml-2 text-xs text-zinc-500">{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
           </div>
-          <div className="flex items-center justify-between mb-2 sm:mb-4">
+          <div className="flex items-center justify-between mb-2 sm:mb-4 lg:mb-4">
             <div className="flex items-center space-x-2">
               {isOnSale ? (
                 <>
@@ -155,11 +155,11 @@ const ProductCard = ({ product }) => {
               <span className="ml-2 text-xs font-semibold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 px-1 py-0.5 rounded">-{product.sale_percent}%</span>
             )}
           </div>
-          <div className="flex items-center space-x-1 sm:space-x-2 mb-2 sm:mb-4">
-            {product.colors?.map((color) => (
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-4 lg:mb-4">
+            {product.available_colors?.map((color) => (
               <div
                 key={color}
-                className="w-4 h-4 rounded-full border border-white/20"
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-zinc-300 dark:border-zinc-600 shadow-sm hover:scale-110 transition-transform duration-200"
                 style={{ backgroundColor: color }}
               />
             ))}
@@ -171,7 +171,7 @@ const ProductCard = ({ product }) => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => addToCart({ ...product, slug: product.slug })}
-          className="w-full py-2 px-2 sm:px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-2xl shadow-emerald-200/40 dark:shadow-emerald-400/20 backdrop-blur-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:focus:ring-emerald-300 text-sm sm:text-base"
+          className="w-full py-2 px-2 sm:px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-2xl shadow-emerald-200/40 dark:shadow-emerald-400/20 backdrop-blur-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:focus:ring-emerald-300 text-sm sm:text-base lg:text-base"
         >
           Add to Cart
         </motion.button>

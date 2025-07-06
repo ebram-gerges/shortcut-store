@@ -1,7 +1,0 @@
-[deploy]
-healthcheckPath = "/healthz/"
-healthcheckTimeout = 300
-restartPolicyType = "on_failure"
-
-[deploy.envs]
-DJANGO_SETTINGS_MODULE = "shortcut.settings_production" 

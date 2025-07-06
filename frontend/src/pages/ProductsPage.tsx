@@ -60,8 +60,15 @@ const ProductsPage = () => {
       try {
         setLoading(true);
         setError(null);
+        
+        // Build API parameters
+        const apiParams: { category_slug?: string } = {};
+        if (filters.categories.length > 0) {
+          apiParams.category_slug = filters.categories[0];
+        }
+        
         const [fetchedProducts, fetchedCategories] = await Promise.all([
-          getProducts(),
+          getProducts(apiParams),
           getCategories()
         ]);
         setProducts(fetchedProducts);
@@ -74,7 +81,7 @@ const ProductsPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [filters.categories]); // Re-fetch when category filter changes
 
   // Set initial filters from query params
   useEffect(() => {
@@ -119,13 +126,13 @@ const ProductsPage = () => {
       // Price filter
       if (filters.priceMin && Number(product.price) < Number(filters.priceMin)) return false;
       if (filters.priceMax && Number(product.price) > Number(filters.priceMax)) return false;
-      // Size filter
-      if (filters.sizes && filters.sizes.length > 0 && Array.isArray(product.sizes)) {
-        if (!filters.sizes.some(size => product.sizes?.includes(size))) return false;
+      // Size filter - use available_sizes from API
+      if (filters.sizes && filters.sizes.length > 0 && Array.isArray(product.available_sizes)) {
+        if (!filters.sizes.some(size => product.available_sizes?.includes(size))) return false;
       }
-      // Color filter
-      if (filters.colors && filters.colors.length > 0 && Array.isArray(product.colors)) {
-        if (!filters.colors.some(color => product.colors?.includes(color))) return false;
+      // Color filter - use available_colors from API
+      if (filters.colors && filters.colors.length > 0 && Array.isArray(product.available_colors)) {
+        if (!filters.colors.some(color => product.available_colors?.includes(color))) return false;
       }
       return true;
     })
@@ -153,14 +160,14 @@ const ProductsPage = () => {
   const getUniqueColorsForCategory = (categorySlug: string) => {
     const colors = new Set<string>();
     products.filter(p => p.category?.slug === categorySlug).forEach(p => {
-      (p.colors || []).forEach(c => colors.add(c));
+      (p.available_colors || []).forEach(c => colors.add(c));
     });
     return Array.from(colors);
   };
   const getUniqueSizesForCategory = (categorySlug: string) => {
     const sizes = new Set<string>();
     products.filter(p => p.category?.slug === categorySlug).forEach(p => {
-      (p.sizes || []).forEach(s => sizes.add(s));
+      (p.available_sizes || []).forEach(s => sizes.add(s));
     });
     return Array.from(sizes);
   };
@@ -365,7 +372,7 @@ const ProductsPage = () => {
             ) : error ? (
               <div className="py-20 text-center text-red-500">{error}</div>
             ) : (
-              <div className="grid grid-cols-2 gap-6 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
                 {filteredProducts.map((product: ProductWithSizes) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

@@ -29,6 +29,7 @@ wheels/
 *.log
 local_settings.py
 db.sqlite3-journal
+db.sqlite3
 media/
 staticfiles/
 
@@ -48,6 +49,7 @@ yarn-error.log*
 # Virtual Environment
 .env/
 venv/
+venv_new/
 ENV/
 
 # Testing
@@ -63,4 +65,34 @@ coverage.xml
 # Project specific
 *.bak
 *.tmp
-*.temp 
+*.temp
+
+# Deployment files (not needed for production)
+railway.*
+render.yaml
+nixpacks.toml
+Procfile
+runtime.txt
+Dockerfile
+setup_*.sh
+setup_*.py
+test_connection.py
+create_mysql_db.sql
+MYSQL_SETUP.md
+run_demo.sh
+restart_demo.sh
+stop_demo.sh
+app_password.txt
+ngrok-*
+products_*.json
+celerybeat-schedule
+
+# Backup and temporary directories
+frontend_backup_*/
+test_suite_analysis/
+managed_context/
+.cursor/
+.qodo/
+
+# Logs directory
+logs/ 

@@ -27,6 +27,13 @@ export interface Product {
   rating?: number;
   colors?: string[];
   sizes?: string[];
+  available_colors?: string[];
+  available_sizes?: string[];
+  indoor_image?: string;
+  outdoor_image?: string;
+  sale_percent?: number;
+  discounted_price?: number;
+  color_variants?: ProductColorVariant[];
 }
 
 export interface ProductVariant {
@@ -36,6 +43,21 @@ export interface ProductVariant {
   stock: number;
   price_adjustment: string;
   images: string[];
+}
+
+export interface ProductColorVariant {
+  id: number;
+  color: string;
+  color_hex: string;
+  is_active: boolean;
+  images: ProductColorVariantImage[];
+}
+
+export interface ProductColorVariantImage {
+  id: number;
+  image: string;
+  alt_text: string;
+  created_at: string;
 }
 
 export interface CollectionGalleryImage {

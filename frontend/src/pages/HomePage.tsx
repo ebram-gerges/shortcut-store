@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getCollectionImages, CollectionImage, getProducts, getCategories, Category } from '../services/productService';
+import { Product } from '../types/product';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -89,6 +90,7 @@ const HomePage = () => {
 
   // Animation for 'All Products' section
   const productsRef = useRef<HTMLDivElement | null>(null);
+  const [productsInView, setProductsInView] = useState(false);
 
   // Animation for 'About' section
   const aboutRef = useRef<HTMLDivElement | null>(null);
@@ -96,6 +98,13 @@ const HomePage = () => {
   // Hero carousel state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [heroImages, setHeroImages] = useState<string[]>([]);
+
+  // Products state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const productsPerPage = 8;
 
   // Fetch collection gallery images from backend
   useEffect(() => {
@@ -126,6 +135,32 @@ const HomePage = () => {
       // setAllProducts(products); // This line was removed as per the edit hint
     })();
   }, []);
+
+  // Fetch products for the All Products section
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const allProducts = await getProducts({ 
+          ordering: '-created_at'
+        });
+        
+        // Simple client-side pagination
+        const startIndex = (currentPage - 1) * productsPerPage;
+        const endIndex = startIndex + productsPerPage;
+        const paginatedProducts = allProducts.slice(startIndex, endIndex);
+        
+        setProducts(paginatedProducts);
+        setTotalPages(Math.ceil(allProducts.length / productsPerPage));
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [currentPage, productsPerPage]);
 
   // Hero carousel effect
   useEffect(() => {
@@ -167,7 +202,7 @@ const HomePage = () => {
     const observer = new window.IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // setProductsInView(true); // This line was removed as per the edit hint
+          setProductsInView(true);
           observer.disconnect();
         }
       },
@@ -308,6 +343,79 @@ const HomePage = () => {
                   </div>
                 </Link>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* All Products Section */}
+        <section
+          ref={productsRef}
+          className={`py-20 transition-all duration-1000 ease-out transform
+            ${productsInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}
+          `}
+        >
+          <div className="px-4 mx-auto max-w-7xl lg:px-8">
+            <h2 className="mb-12 text-3xl font-bold text-center text-red-700 dark:text-red-400">
+              All Products
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {loading ? (
+                <p>Loading products...</p>
+              ) : products.length === 0 ? (
+                <p>No products found.</p>
+              ) : (
+                products.map(product => (
+                  <Link to={`/product/${product.id}`} key={product.id} className="group">
+                    <div className="overflow-hidden relative w-full rounded-xl shadow-md transition-transform duration-300 aspect-square group-hover:scale-105">
+                       {(product.indoor_image || product.outdoor_image) ? (
+                         <img
+                           src={(product.indoor_image || product.outdoor_image)?.startsWith('http') 
+                             ? (product.indoor_image || product.outdoor_image) 
+                             : `${apiBaseUrl}${product.indoor_image || product.outdoor_image}`}
+                           alt={product.name}
+                           className="object-cover absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-110"
+                           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                         />
+                       ) : (
+                         <div className="flex absolute inset-0 justify-center items-center w-full h-full text-2xl bg-zinc-200 text-zinc-400">No Image</div>
+                       )}
+                      <div className="flex absolute bottom-0 left-0 flex-col items-start p-4 w-full bg-gradient-to-t from-black/80 to-black/0">
+                        <h3 className="mb-1 text-lg font-bold text-white">{product.name}</h3>
+                        <p className="text-sm text-white/80">${product.price}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-10">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="mx-4 text-lg font-bold text-white">Page {currentPage} of {totalPages}</span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+            
+            {/* View All Products Button */}
+            <div className="flex justify-center mt-8">
+              <Link
+                to="/products"
+                className="bg-[#059669] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#059669]/90 transition-all duration-300 inline-block shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                View All Products
+              </Link>
             </div>
           </div>
         </section>

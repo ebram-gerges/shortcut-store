@@ -2,6 +2,12 @@ from rest_framework import serializers
 from .models import Product, ProductColorVariant, ProductSizeVariant, ProductStock, ProductColorVariantImage, CollectionImage, CollectionGalleryImage, Category
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'description', 'image']
+
+
 class ProductColorVariantImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductColorVariantImage
@@ -48,6 +54,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     color_variants = ProductColorVariantSerializer(many=True, read_only=True)
     rating = serializers.FloatField(read_only=True)
     slug = serializers.SlugField(read_only=True)
+    category = CategorySerializer(read_only=True)
 
     def get_in_stock(self, obj):
         # Consider in stock if any stock_items have available_quantity > 0
@@ -73,6 +80,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     outdoor_image = serializers.ImageField(read_only=True)
     rating = serializers.FloatField(read_only=True)
     slug = serializers.SlugField(read_only=True)
+    category = CategorySerializer(read_only=True)
 
     def get_in_stock(self, obj):
         return obj.stock_items.filter(quantity__gt=0).exists()

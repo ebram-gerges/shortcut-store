@@ -163,6 +163,7 @@ const ProductDetailPage = () => {
         size: selectedSize,
         image: selectedImage,
         sale_percent: product.sale_percent,
+        slug: product.slug,
       });
     }
     setIsAddedToCart(true);
@@ -176,6 +177,7 @@ const ProductDetailPage = () => {
       price: Number(product.price),
       color: selectedColor,
       size: selectedSize,
+      slug: product.slug,
     });
     setIsAddedToWishlist(true);
     setTimeout(() => setIsAddedToWishlist(false), 2000);
@@ -321,26 +323,35 @@ const ProductDetailPage = () => {
               </div>
             )}
             {/* Size Selection */}
-            {Array.isArray(product.available_sizes) && product.available_sizes.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-black dark:text-white font-semibold mb-3">Size:</h3>
-                <div className="flex space-x-3">
-                  {product.available_sizes.map((size: string) => (
+            <div className="mb-6">
+              <h3 className="text-black dark:text-white font-semibold mb-3">Size:</h3>
+              <div className="flex space-x-3">
+                {['M', 'L', 'XL', '2XL'].map((size: string) => {
+                  const isAvailable = Array.isArray(product.available_sizes) && product.available_sizes.includes(size);
+                  const isSelected = selectedSize === size;
+                  
+                  return (
                     <button
                       key={size}
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => isAvailable && setSelectedSize(size)}
+                      disabled={!isAvailable}
                       className={`px-5 h-10 rounded-full border-2 flex items-center justify-center text-base font-semibold transition-all duration-150 shadow-sm
-                        ${selectedSize === size ? 'border-[#059669] bg-[#059669] text-white scale-105 shadow-lg' : 'border-zinc-400 bg-zinc-800 text-white hover:border-[#059669]'}
+                        ${isAvailable 
+                          ? (isSelected 
+                            ? 'border-[#059669] bg-[#059669] text-white scale-105 shadow-lg' 
+                            : 'border-zinc-400 bg-zinc-800 text-white hover:border-[#059669]')
+                          : 'border-zinc-500 bg-zinc-700 text-zinc-400 cursor-not-allowed'
+                        }
                       `}
                       aria-label={size}
                       type="button"
                     >
-                      {size}
+                      {isAvailable ? size : <del className="text-zinc-400">{size}</del>}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
             {/* Stock Status */}
             <div className="mb-6">
               {selectedInStock ? (
@@ -491,7 +502,7 @@ const ProductDetailPage = () => {
                     Add a review to {product.name}
                   </Link>
                 </div>
-                <ProductReviews productId={product.id} productName={product.name} />
+                <ProductReviews productId={product.id} productName={product.name} productSlug={product.slug} />
               </div>
             )}
           </div>

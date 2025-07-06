@@ -3,7 +3,6 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django_attach.models import Attachment
 from django.contrib.contenttypes.fields import GenericRelation
 
 
@@ -181,7 +180,6 @@ class ProductColorVariant(models.Model):
     color_hex = models.CharField(max_length=7, blank=True, help_text="Hex color code (e.g., #000000)")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    attachments = GenericRelation(Attachment)
 
     class Meta:
         unique_together = ('product', 'color')
