@@ -1,109 +1,123 @@
 """
-Production settings for shortcut project.
+Production Django settings for Shortcut Store.
+This file contains production-specific configurations with security and performance optimizations.
 """
+
 import os
 from pathlib import Path
-from .settings import *
+from .settings import *  # Import base settings
+import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# SECURITY WARNING: don't run with debug turned on in production!
+# Override development settings with production values
 DEBUG = False
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-b^lazyv&dao&g79==@g#(m-ekmq6!pfmonptv8205opyqnu$3@')
+# Security Settings
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable is required in production")
 
-# Security settings for production
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
+    raise ValueError("ALLOWED_HOSTS environment variable is required in production")
 
-# HTTPS Security Settings
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Database - PostgreSQL Configuration
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'shortcut_store'),
-        'USER': os.environ.get('DB_USER', 'shortcut_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'CONN_MAX_AGE': 60,
+# Database Configuration
+if os.getenv('DATABASE_URL'):
+    # For services like Railway, Heroku, etc.
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
-
-# Redis cache configuration
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+else:
+    # Traditional PostgreSQL setup
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'shortcut_store'),
+            'USER': os.getenv('DB_USER', 'shortcut_user'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': 'prefer',
+            },
+            'CONN_MAX_AGE': 600,
         }
     }
+
+# Redis Configuration
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+        },
+        'KEY_PREFIX': 'shortcut_store',
+        'TIMEOUT': 300,
+    }
 }
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
 
-# Celery configuration
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
-# Static files (CSS, JavaScript, Images)
+# Security Headers and Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# HTTPS Settings (enable if using HTTPS)
+USE_HTTPS = os.getenv('USE_HTTPS', 'False').lower() == 'true'
+if USE_HTTPS:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF and CORS Settings
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+CORS_ALLOW_CREDENTIALS = True
+
+# Static Files Configuration
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Media files
+# Static files storage for production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Add WhiteNoise middleware for static files
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise
+] + MIDDLEWARE[1:]  # Keep the rest of middleware
+
+# Media Files Configuration
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Security middleware and settings
-MIDDLEWARE.insert(1, 'django.middleware.security.SecurityMiddleware')
-
-# Enhanced security settings
-CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SAMESITE = 'Lax'
-
-# CORS settings for production
-CORS_ALLOWED_ORIGINS = [
-    "https://your-frontend-domain.com",  # Replace with your frontend domain
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
-
-# CSRF Trusted Origins
-CSRF_TRUSTED_ORIGINS = [
-    "https://your-frontend-domain.com",  # Replace with your frontend domain
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
-
-# Email configuration (use environment variables)
+# Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'shortcut756@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'wijpdbtlxdfseuxq')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER', 'noreply@shortcutstore.com')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-# Enhanced logging configuration
+# Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -112,15 +126,31 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
     },
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/django.log'),
+            'maxBytes': 15728640,  # 15MB
+            'backupCount': 10,
             'formatter': 'verbose',
         },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/django_errors.log'),
+            'maxBytes': 15728640,  # 15MB
+            'backupCount': 10,
             'formatter': 'verbose',
         },
     },
@@ -129,19 +159,95 @@ LOGGING = {
         'level': 'INFO',
     },
     'loggers': {
-        'django.db.backends': {
-            'handlers': ['console'],
-            'level': 'WARNING',
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'shortcut': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
 
-# Password hashing
-PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-]
+# Create logs directory if it doesn't exist
+os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
-# Disable Django's debug toolbar in production
-if 'debug_toolbar' in INSTALLED_APPS:
-    INSTALLED_APPS.remove('debug_toolbar') 
+# Performance Settings
+CONN_MAX_AGE = 600  # Database connection pooling
+
+# Data upload settings
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Admin Configuration
+ADMIN_URL = os.getenv('ADMIN_URL', 'admin/')
+
+# Google OAuth (if using)
+if os.getenv('GOOGLE_OAUTH_CLIENT_ID'):
+    SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id'] = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
+    SOCIALACCOUNT_PROVIDERS['google']['APP']['secret'] = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
+
+# Error Tracking (Sentry)
+SENTRY_DSN = os.getenv('SENTRY_DSN')
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(auto_enabling=True),
+            CeleryIntegration(monitor_beat_tasks=True),
+        ],
+        traces_sample_rate=0.1,
+        send_default_pii=True,
+        environment=os.getenv('ENVIRONMENT', 'production'),
+    )
+
+# Celery Configuration (if using)
+if REDIS_URL:
+    CELERY_BROKER_URL = REDIS_URL
+    CELERY_RESULT_BACKEND = REDIS_URL
+    CELERY_ACCEPT_CONTENT = ['json']
+    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_RESULT_SERIALIZER = 'json'
+    CELERY_TIMEZONE = TIME_ZONE
+
+# REST Framework Production Settings
+REST_FRAMEWORK.update({
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour'
+    }
+})
+
+# Content Security Policy (optional)
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "https:")
+
+# Update Jazzmin for production
+JAZZMIN_SETTINGS.update({
+    "show_ui_builder": False,  # Disable UI builder in production
+    "environment": "Production",
+})
+
+print("🚀 Production settings loaded successfully!") 
