@@ -11,6 +11,7 @@ from django.utils import timezone
 import json
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import CustomUserRegistrationForm, CustomAuthenticationForm, EmailVerificationForm
 from .models import User
@@ -53,6 +54,8 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('landing')
 
+    next_url = request.GET.get('next') or request.POST.get('next') or 'landing'
+
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -61,13 +64,16 @@ def login_view(request):
                 messages.error(request, 'Account not verified. Please check your email.')
                 return redirect('login')
             login(request, user)
+            # Only redirect to next if it's safe
+            if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                return redirect(next_url)
             return redirect('landing')
         else:
             messages.error(request, 'Invalid email or password')
     else:
         form = CustomAuthenticationForm()
 
-    return render(request, 'accounts/login.html', {'form': form})
+    return render(request, 'accounts/login.html', {'form': form, 'next': next_url})
 
 
 def verify_email_view(request, user_id=None):

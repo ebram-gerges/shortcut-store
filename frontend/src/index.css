@@ -12,12 +12,12 @@
 
 .light-gradient {
   background:
-    radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.25) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(5, 150, 105, 0.22) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.20) 0%, transparent 50%),
-    radial-gradient(circle at 60% 60%, rgba(52, 211, 153, 0.18) 0%, transparent 40%),
-    radial-gradient(circle at 10% 10%, rgba(34, 197, 94, 0.15) 0%, transparent 30%),
-    radial-gradient(circle at 90% 90%, rgba(4, 120, 87, 0.12) 0%, transparent 35%);
+    radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(5, 150, 105, 0.32) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.28) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(52, 211, 153, 0.24) 0%, transparent 40%),
+    radial-gradient(circle at 10% 10%, rgba(34, 197, 94, 0.22) 0%, transparent 30%),
+    radial-gradient(circle at 90% 90%, rgba(4, 120, 87, 0.18) 0%, transparent 35%);
 }
 .marquee-row {
   display: flex;
@@ -98,6 +98,48 @@
 }
 .animate-bounce-slow {
   animation: bounce-slow 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes modern-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+.animate-marquee {
+  animation: modern-marquee linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation-play-state: paused !important;
+  }
+}
+@keyframes single-marquee-move {
+  0% {
+    transform: translateX(100vw);
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+.single-marquee {
+  will-change: transform;
+  pointer-events: none;
+}
+@keyframes jump-box {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-12px); }
+  40% { transform: translateY(0); }
+  60% { transform: translateY(-8px); }
+  80% { transform: translateY(0); }
+}
+.animate-jump-box {
+  animation: jump-box 1.4s infinite cubic-bezier(0.4,0,0.2,1);
 }
 *{
     scroll-behavior: smooth;

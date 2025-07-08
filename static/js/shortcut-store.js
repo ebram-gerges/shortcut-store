@@ -419,8 +419,10 @@ function showQuickView(productId) {
 
 // Initialize sidebars
 function initializeSidebars() {
+    const offcanvasElements = document.querySelectorAll('.offcanvas');
     const customBackdrop = document.getElementById('customBackdrop');
-    const offcanvasElements = ['#offcanvasWishlist', '#offcanvasCart'];
+
+    if (!customBackdrop) return; // Prevent error if backdrop is missing
 
     // Function to show backdrop
     function showBackdrop() {
@@ -433,8 +435,7 @@ function initializeSidebars() {
     }
 
     // Setup offcanvas event handlers
-    offcanvasElements.forEach(selector => {
-        const element = document.querySelector(selector);
+    offcanvasElements.forEach(function(element) {
         if (element) {
             // Show backdrop when offcanvas is shown
             element.addEventListener('show.bs.offcanvas', showBackdrop);
@@ -445,6 +446,8 @@ function initializeSidebars() {
     });
 
     // Handle backdrop clicks to close offcanvas
+    // Only add event listener if customBackdrop exists
+    if (customBackdrop) {
     customBackdrop.addEventListener('click', function() {
         // Find any open offcanvas and close it
         const openOffcanvas = document.querySelector('.offcanvas.show');
@@ -455,6 +458,7 @@ function initializeSidebars() {
             }
         }
     });
+    }
 }
 
 // This duplicate function has been removed - using the main syncCartFromDatabase function above

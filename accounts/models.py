@@ -24,12 +24,13 @@ class User(AbstractUser):
 
     # Override is_active to require email verification
     # Temporarily disabled email verification
-    # def save(self, *args, **kwargs):
-    #     if not self.pk:  # New user
-    #         if not self.is_superuser:  # Only require verification for non-superusers
-    #             self.is_active = False
-    #             self.generate_verification_code()
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        # For new superusers, always mark as verified and active by default.
+        # Regular users still require email verification.
+        if not self.pk and self.is_superuser:
+            self.email_verified = True
+            self.is_active = True
+        super().save(*args, **kwargs)
 
     def generate_verification_code(self):
         """Generate and store a fresh 6-digit verification code."""
@@ -59,6 +60,10 @@ class User(AbstractUser):
             ])
             return True
         return False
+
+    def is_verified(self):
+        print(f"DEBUG: is_verified called for user {self.email}, email_verified={self.email_verified}, is_active={self.is_active}, is_superuser={self.is_superuser}")
+        return self.email_verified
 
     current_refresh_token = models.CharField(max_length=255, blank=True, null=True)
     orders_count = models.IntegerField(default=0)

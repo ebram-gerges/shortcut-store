@@ -200,15 +200,8 @@ const ProfilePage = () => {
 
   return (
     <div>
-      <div className="flex justify-end max-w-3xl mx-auto pt-6 px-2 sm:px-4">
-        <button
-          className="px-4 py-2 rounded-lg font-semibold shadow bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-          onClick={() => setShowNewProfile((v) => !v)}
-        >
-          Switch to {showNewProfile ? 'Old' : 'New'} Profile Page
-        </button>
-      </div>
-      {showNewProfile ? <NewProfile /> : <OldProfile />}
+      {/* Removed toggle button, always show OldProfile */}
+      <OldProfile />
     </div>
   );
 };

@@ -8,9 +8,10 @@ from accounts.api_views import MyTokenObtainPairView
 from core.healthcheck import healthcheck
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),  # Allauth URLs
-    path('accounts/', include('accounts.urls')),
+    path('admin-pZybk7TH5r8iNHvj/', admin.site.urls),
+    path('admin-auth/', include('django.contrib.auth.urls')),  # Built-in admin login
+    path('accounts/', include('accounts.urls')),  # Custom accounts views first
+    path('accounts/', include('allauth.urls')),   # Allauth after
     path('auth/', include('allauth.urls')),  # Google OAuth URLs
     path('products/', include('products.urls')),
     path('cart/', include('cart.urls')),

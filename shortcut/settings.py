@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'nested_admin',
     'jazzmin',
     'landing',
-    'accounts',
+    'accounts.apps.AccountsConfig',
     'products',
     'cart',
     'orders',
@@ -68,26 +68,25 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
+    # 2FA apps
+    'django_otp',
+    'django_otp.plugins.otp_email',
+    'two_factor',
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'shortcut.urls'
@@ -266,7 +265,7 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 # ===================================
 
 # Login/Logout URLs
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = '/admin-pZybk7TH5r8iNHvj/login/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Session settings
@@ -475,3 +474,13 @@ UNFOLD = {
     },
     "ENVIRONMENT_LABEL": "Production",  # Change as needed
 }
+
+# Two-Factor Auth (2FA) settings
+TWO_FACTOR_EMAIL_GATEWAY = 'two_factor.gateways.email.EmailGateway'
+TWO_FACTOR_EMAIL_SUBJECT = 'Your Shortcut Store Admin Login Code'
+TWO_FACTOR_EMAIL_BODY_TEMPLATE = 'Your verification code is: {{ token }}\n\nIf you did not request this, please ignore this email.'
+TWO_FACTOR_EMAIL_HTML_BODY_TEMPLATE = '<p>Your verification code is: <b>{{ token }}</b></p><p>If you did not request this, please ignore this email.</p>'
+TWO_FACTOR_LOGIN_TIMEOUT = 300  # 5 minutes
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB

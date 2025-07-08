@@ -115,7 +115,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
           <div className="flex relative justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="whitespace-nowrap flex items-center text-xl font-bold text-black dark:text-white hover:text-[#059669] transition-colors">
-              <img src={import.meta.env.VITE_API_BASE_URL + "/media/site-logo.svg"} alt="Shortcut Store Logo" style={{ height: 40, width: 'auto' }} className="mr-2" />
+              <img src="/media/site-logo.svg" alt="Shortcut Store Logo" style={{ height: 40, width: 'auto' }} className="mr-2" />
             </Link>
 
             {/* Desktop Navigation (lg and up) */}
@@ -146,14 +146,6 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                   </Link>
                 </div>
               ))}
-              <div key="nav-customer-service" className="inline-block relative align-middle group">
-                <Link to="/products" className="whitespace-nowrap block text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1">
-                  Customer Service
-                  <span
-                    className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
-                  ></span>
-                </Link>
-              </div>
             </nav>
 
             {/* Right side icons (lg and up) */}

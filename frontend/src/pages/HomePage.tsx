@@ -44,42 +44,33 @@ const getAnimationDuration = () => {
 };
 */
 
-/*
+// MarqueeBanner component for site announcement
+const getAnimationDuration = () => (typeof window !== 'undefined' && window.innerWidth < 640 ? 9 : 14);
+
 const MarqueeBanner: React.FC = () => {
   const [message, setMessage] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [animationDuration, setAnimationDuration] = useState(getAnimationDuration());
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/site-announcement/`)
+  // Fetch the latest message from the backend
+  const fetchMessage = () => {
+    fetch(`/api/site-announcement/`)
       .then(res => res.json())
       .then(data => setMessage(data.message || ''));
-  }, []);
+  };
 
   useEffect(() => {
-    const handleResize = () => {
-      setAnimationDuration(getAnimationDuration());
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    fetchMessage();
   }, []);
 
   if (!message) return null;
+
   return (
-    <div className="marquee-container" ref={containerRef}>
-      <div
-        className="marquee-row"
-        style={{
-          animationDuration: `${animationDuration / 1000}s`,
-        }}
-      >
-        <span className="inline-block px-8 font-bold whitespace-nowrap">{message}</span>
-        <span className="inline-block px-8 font-bold whitespace-nowrap">{message}</span>
-      </div>
+    <div className="absolute bottom-0 left-0 z-30 w-full flex items-center justify-center h-12 px-4 bg-black/70 border-t border-emerald-700">
+      <span className="text-white font-semibold text-base md:text-lg tracking-wide text-center w-full">
+        {message}
+      </span>
     </div>
   );
 };
-*/
 
 // Add marquee animation to index.css or here via style tag if not present
 
@@ -112,13 +103,21 @@ const HomePage = () => {
       const collections: CollectionImage[] = await getCollectionImages();
       // Use main image if available, otherwise fallback to gallery images
       const heroImgs: string[] = collections
-        .map(col => col.image ? (col.image.startsWith('http') ? col.image : `${apiBaseUrl}${col.image}`) : null)
+        .map(col => {
+          if (!col.image) return null;
+          if (col.image.startsWith('http')) return col.image;
+          // Always prepend base URL for /media/ paths
+          return `${apiBaseUrl}${col.image}`;
+        })
         .filter((img): img is string => !!img);
       // If no main images, fallback to gallery images
       if (heroImgs.length === 0) {
         const galleryImages: string[] = collections
           .flatMap(col => col.images)
-          .map(img => img.image.startsWith('http') ? img.image : `${apiBaseUrl}${img.image}`);
+          .map(img => {
+            if (img.image.startsWith('http')) return img.image;
+            return `${apiBaseUrl}${img.image}`;
+          });
         setHeroImages(galleryImages);
       } else {
         setHeroImages(heroImgs);
@@ -304,9 +303,7 @@ const HomePage = () => {
           ))}
         </div>
         {/* Marquee Banner at the bottom of the hero section */}
-        {/** <div className="absolute bottom-0 left-0 z-30 w-full">
           <MarqueeBanner />
-        </div> **/}
       </section>
 
       <hr className="border-zinc-700 dark:border-zinc-400 border-3 w-[90%] mx-auto mt-10" />

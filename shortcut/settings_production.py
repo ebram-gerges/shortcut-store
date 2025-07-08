@@ -4,7 +4,18 @@ Production settings for shortcut project.
 import os
 from pathlib import Path
 from .settings import *
+import dotenv
 
+print('USING settings_production.py FOR DJANGO SETTINGS')
+
+# Explicitly set the path to the .env file in the project root
+dotenv_path = os.path.join(Path(__file__).resolve().parent.parent, '.env')
+print("Loading .env from:", dotenv_path)
+dotenv.load_dotenv(dotenv_path=dotenv_path, override=True)
+
+print("DB_HOST:", os.environ.get("DB_HOST"))
+print("DB_USER:", os.environ.get("DB_USER"))
+print("DB_PASSWORD:", os.environ.get("DB_PASSWORD"))
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -72,6 +83,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Security middleware and settings
+MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 MIDDLEWARE.insert(1, 'django.middleware.security.SecurityMiddleware')
 
 # Enhanced security settings
@@ -81,15 +93,19 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 # CORS settings for production
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    "https://your-frontend-domain.com",  # Replace with your frontend domain
-    "http://localhost:3000",
-    "http://localhost:5173",
+    "https://shortcut-eg.store",
+    "https://www.shortcut-eg.store",
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
-    "https://your-frontend-domain.com",  # Replace with your frontend domain
+    "https://shortcut-eg.store",
+    "https://shortcut-eg.store/admin-pZybk7TH5r8iNHvj",
+    "https://www.shortcut-eg.store",
+    "https://www.shortcut-eg.store/admin-pZybk7TH5r8iNHvj",
     "http://localhost:3000",
     "http://localhost:5173",
 ]
@@ -145,3 +161,42 @@ PASSWORD_HASHERS = [
 # Disable Django's debug toolbar in production
 if 'debug_toolbar' in INSTALLED_APPS:
     INSTALLED_APPS.remove('debug_toolbar') 
+
+LOGIN_URL = '/admin-pZybk7TH5r8iNHvj/login/' 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB 
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+] 
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+] 
+
+# Ensure Allauth apps are included for production
+if 'allauth' not in INSTALLED_APPS:
+    INSTALLED_APPS += [
+        'allauth',
+        'allauth.account',
+        'allauth.socialaccount',
+        'allauth.socialaccount.providers.google',
+    ] 
+
+# Ensure Allauth AccountMiddleware is present after AuthenticationMiddleware
+if 'allauth.account.middleware.AccountMiddleware' not in MIDDLEWARE:
+    idx = MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware') + 1
+    MIDDLEWARE.insert(idx, 'allauth.account.middleware.AccountMiddleware') 
