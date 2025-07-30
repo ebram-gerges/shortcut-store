@@ -34,9 +34,8 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 # Application definition
 INSTALLED_APPS = [
     'nested_admin',
-    'jazzmin',
     'landing',
-    'accounts',
+    'accounts.apps.AccountsConfig',
     'products',
     'cart',
     'orders',
@@ -50,15 +49,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
-    'debug_toolbar',  # For demo performance monitoring
+    # 2FA apps
+    'django_otp',
+    'django_otp.plugins.otp_email',
+    # 'two_factor',  # Disabled to allow admin login without 2FA
 ]
 
 MIDDLEWARE = [
@@ -345,36 +343,6 @@ INTERNAL_IPS = [
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
     'INTERCEPT_REDIRECTS': False,
-}
-
-# Jazzmin settings
-JAZZMIN_SETTINGS = {
-    "site_title": "Shortcut Store Admin",
-    "site_header": "Shortcut Store Admin",
-    "site_brand": "Shortcut Store",
-    "welcome_sign": "Welcome to the Shortcut Store Admin!",
-    "copyright": "Shortcut Store",
-    "search_model": ["products.Product", "products.ProductColorVariant", "products.ProductSizeVariant"],
-    "show_sidebar": True,
-    "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    "order_with_respect_to": ["products", "accounts", "orders", "cart", "reviews", "vouchers", "wishlist"],
-    "custom_links": {},
-    "icons": {
-        "products.Product": "fas fa-tshirt",
-        "products.ProductColorVariant": "fas fa-palette",
-        "products.ProductSizeVariant": "fas fa-ruler-combined",
-        "products.ProductColorVariantImage": "fas fa-image",
-    },
-    "default_icon_parents": "fas fa-folder-open",
-    "default_icon_children": "fas fa-file",
-    "related_modal_active": True,
-    "use_google_fonts_cdn": True,
-    "show_ui_builder": True,
-    "changeform_format": "horizontal_tabs",
-    "changeform_format_overrides": {"products.Product": "collapsible",},
-    "theme": "darkly",
 }
 
 # Unfold settings

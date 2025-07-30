@@ -48,7 +48,13 @@
             <div class="col-lg-6">
                 <div class="product-info-detail">
                     <!-- Product Title -->
-                    <h1 class="product-detail-title">{{ product.name }}</h1>
+                    <h1 class="product-detail-title">
+                        {% if product.__class__.__name__ == 'OneSizeProduct' or product.category.is_one_size %}
+                            1 sized({{ product.name }})
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}
+                    </h1>
                     
                     <!-- Rating (placeholder) -->
                     <div class="product-rating mb-3">
@@ -82,23 +88,27 @@
                         <label class="form-label fw-bold">Color: <span id="selectedColorName">{{ selected_color }}</span></label>
                         <div class="color-options">
                             {% for variant in color_variants %}
-                                <div class="color-option {% if variant.color == selected_color %}active{% endif %}"
+                                <button
+                                  class="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-150 shadow-sm relative group color-option{% if variant.color == selected_color %} active{% endif %}"
+                                  aria-label="{{ variant.color }}"
+                                  type="button"
                                      data-color="{{ variant.color }}"
                                      data-color-hex="{{ variant.color_hex|default:'#000000' }}"
-                                     title="{{ variant.color }}">
-                                    {% if variant.color_hex %}
-                                        <div class="color-swatch" style="background-color: {{ variant.color_hex }};"></div>
-                                    {% else %}
-                                        <div class="color-swatch color-{{ variant.color|lower }}"></div>
-                                    {% endif %}
-                                </div>
+                                  style="background-color: {{ variant.color_hex|default:'#fff' }};"
+                                  title="{{ variant.color }}"
+                                >
+                                  <span class="sr-only">{{ variant.color }}</span>
+                                  <span class="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">
+                                    {{ variant.color }}
+                                  </span>
+                                </button>
                             {% endfor %}
                         </div>
                     </div>
                     {% endif %}
                     
                     <!-- Size Selection -->
-                    {% if size_variants %}
+                    {% if size_variants and not (product.__class__.__name__ == 'OneSizeProduct' or product.category.is_one_size) %}
                     <div class="size-selection mb-4">
                         <label class="form-label fw-bold">Size:</label>
                         <div class="size-options">

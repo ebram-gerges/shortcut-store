@@ -34,16 +34,29 @@ export interface ProductStockItem {
   is_active?: boolean;
 }
 
+export interface SubCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  is_active: boolean;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Category {
   id: number;
   name: string;
   slug: string;
   description?: string;
   image?: string;
-  is_active: boolean;
-  order: number;
+  image_variants?: any;
+  is_active?: boolean;
+  order?: number;
   created_at: string;
   updated_at: string;
+  subcategories?: SubCategory[];
 }
 
 export interface Product {
@@ -55,6 +68,7 @@ export interface Product {
   indoor_image?: string;
   outdoor_image?: string;
   category?: Category;
+  subcategory?: SubCategory;
   created_at: string;
   updated_at: string;
   variants?: ProductVariant[];

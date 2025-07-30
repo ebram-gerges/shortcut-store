@@ -30,6 +30,38 @@ api.interceptors.request.use(
   }
 );
 
+// Helper to get CSRF token from cookies
+function getCookie(name: string) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Add CSRF token to POST, PUT, PATCH, DELETE requests
+api.interceptors.request.use(
+  (config) => {
+    const method = config.method?.toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method || '')) {
+      const csrftoken = getCookie('csrftoken');
+      if (csrftoken) {
+        config.headers['X-CSRFToken'] = csrftoken;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
   (response: AxiosResponse) => response,

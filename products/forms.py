@@ -69,3 +69,36 @@ class ProductColorVariantBulkImageUploadForm(forms.Form):
         label="Images",
         help_text="Select one or more images to upload."
     ) 
+
+class OneSizeProductColorVariantAdminForm(forms.ModelForm):
+    size = forms.ChoiceField(
+        choices=[('One Size', 'One Size')],
+        label="Size",
+        required=True
+    )
+    stock = forms.IntegerField(required=True, min_value=0, label="Stock for One Size")
+    # images_upload field removed for Django 5.x compatibility
+    class Meta:
+        model = ProductColorVariant
+        fields = ['color', 'color_hex', 'is_active']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If editing, prepopulate size and stock from the existing ProductSizeVariant
+        if self.instance.pk:
+            size_variant = self.instance.size_variants.first()
+            if size_variant:
+                self.fields['size'].initial = size_variant.size
+                self.fields['stock'].initial = size_variant.stock
+
+    def save(self, commit=True):
+        instance = super().save(commit)
+        size = self.cleaned_data.get('size', 'One Size')
+        stock = self.cleaned_data.get('stock', 0)
+        # Remove all other sizes, keep only one
+        ProductSizeVariant.objects.filter(color_variant=instance).exclude(size=size).delete()
+        sv, created = ProductSizeVariant.objects.get_or_create(color_variant=instance, size=size)
+        sv.stock = stock
+        sv.is_active = True
+        sv.save()
+        return instance 

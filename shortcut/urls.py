@@ -28,6 +28,8 @@ urlpatterns = [
     path('api/orders/', include('orders.urls')),
     path('api/vouchers/', include('vouchers.api_urls')),
 
+    # Temporary direct API endpoints for testing
+    path('test-api/', include('products.api_urls')),
     # JWT token endpoints (root-level) for SPA convenience
     path('api/token/', MyTokenObtainPairView.as_view(), name='jwt_token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='jwt_token_refresh'),
@@ -38,9 +40,9 @@ urlpatterns = [
 
 # Serve React build files
 if not settings.DEBUG:
-    # Catch all other routes and return the React app
+    # Catch all other routes and return the React app (but not API routes)
     urlpatterns += [
-        re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
+        re_path(r'^(?!api/|admin|admin-auth|accounts|auth|products|cart|wishlist|reviews|vouchers|healthz|static|media).*$', TemplateView.as_view(template_name='index.html')),
     ]
 
 if settings.DEBUG:

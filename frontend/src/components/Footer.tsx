@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from './ui/Modal';
+import { FaInstagram, FaTiktok, FaFacebook, FaWhatsapp, FaEnvelope } from 'react-icons/fa';
 
 const Footer = () => {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showReturn, setShowReturn] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showCookies, setShowCookies] = useState(false);
+  const [showDelivery, setShowDelivery] = useState(false);
 
   return (
     <footer 
@@ -37,41 +39,40 @@ const Footer = () => {
             {/* Social Media Links */}
             <div className="flex space-x-4">
               <a 
-                href="#" 
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all duration-300 group shadow-sm"
-                aria-label="Facebook"
-              >
-                <svg className="w-5 h-5 text-white group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all duration-300 group shadow-sm"
+                href="https://www.instagram.com/shortcut._eg?igsh=MTZnZ3h5bmJhdXYzcQ==" 
+                target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all duration-300 group shadow-sm"
                 aria-label="Instagram"
               >
-                <svg className="w-5 h-5 text-white group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.49-3.323-1.297C4.198 14.895 3.708 13.744 3.708 12.447s.49-2.448 1.297-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.807.875 1.297 2.026 1.297 3.323s-.49 2.448-1.297 3.323c-.875.807-2.026 1.297-3.323 1.297zm7.718-1.297c-.875.807-2.026 1.297-3.323 1.297s-2.448-.49-3.323-1.297c-.807-.875-1.297-2.026-1.297-3.323s.49-2.448 1.297-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.807.875 1.297 2.026 1.297 3.323s-.49 2.448-1.297 3.323z"/>
-                </svg>
-              </a>
-              {/* Replace YouTube with WhatsApp */}
-              <a 
-                href="https://wa.me/201234567890" target="_blank" rel="noopener noreferrer"
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all duration-300 group shadow-sm"
-                aria-label="WhatsApp"
-              >
-                <svg className="w-5 h-5 text-white group-hover:text-white" fill="currentColor" viewBox="0 0 32 32">
-                  <path d="M16 2.938c-7.285 0-13.188 5.903-13.188 13.188 0 2.326.607 4.594 1.762 6.594l-1.844 6.75 6.938-1.813c1.938 1.094 4.094 1.719 6.344 1.719 7.285 0 13.188-5.903 13.188-13.188s-5.903-13.188-13.188-13.188zM16 27.063c-2.031 0-4.031-.531-5.781-1.531l-.406-.25-4.125 1.094 1.094-4.031-.25-.406c-1.094-1.75-1.688-3.75-1.688-5.844 0-6.094 4.969-11.063 11.063-11.063s11.063 4.969 11.063 11.063-4.969 11.063-11.063 11.063zM22.406 19.781c-.344-.188-2.031-1-2.344-1.125-.313-.125-.531-.188-.75.188s-.875 1.125-1.063 1.344c-.188.219-.375.25-.719.094-.344-.156-1.438-.531-2.75-1.688-1.016-.906-1.703-2.031-1.906-2.375-.188-.344-.021-.531.125-.719.125-.156.281-.406.438-.625.156-.219.219-.375.344-.625.125-.25.063-.469-.031-.656-.094-.188-.75-1.813-1.031-2.469-.281-.656-.563-.563-.75-.563-.188 0-.406-.031-.625-.031s-.563.063-.844.406c-.281.344-1.094 1.063-1.094 2.594s1.125 3.031 1.281 3.25c.156.219 2.219 3.406 5.406 4.625.75.313 1.344.5 1.813.625.75.188 1.438.156 1.969.094.594-.063 1.813-.75 2.063-1.469.25-.719.25-1.344.188-1.469-.063-.125-.281-.188-.594-.344z"/>
-                </svg>
+                <FaInstagram className="w-5 h-5 text-white group-hover:text-white" />
               </a>
               <a 
-                href="#" 
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all duration-300 group shadow-sm"
+                href="https://www.tiktok.com/@short.cut.eg?_t=ZS-8xRKjtDUSxR&_r=1" target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-all duration-300 group shadow-sm"
                 aria-label="TikTok"
               >
-                <svg className="w-5 h-5 text-white group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
-                </svg>
+                <FaTiktok className="w-5 h-5 text-white group-hover:text-white" />
+              </a>
+              <a 
+                href="https://www.facebook.com/share/12Kzjf6qBvH/" target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all duration-300 group shadow-sm"
+                aria-label="Facebook"
+              >
+                <FaFacebook className="w-5 h-5 text-white group-hover:text-white" />
+              </a>
+              <a 
+                href="https://wa.me/201274334267" target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-green-500 hover:text-white transition-all duration-300 group shadow-sm"
+                aria-label="WhatsApp"
+              >
+                <FaWhatsapp className="w-5 h-5 text-white group-hover:text-white" />
+              </a>
+              <a 
+                href="mailto:shortcut756@gmail.com" target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-300 group shadow-sm"
+                aria-label="Gmail"
+              >
+                <FaEnvelope className="w-5 h-5 text-white group-hover:text-white" />
               </a>
             </div>
           </div>
@@ -99,7 +100,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link to="/contact" className="text-gray-200 hover:text-emerald-300 transition-colors duration-300">
-                  Contact
+                  Contact Us
                 </Link>
               </li>
               {/* Removed FAQ link */}
@@ -124,6 +125,9 @@ const Footer = () => {
               </button>
               <button onClick={() => setShowReturn(true)} className="text-gray-200 hover:text-emerald-300 transition-colors duration-300 underline">
                 Return Policy
+              </button>
+              <button onClick={() => setShowDelivery(true)} className="text-gray-200 hover:text-emerald-300 transition-colors duration-300 underline">
+                Delivery Policy
               </button>
               <button onClick={() => setShowTerms(true)} className="text-gray-200 hover:text-emerald-300 transition-colors duration-300 underline">
                 Terms of Service
@@ -160,11 +164,39 @@ const Footer = () => {
         <p><b>Contact:</b> For privacy questions, contact us at support@shortcut-eg.com.</p>
       </Modal>
       <Modal isOpen={showReturn} onClose={() => setShowReturn(false)} title="Return Policy">
-        {/* Return Policy content will go here */}
-        <p><b>Returns:</b> If you are not satisfied with your purchase, you may return items within 14 days of receipt for a refund or exchange. Items must be unused and in original packaging.</p>
-        <p><b>Process:</b> To initiate a return, contact us at support@shortcut-eg.com with your order details. We will provide instructions for returning your item.</p>
-        <p><b>Refunds:</b> Refunds are processed within 7 business days after we receive your returned item.</p>
-        <p><b>Contact:</b> For return questions, contact us at support@shortcut-eg.com.</p>
+        <div className="space-y-4">
+          <p><b>Return Window:</b> You may return items within 14 days of receipt for a refund or exchange. Items must be unused, unworn, and in their original packaging with all tags attached.</p>
+          
+          <p><b>Return Process:</b> To initiate a return, contact us at support@shortcut-eg.com with your order details. We will provide instructions for returning your item.</p>
+          
+          <p><b>Return Shipping:</b> Customers are responsible for return shipping costs unless the item is defective or we sent the wrong item.</p>
+          
+          <p><b>Refunds:</b> Refunds are processed within 7 business days after we receive your returned item. The refund will be issued to your original payment method.</p>
+          
+          <p><b>Exchanges:</b> We offer exchanges for different sizes or colors, subject to availability.</p>
+          
+          <p><b>Non-Returnable Items:</b> Sale items, personalized items, and items marked as final sale cannot be returned.</p>
+          
+          <p><b>Contact:</b> For return questions, contact us at support@shortcut-eg.com or WhatsApp: +201274334267</p>
+        </div>
+      </Modal>
+      
+      <Modal isOpen={showDelivery} onClose={() => setShowDelivery(false)} title="Delivery Policy">
+        <div className="space-y-4">
+          <p><b>Delivery Cost:</b> Delivery costs vary based on your location and are calculated after order placement. You will receive the exact delivery cost via WhatsApp or email within 24 hours of placing your order.</p>
+          
+          <p><b>Delivery Areas:</b> We deliver to all major cities and governorates in Egypt. Delivery to remote areas may take longer and may have additional costs.</p>
+          
+          <p><b>Delivery Time:</b> Standard delivery takes 3-5 business days after order confirmation. Express delivery options may be available for an additional fee.</p>
+          
+          <p><b>Order Processing:</b> Orders are processed within 24 hours during business days. Orders placed on weekends or holidays will be processed on the next business day.</p>
+          
+          <p><b>Delivery Confirmation:</b> You will receive delivery updates via WhatsApp or email, including tracking information when available.</p>
+          
+          <p><b>Delivery Issues:</b> If you experience any delivery issues, please contact us immediately at support@shortcut-eg.com or WhatsApp: +201274334267</p>
+          
+          <p><b>Contact:</b> For delivery questions, contact us at support@shortcut-eg.com or WhatsApp: +201274334267</p>
+        </div>
       </Modal>
       <Modal isOpen={showTerms} onClose={() => setShowTerms(false)} title="Terms of Service">
         {/* Terms of Service content will go here */}

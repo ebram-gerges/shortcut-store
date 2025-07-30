@@ -5,10 +5,38 @@ import { useCart } from '../context/CartContext';
 import { getProductBySlug } from '../services/productService';
 import { Product } from '../types/product';
 import { Link } from 'react-router-dom';
+import { isOneSizeCategory } from '../utils/oneSizeCategory';
 
 interface WishlistSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+// Add a helper to build <picture> sources from image_variants
+function ResponsivePicture({ variants, alt, fallback, ...props }: { variants?: any, alt: string, fallback: string, [key: string]: any }) {
+  if (!variants) {
+    return <img src={fallback} alt={alt} {...props} />;
+  }
+  const getSrcSet = (fmt: string) => {
+    if (!variants[fmt]) return undefined;
+    return Object.entries(variants[fmt])
+      .map(([size, path]) => `${import.meta.env.VITE_API_BASE_URL}${path} ${size}w`)
+      .join(', ');
+  };
+  const webpSrcSet = getSrcSet('webp');
+  const avifSrcSet = getSrcSet('avif');
+  let defaultSrc = fallback;
+  if (webpSrcSet) {
+    const largest = Object.entries(variants.webp).sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (largest) defaultSrc = `${import.meta.env.VITE_API_BASE_URL}${largest[1]}`;
+  }
+  return (
+    <picture>
+      {avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes="100vw" />}
+      {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes="100vw" />}
+      <img src={defaultSrc} alt={alt} {...props} />
+    </picture>
+  );
 }
 
 const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) => {
@@ -139,7 +167,12 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
                       <div className="flex items-start space-x-4">
                         <div className="w-16 h-16 bg-zinc-700 rounded-lg flex items-center justify-center overflow-hidden">
                           {imageUrl ? (
-                            <img src={imageUrl} alt={item.name} className="object-contain w-full h-full" />
+                            <ResponsivePicture
+                              variants={product?.indoor_image_variants}
+                              alt={item.name}
+                              fallback={imageUrl}
+                              className="object-contain w-full h-full"
+                            />
                           ) : loadingProducts[item.id] ? (
                             <span className="text-zinc-400 text-xs animate-pulse">Loading...</span>
                           ) : (
@@ -151,7 +184,9 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({ isOpen, onClose }) =>
                             {item.name}
                           </Link>
                           <p className="text-zinc-400 text-sm">
-                            {item.color} • {item.size}
+                            {product && isOneSizeCategory(product.category, product.subcategory) && item.color
+                              ? `one size ${item.name} (${item.color})`
+                              : `${item.color} • ${item.size}`}
                           </p>
                           <p className="text-[#059669] font-semibold">LE {item.price}</p>
                           {!inStock && (

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.admin import ModelAdmin, TabularInline, StackedInline
 from django.contrib.admin.views.decorators import staff_member_required
-from .models import Product, ProductColorVariant, ProductColorVariantImage, ProductSizeVariant, ProductStock, CollectionImage, CollectionGalleryImage, Category, SiteAnnouncement
+from .models import Product, ProductColorVariant, ProductColorVariantImage, ProductSizeVariant, ProductStock, CollectionImage, CollectionGalleryImage, Category, SiteAnnouncement, SubCategory, Question, OneSizeProduct, MultiSizeProduct
 from django.urls import path
 from django.http import JsonResponse
 import logging
@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.admin import AdminSite
 import nested_admin
 from django.forms.widgets import FileInput
-from .forms import ProductColorVariantAdminForm, ProductColorVariantBulkImageUploadForm
+from .forms import ProductColorVariantAdminForm, ProductColorVariantBulkImageUploadForm, OneSizeProductColorVariantAdminForm
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.contrib import messages
@@ -21,12 +21,12 @@ from django.contrib import messages
 # Nested Inline for images under color variant
 class ProductColorVariantImageInline(nested_admin.NestedTabularInline):
     model = ProductColorVariantImage
-    extra = 0
+    extra = 1
     fields = ('image', 'alt_text')  # Restore default fields
     # Remove any custom save_new_objects or multi_images logic
 
 # Nested Inline for size variants under color variant
-class ProductSizeVariantInline(nested_admin.NestedStackedInline):
+class ProductSizeVariantInline(nested_admin.NestedTabularInline):
     model = ProductSizeVariant
     extra = 1
     fieldsets = (
@@ -49,10 +49,18 @@ class ProductSizeVariantInline(nested_admin.NestedStackedInline):
 class ProductColorVariantInline(nested_admin.NestedStackedInline):
     model = ProductColorVariant
     form = ProductColorVariantAdminForm
-    extra = 0
+    extra = 1  # Allow at least one new form
     readonly_fields = ('display_images',)
     ordering_field = None  # Unfold compatibility
-    inlines = [ProductColorVariantImageInline]  # Restore default image inline
+    inlines = [ProductColorVariantImageInline, ProductSizeVariantInline]
+    fieldsets = [
+        ('Color Variant Details', {
+            'fields': [
+                'color', 'color_hex', 'is_active', 'stock', 'size',
+            ],
+            'description': 'Set the color, hex code, activation, sizes, and stock for this variant.'
+        }),
+    ]
 
     def get_fieldsets(self, request, obj=None):
         return [
@@ -171,10 +179,27 @@ class ProductColorVariantForm(forms.ModelForm):
         model = ProductColorVariant
         fields = '__all__'
 
-# Register Product with nested-admin (default Django admin)
-from django.contrib import admin as django_admin
-@django_admin.register(Product)
-class ProductAdmin(nested_admin.NestedModelAdmin):
+class ProductAdminForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show subcategories for Basic Top
+        if self.instance and self.instance.category:
+            if self.instance.category.name.lower() == 'basic top':
+                self.fields['subcategory'].queryset = SubCategory.objects.filter(category=self.instance.category)
+                self.fields['subcategory'].widget.attrs['style'] = ''
+            else:
+                self.fields['subcategory'].queryset = SubCategory.objects.none()
+                self.fields['subcategory'].widget.attrs['style'] = 'display:none;'
+        else:
+            self.fields['subcategory'].queryset = SubCategory.objects.none()
+            self.fields['subcategory'].widget.attrs['style'] = 'display:none;'
+
+class ProductAdmin(admin.ModelAdmin):
+    form = ProductAdminForm
     list_display = ('name', 'slug', 'category', 'price', 'created_at')
     list_filter = ('category', 'created_at')
     search_fields = ('name', 'slug', 'description')
@@ -182,16 +207,18 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
     inlines = [ProductColorVariantInline]
     fieldsets = (
         (None, {
-            'fields': ('name', 'slug', 'description', 'category', 'price', 'sale_percent')
+            'fields': ('name', 'slug', 'description', 'category', 'subcategory', 'price', 'sale_percent')
         }),
         ('Product Images', {
             'fields': ('indoor_image', 'outdoor_image'),
             'description': 'Upload indoor and outdoor images for the product.'
         }),
     )
+    class Media:
+        js = ('admin/js/product_subcategory_toggle.js',)
 
 @admin.register(ProductColorVariant)
-class ProductColorVariantAdmin(django_admin.ModelAdmin):
+class ProductColorVariantAdmin(admin.ModelAdmin):
     form = ProductColorVariantAdminForm
     list_display = ('product', 'color', 'is_active', 'created_at')
     search_fields = ('product__name', 'color')
@@ -304,7 +331,7 @@ class ProductColorVariantAdmin(django_admin.ModelAdmin):
         return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 @admin.register(ProductColorVariantImage)
-class ProductColorVariantImageAdmin(django_admin.ModelAdmin):
+class ProductColorVariantImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'color_variant', 'image', 'alt_text', 'created_at')
     search_fields = ('color_variant__product__name', 'alt_text')
     ordering = ('color_variant', 'created_at')
@@ -339,7 +366,7 @@ class ProductColorVariantImageAdmin(django_admin.ModelAdmin):
         return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 @admin.register(ProductSizeVariant)
-class ProductSizeVariantAdmin(django_admin.ModelAdmin):
+class ProductSizeVariantAdmin(admin.ModelAdmin):
     list_display = ('color_variant', 'size', 'stock', 'is_active')
     search_fields = ('color_variant__product__name', 'size')
 
@@ -392,15 +419,15 @@ class CollectionImageAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'product_count', 'is_active', 'order', 'created_at')
-    list_filter = ('is_active', 'created_at')
+    list_display = ('name', 'slug', 'product_count', 'is_active', 'order', 'is_one_size', 'created_at')
+    list_filter = ('is_active', 'is_one_size', 'created_at')
     search_fields = ('name', 'description')
     prepopulated_fields = {'slug': ('name',)}
     ordering = ('order', 'name')
     readonly_fields = ('product_count', 'created_at', 'updated_at')
     fieldsets = (
         (None, {
-            'fields': ('name', 'slug', 'description', 'image', 'is_active', 'order')
+            'fields': ('name', 'slug', 'description', 'image', 'is_active', 'order', 'is_one_size')
         }),
         ('Statistics', {
             'fields': ('product_count', 'created_at', 'updated_at'),
@@ -418,3 +445,75 @@ class SiteAnnouncementAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'created_at')
     search_fields = ('message',)
     ordering = ('-created_at',)
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'product', 'date')
+    search_fields = ('username', 'email', 'product__name', 'question')
+    list_filter = ('product', 'date')
+
+admin.site.register(SubCategory)
+admin.site.register(Product, ProductAdmin)
+
+class OneSizeProductColorVariantInline(nested_admin.NestedStackedInline):
+    model = ProductColorVariant
+    form = OneSizeProductColorVariantAdminForm
+    extra = 1
+    can_delete = True
+    inlines = [ProductColorVariantImageInline]
+    fieldsets = [
+        ('Color Variant Details', {
+            'fields': [
+                'color', 'color_hex', 'is_active', 'size', 'stock',
+            ],
+            'description': 'Set the color, hex code, activation, and stock for this one-size variant.'
+        }),
+    ]
+
+@admin.register(OneSizeProduct)
+class OneSizeProductAdmin(nested_admin.NestedModelAdmin):
+    form = ProductAdminForm
+    list_display = ('name', 'slug', 'category', 'price', 'created_at')
+    list_filter = ('category', 'created_at')
+    search_fields = ('name', 'slug', 'description')
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = [OneSizeProductColorVariantInline]
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'slug', 'description', 'category', 'subcategory', 'price', 'sale_percent')
+        }),
+        ('Product Images', {
+            'fields': ('indoor_image', 'outdoor_image'),
+            'description': 'Upload indoor and outdoor images for the product.'
+        }),
+    )
+    change_form_template = "admin/products/product_change_form_debug.html"
+    class Media:
+        js = ('admin/js/product_subcategory_toggle.js',)
+
+@admin.register(MultiSizeProduct)
+class MultiSizeProductAdmin(nested_admin.NestedModelAdmin):
+    form = ProductAdminForm
+    list_display = ('name', 'slug', 'category', 'price', 'created_at')
+    list_filter = ('category', 'created_at')
+    search_fields = ('name', 'slug', 'description')
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = [ProductColorVariantInline]
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'slug', 'description', 'category', 'subcategory', 'price', 'sale_percent')
+        }),
+        ('Product Images', {
+            'fields': ('indoor_image', 'outdoor_image'),
+            'description': 'Upload indoor and outdoor images for the product.'
+        }),
+    )
+    change_form_template = "admin/products/product_change_form_debug.html"
+    class Media:
+        js = ('admin/js/product_subcategory_toggle.js',)
+
+# Optionally, unregister the base Product admin to avoid confusion
+try:
+    admin.site.unregister(Product)
+except admin.sites.NotRegistered:
+    pass

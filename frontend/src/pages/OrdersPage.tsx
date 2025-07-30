@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { Package, Calendar, BadgeCheck } from 'lucide-react';
+import { isOneSizeCategory } from '../utils/oneSizeCategory';
 
 interface OrderItem {
   id: number;
-  product: { id: number; name: string; image: string };
+  product: { id: number; name: string; image: string; category: string; subcategory: string };
   quantity: number;
   price: number;
   color: string;
@@ -71,7 +72,11 @@ const OrdersPage = () => {
                         </div>
                         <div className="flex-1">
                           <div className="text-white font-medium">{item.product.name}</div>
-                          <div className="text-zinc-400 text-sm">{item.color} • {item.size} • Qty: {item.quantity}</div>
+                          <div className="text-zinc-400 text-sm">
+                            {isOneSizeCategory(item.product.category, item.product.subcategory) && item.color
+                              ? `one size ${item.product.name} (${item.color})`
+                              : `${item.color} • ${item.size} • Qty: ${item.quantity}`}
+                          </div>
                         </div>
                         <div className="text-white font-semibold">LE {(item.price * item.quantity).toFixed(2)}</div>
                       </div>

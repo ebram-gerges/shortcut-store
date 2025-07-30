@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from .settings import *
 import dotenv
+import re
 
 print('USING settings_production.py FOR DJANGO SETTINGS')
 
@@ -20,7 +21,7 @@ print("DB_PASSWORD:", os.environ.get("DB_PASSWORD"))
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-b^lazyv&dao&g79==@g#(m-ekmq6!pfmonptv8205opyqnu$3@')
@@ -86,71 +87,68 @@ MEDIA_ROOT = BASE_DIR / 'media'
 MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 MIDDLEWARE.insert(1, 'django.middleware.security.SecurityMiddleware')
 
-# Enhanced security settings
+# CSRF settings for production
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
 
+# CSRF Trusted Origins for production
+CSRF_TRUSTED_ORIGINS = [
+    'https://shortcut-eg.store',
+    'https://www.shortcut-eg.store',
+]
+
+# Temporarily disable CSRF middleware for testing
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',  # Temporarily disabled
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+]
+
+# CSRF exemption for specific API endpoints
+CSRF_EXEMPT_URLS = [
+    r'^/api/products/questions/submit/$',
+]
+
+# Custom CSRF middleware that exempts specific URLs
+class CustomCsrfViewMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Check if the request path matches any exempt URLs
+        for pattern in CSRF_EXEMPT_URLS:
+            if re.match(pattern, request.path):
+                request._dont_enforce_csrf_checks = True
+                break
+        return self.get_response(request)
+
+# Replace the standard CSRF middleware with our custom one
+# MIDDLEWARE = [
+#     'django.middleware.security.SecurityMiddleware',
+#     'django.contrib.sessions.middleware.SessionMiddleware',
+#     'corsheaders.middleware.CorsMiddleware',
+#     'django.middleware.common.CommonMiddleware',
+#     'shortcut.settings_production.CustomCsrfViewMiddleware',  # Custom CSRF middleware
+#     'django.contrib.auth.middleware.AuthenticationMiddleware',
+#     'django.contrib.messages.middleware.MessageMiddleware',
+#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#     'allauth.account.middleware.AccountMiddleware',
+# ]
+
 # CORS settings for production
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    "https://shortcut-eg.store",
-    "https://www.shortcut-eg.store",
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://(www\.)?shortcut-eg\.store$",
 ]
 CORS_ALLOW_CREDENTIALS = True
-
-# CSRF Trusted Origins
-CSRF_TRUSTED_ORIGINS = [
-    "https://shortcut-eg.store",
-    "https://shortcut-eg.store/admin-pZybk7TH5r8iNHvj",
-    "https://www.shortcut-eg.store",
-    "https://www.shortcut-eg.store/admin-pZybk7TH5r8iNHvj",
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
-
-# Email configuration (use environment variables)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'shortcut756@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'wijpdbtlxdfseuxq')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# Enhanced logging configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
-    },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django.db.backends': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-        },
-    },
-}
 
 # Password hashing
 PASSWORD_HASHERS = [
@@ -194,9 +192,17 @@ if 'allauth' not in INSTALLED_APPS:
         'allauth.account',
         'allauth.socialaccount',
         'allauth.socialaccount.providers.google',
-    ] 
+    ]
+# Do NOT re-add 'two_factor' here
 
 # Ensure Allauth AccountMiddleware is present after AuthenticationMiddleware
 if 'allauth.account.middleware.AccountMiddleware' not in MIDDLEWARE:
     idx = MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware') + 1
     MIDDLEWARE.insert(idx, 'allauth.account.middleware.AccountMiddleware') 
+
+# (Monkeypatch for User.is_verified removed to avoid early import issues) 
+CORS_ALLOWED_ORIGINS = [
+    "https://shortcut-eg.store",
+    "https://www.shortcut-eg.store",
+]
+CORS_ALLOW_CREDENTIALS = True

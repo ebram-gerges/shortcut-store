@@ -4,7 +4,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from django.urls import path, re_path, include
 from .api_views import (
     ProductViewSet, collection_images_list,
-    get_site_announcement,
+    get_site_announcement, submit_question, test_simple
 )
 
 # Create a router and register our viewsets with it
@@ -21,4 +21,6 @@ urlpatterns = [
 
 urlpatterns += [
     path('site-announcement/', get_site_announcement, name='site-announcement'),
+    path('products/questions/submit/', submit_question, name='submit-question'),
+    path('test/', test_simple, name='test_simple'),
 ]

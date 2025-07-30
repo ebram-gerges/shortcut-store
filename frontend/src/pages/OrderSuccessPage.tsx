@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CheckCircle, Package, Truck } from 'lucide-react';
 import api from '../services/api';
+import { isOneSizeCategory } from '../utils/oneSizeCategory';
 
 interface OrderItem {
   id: number;
@@ -144,7 +145,9 @@ const OrderSuccessPage = () => {
                   <div className="flex-1">
                     <h4 className="text-white font-medium">{item.name}</h4>
                     <p className="text-zinc-400 text-sm">
-                      {item.color} • {item.size} • Qty: {item.quantity}
+                      {isOneSizeCategory(undefined, undefined) && item.color // fallback, update if product.category/subcategory available
+                        ? `one size ${item.name} (${item.color})`
+                        : `${item.color} • ${item.size} • Qty: ${item.quantity}`}
                     </p>
                   </div>
                   <span className="text-white font-semibold">

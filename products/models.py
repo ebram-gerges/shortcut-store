@@ -4,6 +4,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericRelation
+from .utils import process_image_variants
+from django.db.models import JSONField
+from django.core.exceptions import ValidationError
 
 
 class Category(models.Model):
@@ -12,10 +15,12 @@ class Category(models.Model):
     slug = models.SlugField(max_length=100, unique=True, db_index=True)
     description = models.TextField(blank=True, help_text="Category description")
     image = models.ImageField(upload_to='categories/', blank=True, null=True, help_text="Category image")
+    image_variants = JSONField(blank=True, null=True, default=dict, help_text="Auto-generated image variants (WebP/AVIF, multiple sizes)")
     is_active = models.BooleanField(default=True, help_text="Enable/disable this category")
     order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_one_size = models.BooleanField(default=False, help_text="Check if this category is for one-size products only")
 
     class Meta:
         ordering = ['order', 'name']
@@ -34,6 +39,9 @@ class Category(models.Model):
             from django.utils.text import slugify
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+        if self.image:
+            self.image_variants = process_image_variants(self.image, instance=self)
+            super().save(update_fields=["image_variants"])  # Save only the variants
 
     @property
     def product_count(self):
@@ -43,6 +51,7 @@ class CollectionImage(models.Model):
     """Model for storing hero section collection (gallery)"""
     title = models.CharField(max_length=200, blank=True, null=True, help_text="Descriptive title for the collection")
     image = models.ImageField(upload_to='collections/main/', blank=True, null=True, help_text="Main image for this collection (used in hero section)")
+    image_variants = JSONField(blank=True, null=True, default=dict, help_text="Auto-generated image variants (WebP/AVIF, multiple sizes)")
     is_active = models.BooleanField(default=True, help_text="Enable/disable this collection")
     order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -55,10 +64,17 @@ class CollectionImage(models.Model):
     def __str__(self):
         return f"{self.title or 'Collection'} (Order: {self.order})"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            self.image_variants = process_image_variants(self.image, instance=self)
+            super().save(update_fields=["image_variants"])  # Save only the variants
+
 
 class CollectionGalleryImage(models.Model):
     collection = models.ForeignKey(CollectionImage, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='collections/gallery/', help_text="Gallery image for this collection")
+    image_variants = JSONField(blank=True, null=True, default=dict, help_text="Auto-generated image variants (WebP/AVIF, multiple sizes)")
     order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -69,6 +85,12 @@ class CollectionGalleryImage(models.Model):
 
     def __str__(self):
         return f"{self.collection.title or 'Collection'} - Image {self.order}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            self.image_variants = process_image_variants(self.image, instance=self)
+            super().save(update_fields=["image_variants"])  # Save only the variants
 
 
 class SizeChoices(models.TextChoices):
@@ -97,6 +119,24 @@ class ColorChoices(models.TextChoices):
     CARBON_GREY = 'Carbon Grey', _('Carbon Grey')
     OTHER = 'Other', _('Other')
 
+class SubCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True, db_index=True)
+    slug = models.SlugField(max_length=100, unique=True, db_index=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
+    description = models.TextField(blank=True, help_text="Subcategory description")
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers appear first)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = "SubCategory"
+        verbose_name_plural = "SubCategories"
+
+    def __str__(self):
+        return f"{self.name} ({self.category.name})"
+
 class Product(models.Model):
     name = models.CharField(max_length=200, db_index=True)
     slug = models.SlugField(max_length=220, unique=True, db_index=True, blank=True)
@@ -110,9 +150,14 @@ class Product(models.Model):
         db_index=True
     )
     indoor_image = models.ImageField(upload_to='products/indoor/', blank=True, null=True, help_text="Indoor image for product card (main image)")
+    indoor_image_variants = JSONField(blank=True, null=True, default=dict, help_text="Auto-generated image variants (WebP/AVIF, multiple sizes)")
     outdoor_image = models.ImageField(upload_to='products/outdoor/', blank=True, null=True, help_text="Outdoor/hover image for product card")
+    outdoor_image_variants = JSONField(blank=True, null=True, default=dict, help_text="Auto-generated image variants (WebP/AVIF, multiple sizes)")
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='products', db_index=True)
+    subcategory = models.ForeignKey('SubCategory', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
+    # Remove custom manager from Product
+    # Use default manager
 
     class Meta:
         indexes = [
@@ -134,6 +179,19 @@ class Product(models.Model):
                 n += 1
             self.slug = slug
         super().save(*args, **kwargs)
+        updated = False
+        if self.indoor_image:
+            self.indoor_image_variants = process_image_variants(self.indoor_image, instance=self)
+            updated = True
+        if self.outdoor_image:
+            self.outdoor_image_variants = process_image_variants(self.outdoor_image, instance=self)
+            updated = True
+        if updated:
+            super().save(update_fields=["indoor_image_variants", "outdoor_image_variants"])
+
+    def clean(self):
+        if self.category is None:
+            raise ValidationError({'category': 'Category is required for all products.'})
 
     @property
     def discounted_price(self):
@@ -149,6 +207,9 @@ class Product(models.Model):
     def available_sizes(self):
         size_order = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
         sizes = list(set(self.color_variants.values_list('size_variants__size', flat=True)))
+        sizes = [s for s in sizes if s is not None]
+        if not sizes:
+            return []
         sizes.sort(key=lambda x: size_order.index(x) if x in size_order else 100 + ord(x[0]))
         return sizes
 
@@ -176,14 +237,14 @@ class Product(models.Model):
 
 class ProductColorVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='color_variants')
-    color = models.CharField(max_length=20, choices=ColorChoices.choices)
+    color = models.CharField(max_length=30)  # Allow any color name
     color_hex = models.CharField(max_length=7, blank=True, help_text="Hex color code (e.g., #000000)")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('product', 'color')
-        ordering = ['color']
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.product.name} - {self.color}"
@@ -192,6 +253,7 @@ class ProductColorVariant(models.Model):
 class ProductColorVariantImage(models.Model):
     color_variant = models.ForeignKey(ProductColorVariant, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='color_variant_images/')
+    image_variants = JSONField(blank=True, null=True, default=dict, help_text="Auto-generated image variants (WebP/AVIF, multiple sizes)")
     alt_text = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -200,6 +262,23 @@ class ProductColorVariantImage(models.Model):
 
     def __str__(self):
         return f"{self.color_variant} - Image"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            self.image_variants = process_image_variants(self.image, instance=self)
+            super().save(update_fields=["image_variants"])  # Save only the variants
+
+def is_one_size_category(category, subcategory=None):
+    """Helper to check if a category or subcategory is a one-size category (sweatpants, suits, basic tops)"""
+    targets = [getattr(category, 'name', None), getattr(category, 'slug', None)]
+    if subcategory:
+        targets += [getattr(subcategory, 'name', None), getattr(subcategory, 'slug', None)]
+    targets = [s.lower() for s in targets if s]
+    return any(
+        'sweatpant' in s or 'suit' in s or 'basic top' in s
+        for s in targets
+    )
 
 class ProductSizeVariant(models.Model):
     color_variant = models.ForeignKey(ProductColorVariant, on_delete=models.CASCADE, related_name='size_variants')
@@ -211,27 +290,18 @@ class ProductSizeVariant(models.Model):
         unique_together = ('color_variant', 'size')
         ordering = ['size']
 
-    def __str__(self):
-        return f"{self.color_variant} - {self.size}"
+    def clean(self):
+        # Enforce only one size per color variant for one-size categories
+        product = self.color_variant.product
+        if is_one_size_category(product.category, product.subcategory):
+            existing = ProductSizeVariant.objects.filter(color_variant=self.color_variant).exclude(pk=self.pk)
+            if existing.exists():
+                raise ValidationError("Only one size is allowed per color variant for this category or subcategory.")
+        super().clean()
 
     def save(self, *args, **kwargs):
+        self.clean()
         super().save(*args, **kwargs)
-        # Sync stock to ProductStock
-        from .models import ProductStock  # avoid circular import
-        product = self.color_variant.product
-        stock_obj, created = ProductStock.objects.get_or_create(
-            product=product,
-            size_variant=self,
-            defaults={
-                'quantity': self.stock,
-                'reserved_quantity': 0,
-                'is_active': self.is_active
-            }
-        )
-        if not created:
-            stock_obj.quantity = self.stock
-            stock_obj.is_active = self.is_active
-            stock_obj.save()
 
 # Stock is managed at the size+color level (can be merged with ProductSizeVariant, but kept for extensibility)
 class ProductStock(models.Model):
@@ -295,6 +365,16 @@ class ProductStock(models.Model):
             return True
         return False
 
+class Question(models.Model):
+    username = models.CharField(max_length=150)
+    email = models.EmailField()
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='questions')
+    question = models.TextField()
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Question by {self.username} on {self.product.name} at {self.date.strftime('%Y-%m-%d %H:%M')}"
+
 class SiteAnnouncement(models.Model):
     message = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
@@ -307,3 +387,29 @@ class SiteAnnouncement(models.Model):
 
     def __str__(self):
         return self.message
+
+class OneSizeProductManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(category__is_one_size=True)
+
+class OneSizeProduct(Product):
+    objects = OneSizeProductManager()
+    def __str__(self):
+        return f"1 sized({self.name})"
+    class Meta:
+        proxy = True
+        verbose_name = "One Size Product"
+        verbose_name_plural = "One Size Products"
+
+class MultiSizeProductManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            models.Q(category__is_one_size=False) | models.Q(category__is_one_size__isnull=True)
+        )
+
+class MultiSizeProduct(Product):
+    objects = MultiSizeProductManager()
+    class Meta:
+        proxy = True
+        verbose_name = "Multi Size Product"
+        verbose_name_plural = "Multi Size Products"

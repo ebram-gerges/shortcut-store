@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { isOneSizeCategory } from '../utils/oneSizeCategory';
 
 interface OrderItem {
   id: number;
@@ -105,7 +106,11 @@ const OrderTrackingPage: React.FC = () => {
                         </div>
                         <div className="flex-1">
                           <div className="text-base font-medium text-white group-hover:underline">{item.product.name}</div>
-                          <div className="mb-1 text-xs text-zinc-400">{item.color} • {item.size} • Qty: {item.quantity}</div>
+                          <div className="mb-1 text-xs text-zinc-400">
+                            {isOneSizeCategory(item.product.category, item.product.subcategory) && item.color
+                              ? `one size ${item.product.name} (${item.color})`
+                              : `${item.color} • ${item.size} • Qty: ${item.quantity}`}
+                          </div>
                           {hasSale && (
                             <div className="mt-1 text-xs font-semibold text-green-400">{salePercent}% OFF</div>
                           )}

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { fetchUserProfile } from '../services/authService';
+import { isOneSizeCategory } from '../utils/oneSizeCategory';
 
 // Phone number formatting utility
 const formatPhoneNumber = (phone: string): string => {
@@ -79,9 +80,11 @@ const CheckoutPage = () => {
     }
   }, [user, token]);
 
+  // Remove shipping fee logic
   const subtotal = getTotalPrice();
-  const shipping = subtotal > 100 ? 0 : 15;
-  const totalBeforeDiscount = subtotal + shipping;
+  // const shipping = subtotal > 100 ? 0 : 15; // REMOVED
+  // const totalBeforeDiscount = subtotal + shipping; // REPLACED WITH:
+  const totalBeforeDiscount = subtotal;
   const total = Math.max(0, totalBeforeDiscount - voucherDiscount);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -401,7 +404,10 @@ const CheckoutPage = () => {
                       <div className="flex-1">
                         <h3 className="font-medium text-white">{item.name}</h3>
                         <p className="text-sm text-zinc-100">
-                          {item.color} • {item.size} • Qty: {item.quantity}
+                          {/* Remove item.product references, use only item fields */}
+                          {item.color && item.size
+                            ? `${item.color} • ${item.size} • Qty: ${item.quantity}`
+                            : `Qty: ${item.quantity}`}
                         </p>
                         {hasSale && (
                           <div className="mt-1 text-xs font-semibold text-green-400">{salePercent}% OFF</div>
@@ -427,9 +433,12 @@ const CheckoutPage = () => {
                   <span>Subtotal</span>
                   <span>{subtotal.toFixed(2)} EGP</span>
                 </div>
+                {/* Delivery message replaces shipping fee */}
                 <div className="flex justify-between text-zinc-100">
-                  <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : `${shipping.toFixed(2)} EGP`}</span>
+                  <span>Delivery</span>
+                  <span className="text-yellow-400 text-sm">
+                    The delivery cost will be sent to you via WhatsApp or email within 24 hours.
+                  </span>
                 </div>
                 <div className="flex justify-between mt-4 text-lg font-semibold text-white">
                   <span>Total</span>
@@ -456,8 +465,10 @@ const CheckoutPage = () => {
               <div className="flex items-center mt-4 space-x-4 text-zinc-100">
                 <Truck className="h-6 w-6 text-[#1b8d69]" />
                 <div>
-                  <p className="font-medium">Free Shipping</p>
-                  <p className="text-sm">On orders over LE 1000</p>
+                  <p className="font-medium">Delivery Policy</p>
+                  <p className="text-sm">
+                    Delivery cost will be communicated to you via WhatsApp or email after order placement.
+                  </p>
                 </div>
               </div>
             </div>

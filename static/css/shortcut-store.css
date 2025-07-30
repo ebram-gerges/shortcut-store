@@ -1817,11 +1817,31 @@ body {
 }
 
 .color-swatch {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: all var(--transition-normal);
+  border: 2.5px solid rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10), 0 0 0 2px #fff;
+  display: inline-block;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+  position: relative;
+}
+
+.color-option:hover .color-swatch {
+  border-color: var(--shortcut-army-green);
+  box-shadow: 0 4px 16px rgba(16,185,129,0.18), 0 0 0 2px #fff;
+  transform: scale(1.08);
+}
+
+[data-theme="dark"] .color-swatch {
+  border: 2.5px solid rgba(255,255,255,0.18);
+  box-shadow: 0 2px 8px rgba(255,255,255,0.08), 0 0 0 2px #18181b;
+}
+
+[data-theme="dark"] .color-option:hover .color-swatch {
+  border-color: var(--shortcut-neon-green);
+  box-shadow: 0 4px 16px rgba(16,185,129,0.22), 0 0 0 2px #18181b;
+  transform: scale(1.08);
 }
 
 /* Predefined color swatches for common colors */

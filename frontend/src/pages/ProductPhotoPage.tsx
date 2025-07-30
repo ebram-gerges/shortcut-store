@@ -131,6 +131,33 @@ const ProductPhotoPage = () => {
     }
   };
 
+  // Add ResponsivePicture for preview
+  function ResponsivePicture({ variants = undefined, alt, fallback, ...props }) {
+    if (!variants) {
+      return <img src={fallback} alt={alt} {...props} />;
+    }
+    const getSrcSet = (fmt) => {
+      if (!variants[fmt]) return undefined;
+      return Object.entries(variants[fmt])
+        .map(([size, path]) => `${import.meta.env.VITE_API_BASE_URL}${path} ${size}w`)
+        .join(', ');
+    };
+    const webpSrcSet = getSrcSet('webp');
+    const avifSrcSet = getSrcSet('avif');
+    let defaultSrc = fallback;
+    if (webpSrcSet) {
+      const largest = Object.entries(variants.webp).sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+      if (largest) defaultSrc = `${import.meta.env.VITE_API_BASE_URL}${largest[1]}`;
+    }
+    return (
+      <picture>
+        {avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes="100vw" />}
+        {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes="100vw" />}
+        <img src={defaultSrc} alt={alt} {...props} />
+      </picture>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center">
@@ -214,11 +241,7 @@ const ProductPhotoPage = () => {
                 
                 {previewUrl ? (
                   <div className="relative">
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-64 object-cover rounded-lg border border-zinc-300 dark:border-zinc-600"
-                    />
+                    <ResponsivePicture fallback={previewUrl} alt="Preview" className="w-full h-64 object-cover rounded-lg border border-zinc-300 dark:border-zinc-600" />
                     <button
                       type="button"
                       onClick={handleRemoveFile}

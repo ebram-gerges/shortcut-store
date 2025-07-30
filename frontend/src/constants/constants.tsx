@@ -8,13 +8,21 @@ export const navLinks = [
         href: '/products'
     },
     {
-        name: 'Summer Collection',
-        href: '/products?season=summer'
+        name: 'Basic Top',
+        href: '/products?category=basic-top'
     },
     {
-        name: 'Top Selling',
-        href: '/products?sort=top'
-    },   
+        name: 'Oversize T-Shirt',
+        href: '/products?category=oversize-t-shirts'
+    },
+    {
+        name: 'Suits',
+        href: '/products?category=suits'
+    },
+    {
+        name: 'Sweatpants',
+        href: '/products?category=sweatpants'
+    },
 ]
 export const footerLinks = [
     {

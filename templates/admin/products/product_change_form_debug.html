@@ -1,0 +1,25 @@
+{% extends "admin/change_form.html" %}
+{% block extrahead %}
+    {{ block.super }}
+    <script>
+      console.log("Admin JS loaded: custom debug line");
+      document.addEventListener('DOMContentLoaded', function() {
+        const addBtns = document.querySelectorAll('.add-row a');
+        if (addBtns.length === 0) {
+          console.log("No add-row buttons found");
+        }
+        addBtns.forEach(function(addBtn, idx) {
+          addBtn.addEventListener('click', function() {
+            console.log("Add color variant button clicked [" + idx + "]");
+            setTimeout(function() {
+              const forms = document.querySelectorAll('.dynamic-productcolorvariant_set');
+              console.log("Number of color variant forms after click:", forms.length);
+            }, 500);
+          });
+        });
+      });
+    </script>
+{% endblock %}
+{% block content %}
+    {{ block.super }}
+{% endblock %} 

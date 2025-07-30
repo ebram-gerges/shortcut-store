@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Heart, ShoppingCart, ChevronDown, LogOut, Sun, Moon, Menu, X as Close, Home, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { getCategories, Category } from '../services/productService';
+
 import { useAuth } from '../context/AuthContext';
 import CartSidebar from './CartSidebar';
 import WishlistSidebar from './WishlistSidebar';
@@ -15,14 +15,41 @@ const getInitials = (name: string) => {
   return name.substring(0, 2).toUpperCase();
 };
 
+// Add ResponsivePicture for logo
+function ResponsivePicture({ variants = undefined, alt, fallback, ...props }: { variants?: any, alt: string, fallback: string, [key: string]: any }) {
+  if (!variants) {
+    return <img src={fallback} alt={alt} {...props} />;
+  }
+  const getSrcSet = (fmt: string) => {
+    if (!variants[fmt]) return undefined;
+    return Object.entries(variants[fmt])
+      .map(([size, path]) => `${import.meta.env.VITE_API_BASE_URL}${path} ${size}w`)
+      .join(', ');
+  };
+  const webpSrcSet = getSrcSet('webp');
+  const avifSrcSet = getSrcSet('avif');
+  let defaultSrc = fallback;
+  if (webpSrcSet) {
+    const largest = Object.entries(variants.webp).sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (largest) defaultSrc = `${import.meta.env.VITE_API_BASE_URL}${largest[1]}`;
+  }
+  return (
+    <picture>
+      {avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes="40px" />}
+      {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes="40px" />}
+      <img src={defaultSrc} alt={alt} {...props} />
+    </picture>
+  );
+}
+
 const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBottomNav, setShowBottomNav] = useState(false);
+  const [bottomNavVisible, setBottomNavVisible] = useState(false);
   const [navbarVisible, setNavbarVisible] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [lastScrollY, setLastScrollY] = useState(0);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -45,9 +72,11 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
           if (currentY > lastScrollY && currentY > 40) {
             // Scrolling down
             setNavbarVisible(false);
+            setBottomNavVisible(true);
           } else {
             // Scrolling up
             setNavbarVisible(true);
+            setBottomNavVisible(false);
           }
           setLastScrollY(currentY);
           ticking = false;
@@ -59,18 +88,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const categoriesData = await getCategories();
-        setCategories(categoriesData);
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      }
-    };
 
-    fetchCategories();
-  }, []);
 
   // Only allow one sidebar open at a time
   const handleSetIsCartOpen = (open: boolean) => {
@@ -85,7 +103,11 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
   // Always show bottom nav on mobile
   useEffect(() => {
     const handleResize = () => {
-      setShowBottomNav(window.innerWidth < 1024); // lg breakpoint
+      const shouldShow = window.innerWidth < 1024; // lg breakpoint
+      setShowBottomNav(shouldShow);
+      if (!shouldShow) {
+        setBottomNavVisible(false);
+      }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -115,7 +137,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
           <div className="flex relative justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="whitespace-nowrap flex items-center text-xl font-bold text-black dark:text-white hover:text-[#059669] transition-colors">
-              <img src="/media/site-logo.svg" alt="Shortcut Store Logo" style={{ height: 40, width: 'auto' }} className="mr-2" />
+              <ResponsivePicture variants={undefined} fallback="/media/site-logo.svg" alt="Shortcut Store Logo" style={{ height: 40, width: 'auto' }} className="mr-2" />
             </Link>
 
             {/* Desktop Navigation (lg and up) */}
@@ -127,19 +149,6 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
                     className="whitespace-nowrap text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
                   >
                     {link.name}
-                    <span
-                      className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
-                    ></span>
-                  </Link>
-                </div>
-              ))}
-              {categories.map(category => (
-                <div key={`nav-${category.slug}`} className="inline-block relative align-middle group">
-                  <Link
-                    to={`/products?category=${category.slug}`}
-                    className="whitespace-nowrap block text-sm text-black dark:text-white hover:text-[#059669] transition-colors px-1"
-                  >
-                    {category.name}
                     <span
                       className="absolute left-0 right-0 mx-auto -bottom-2 h-[3px] bg-[#059669] rounded transition-transform duration-300 origin-center scale-x-0 group-hover:scale-x-100 pointer-events-none"
                     ></span>
@@ -331,7 +340,7 @@ const Header = ({ toggleTheme, theme }: { toggleTheme: () => void, theme: string
 
       {/* Mobile Bottom Navigation Bar */}
       {showBottomNav && (
-        <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[130] w-[95vw] max-w-md bg-white/90 dark:bg-zinc-900/90 rounded-2xl shadow-2xl flex justify-around items-center py-2 px-2 border border-zinc-200 dark:border-zinc-700 lg:hidden">
+        <nav className={`fixed bottom-0 left-1/2 -translate-x-1/2 z-[130] w-[95vw] max-w-md bg-white/90 dark:bg-zinc-900/90 rounded-2xl shadow-2xl flex justify-around items-center py-2 px-2 border border-zinc-200 dark:border-zinc-700 lg:hidden transition-all duration-300 ${bottomNavVisible ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0'}`}>
           <Link to="/" className="flex flex-col items-center text-xs text-zinc-700 dark:text-zinc-200">
             <Home className="mb-1 w-7 h-7" />
             Shop

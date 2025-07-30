@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ChevronDown, Menu } from 'lucide-react';
 // import { mockProducts } from '../data/mockData';
@@ -6,7 +6,6 @@ import { ChevronDown, Menu } from 'lucide-react';
 // import { useCart } from '../context/CartContext';
 // import { useWishlist } from '../context/WishlistContext';
 import { getProducts, Product, getCategories, Category } from '../services/productService';
-// @ts-expect-error: ProductCard is a JS file with no type declaration
 import ProductCard from '../components/ProductCard';
 import Skeleton from '../components/ui/Skeleton';
 
@@ -19,8 +18,10 @@ function getQueryParams(search: string) {
   };
 }
 
-// Extend Product type locally to include available_sizes and sale_percent
-type ProductWithSizes = Product & { available_sizes?: string[], sale_percent?: number };
+// Extend Product type locally to include available_sizes, sale_percent, and subcategory
+// and Category to include subcategories
+type ProductWithSizes = Product & { available_sizes?: string[], sale_percent?: number, subcategory?: any };
+type CategoryWithSub = Category & { subcategories?: any[] };
 
 const ProductsPage = () => {
   const location = useLocation();
@@ -34,6 +35,7 @@ const ProductsPage = () => {
     categories: [] as string[],
     seasons: [] as string[],
     colors: [] as string[],
+    subcategories: [] as string[], // NEW
   });
   const [sortBy, setSortBy] = useState('no-sort');
   const [collapsed, setCollapsed] = useState({
@@ -48,6 +50,8 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showSubcatDropdown, setShowSubcatDropdown] = useState(false);
+  const subcatDropdownRef = useRef<HTMLDivElement>(null);
 
   // const { currency } = useCurrency();
   // const conversionRate = 50; // 1 USD = 50 EGP
@@ -111,6 +115,23 @@ const ProductsPage = () => {
     setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (subcatDropdownRef.current && !subcatDropdownRef.current.contains(event.target as Node)) {
+        setShowSubcatDropdown(false);
+      }
+    }
+    if (showSubcatDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSubcatDropdown]);
+
   // Helper to filter products
   const filteredProducts = products
     .filter(product => {
@@ -133,6 +154,14 @@ const ProductsPage = () => {
       // Color filter - use available_colors from API
       if (filters.colors && filters.colors.length > 0 && Array.isArray(product.available_colors)) {
         if (!filters.colors.some(color => product.available_colors?.includes(color))) return false;
+      }
+      // Subcategory filter (only for Basic Top)
+      if (
+        filters.categories.length === 1 &&
+        (categories.find(c => c.slug === filters.categories[0]) as CategoryWithSub)?.slug === 'basic-top' &&
+        filters.subcategories.length > 0
+      ) {
+        if (!((product as ProductWithSizes).subcategory) || !filters.subcategories.includes((product as ProductWithSizes).subcategory.slug)) return false;
       }
       return true;
     })
@@ -172,12 +201,19 @@ const ProductsPage = () => {
     return Array.from(sizes);
   };
 
+  // Helper: Get subcategories for selected category
+  const getSubcategoriesForCategory = (categorySlug: string) => {
+    const cat = categories.find(c => c.slug === categorySlug);
+    return (cat as CategoryWithSub)?.subcategories || [];
+  };
+
   const handleCategorySelect = (category: string) => {
     setFilters(prev => ({
       ...prev,
       categories: prev.categories[0] === category ? [] : [category],
       colors: [],
       sizes: [],
+      subcategories: [], // Clear subcategories when category changes
     }));
   };
 
@@ -266,32 +302,37 @@ const ProductsPage = () => {
                         </label>
                         {filters.categories[0] === category.slug && (
                           <>
-                            <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                              {getUniqueColorsForCategory(category.slug).map(color => (
-                                <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    className="mr-1 bg-zinc-700 border-zinc-600"
-                                    checked={filters.colors?.includes(color)}
-                                    onChange={() => handleFilterChange('colors', color)}
-                                  />
-                                  <span className="capitalize">{color}</span>
-                                </label>
-                              ))}
-                            </div>
-                            <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                              {getUniqueSizesForCategory(category.slug).map(size => (
-                                <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                  <input
-                                    type="checkbox"
-                                    className="mr-1 bg-zinc-700 border-zinc-600"
-                                    checked={filters.sizes?.includes(size)}
-                                    onChange={() => handleFilterChange('sizes', size)}
-                                  />
-                                  <span>{size}</span>
-                                </label>
-                              ))}
-                            </div>
+                            {/* Only show color and size filters if NOT Basic Top */}
+                            {(category as CategoryWithSub).slug !== 'basic-top' && (
+                              <>
+                                <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                                  {getUniqueColorsForCategory(category.slug).map(color => (
+                                    <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                      <input
+                                        type="checkbox"
+                                        className="mr-1 bg-zinc-700 border-zinc-600"
+                                        checked={filters.colors?.includes(color)}
+                                        onChange={() => handleFilterChange('colors', color)}
+                                      />
+                                      <span className="capitalize">{color}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                                  {getUniqueSizesForCategory(category.slug).map(size => (
+                                    <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                      <input
+                                        type="checkbox"
+                                        className="mr-1 bg-zinc-700 border-zinc-600"
+                                        checked={filters.sizes?.includes(size)}
+                                        onChange={() => handleFilterChange('sizes', size)}
+                                      />
+                                      <span>{size}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </>
+                            )}
                           </>
                         )}
                       </div>
@@ -359,6 +400,40 @@ const ProductsPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Subcategory (only for Basic Top) - Desktop */}
+              {filters.categories.length === 1 && categories.find(c => c.slug === filters.categories[0])?.slug === 'basic-top' && (
+                <div className="mb-8 relative" ref={subcatDropdownRef}>
+                  <button
+                    type="button"
+                    className="flex justify-between items-center w-full px-3 py-2 border rounded bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border-zinc-300 dark:border-zinc-700 shadow"
+                    onClick={() => setShowSubcatDropdown(v => !v)}
+                  >
+                    <span className="font-semibold">Subcategory</span>
+                    <ChevronDown className={`h-5 w-5 ml-2 transition-transform ${showSubcatDropdown ? '' : 'rotate-180'}`} />
+                  </button>
+                  {showSubcatDropdown && (
+                    <div className="absolute left-0 mt-2 w-full z-50 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded shadow-lg p-3">
+                      {(getSubcategoriesForCategory(filters.categories[0]) as any[]).map((sub: any) => (
+                        <label key={sub.slug} className="flex items-center text-zinc-900 dark:text-zinc-300 mb-2">
+                          <input
+                            type="checkbox"
+                            className="mr-2 bg-zinc-700 border-zinc-600"
+                            checked={filters.subcategories.includes(sub.slug)}
+                            onChange={() => setFilters(prev => ({
+                              ...prev,
+                              subcategories: prev.subcategories.includes(sub.slug)
+                                ? prev.subcategories.filter((s: string) => s !== sub.slug)
+                                : [...prev.subcategories, sub.slug]
+                            }))}
+                          />
+                          <span>{sub.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -440,32 +515,37 @@ const ProductsPage = () => {
                       </label>
                       {filters.categories[0] === category.slug && (
                         <>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueColorsForCategory(category.slug).map(color => (
-                              <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.colors?.includes(color)}
-                                  onChange={() => handleFilterChange('colors', color)}
-                                />
-                                <span className="capitalize">{color}</span>
-                              </label>
-                            ))}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                            {getUniqueSizesForCategory(category.slug).map(size => (
-                              <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
-                                <input
-                                  type="checkbox"
-                                  className="mr-1 bg-zinc-700 border-zinc-600"
-                                  checked={filters.sizes?.includes(size)}
-                                  onChange={() => handleFilterChange('sizes', size)}
-                                />
-                                <span>{size}</span>
-                              </label>
-                            ))}
-                          </div>
+                          {/* Only show color and size filters if NOT Basic Top */}
+                          {category.slug !== 'basic-top' && (
+                            <>
+                              <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                                {getUniqueColorsForCategory(category.slug).map(color => (
+                                  <label key={color} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                    <input
+                                      type="checkbox"
+                                      className="mr-1 bg-zinc-700 border-zinc-600"
+                                      checked={filters.colors?.includes(color)}
+                                      onChange={() => handleFilterChange('colors', color)}
+                                    />
+                                    <span className="capitalize">{color}</span>
+                                  </label>
+                                ))}
+                              </div>
+                              <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                                {getUniqueSizesForCategory(category.slug).map(size => (
+                                  <label key={size} className="flex items-center text-zinc-900 dark:text-zinc-300">
+                                    <input
+                                      type="checkbox"
+                                      className="mr-1 bg-zinc-700 border-zinc-600"
+                                      checked={filters.sizes?.includes(size)}
+                                      onChange={() => handleFilterChange('sizes', size)}
+                                    />
+                                    <span>{size}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
@@ -502,8 +582,8 @@ const ProductsPage = () => {
                 </div>
               </div>
             </div>
-            {/* Size filter for mobile, only show if a category is selected */}
-            {filters.categories.length > 0 && (
+            {/* Size filter for mobile, only show if a category is selected and not Basic Top */}
+            {filters.categories.length > 0 && categories.find(c => c.slug === filters.categories[0])?.slug !== 'basic-top' && (
               <div className="mb-8">
                 <button
                   type="button"
@@ -530,6 +610,50 @@ const ProductsPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Subcategory (only for Basic Top) - Mobile */}
+            {filters.categories.length === 1 && categories.find(c => c.slug === filters.categories[0])?.slug === 'basic-top' && (
+              <div className="mb-8 relative" ref={subcatDropdownRef}>
+                <button
+                  type="button"
+                  className="flex justify-between items-center w-full px-3 py-2 border rounded bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border-zinc-300 dark:border-zinc-700 shadow"
+                  onClick={() => setShowSubcatDropdown(v => !v)}
+                >
+                  <span className="font-semibold">Subcategory</span>
+                  <ChevronDown className={`h-5 w-5 ml-2 transition-transform ${showSubcatDropdown ? '' : 'rotate-180'}`} />
+                </button>
+                {showSubcatDropdown && (
+                  <div className="absolute left-0 mt-2 w-full z-50 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded shadow-lg p-3">
+                    {(getSubcategoriesForCategory(filters.categories[0]) as any[]).map((sub: any) => (
+                      <label key={sub.slug} className="flex items-center text-zinc-900 dark:text-zinc-300 mb-2">
+                        <input
+                          type="checkbox"
+                          className="mr-2 bg-zinc-700 border-zinc-600"
+                          checked={filters.subcategories.includes(sub.slug)}
+                          onChange={() => setFilters(prev => ({
+                            ...prev,
+                            subcategories: prev.subcategories.includes(sub.slug)
+                              ? prev.subcategories.filter((s: string) => s !== sub.slug)
+                              : [...prev.subcategories, sub.slug]
+                          }))}
+                        />
+                        <span>{sub.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Clear Filters Button */}
+            <button
+              className="mt-4 px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-700 text-black dark:text-white border border-zinc-300 dark:border-zinc-600 shadow hover:bg-zinc-300 dark:hover:bg-zinc-600"
+              onClick={() => setFilters({
+                availability: [], priceMin: '', priceMax: '', sizes: [], categories: [], seasons: [], colors: [], subcategories: []
+              })}
+            >
+              Clear Filters
+            </button>
           </div>
           {/* Overlay click to close */}
           <div className="flex-1 h-full bg-black bg-opacity-40" onClick={() => setShowMobileFilters(false)} />

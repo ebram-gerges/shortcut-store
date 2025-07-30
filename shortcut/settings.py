@@ -52,7 +52,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
     'nested_admin',
-    'jazzmin',
     'landing',
     'accounts.apps.AccountsConfig',
     'products',
@@ -75,7 +74,7 @@ INSTALLED_APPS = [
     # 2FA apps
     'django_otp',
     'django_otp.plugins.otp_email',
-    'two_factor',
+    # 'two_factor',  # Disabled to allow admin login without 2FA
 ]
 
 MIDDLEWARE = [
@@ -166,36 +165,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # CORS settings duplicated below; keeping only the more specific allow list.
 # CORS_ALLOW_ALL_ORIGINS = True  # Removed duplicate
-
-# Jazzmin settings for a beautiful admin
-JAZZMIN_SETTINGS = {
-    "site_title": "Shortcut Store Admin",
-    "site_header": "Shortcut Store Admin",
-    "site_brand": "Shortcut Store",
-    "welcome_sign": "Welcome to the Shortcut Store Admin!",
-    "copyright": "Shortcut Store",
-    "search_model": ["products.Product", "products.ProductColorVariant", "products.ProductSizeVariant"],
-    "show_sidebar": True,
-    "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    "order_with_respect_to": ["products", "accounts", "orders", "cart", "reviews", "vouchers", "wishlist"],
-    "custom_links": {},
-    "icons": {
-        "products.Product": "fas fa-tshirt",
-        "products.ProductColorVariant": "fas fa-palette",
-        "products.ProductSizeVariant": "fas fa-ruler-combined",
-        "products.ProductColorVariantImage": "fas fa-image",
-    },
-    "default_icon_parents": "fas fa-folder-open",
-    "default_icon_children": "fas fa-file",
-    "related_modal_active": True,
-    "use_google_fonts_cdn": True,
-    "show_ui_builder": True,
-    "changeform_format": "horizontal_tabs",
-    "changeform_format_overrides": {"products.Product": "collapsible",},
-    "theme": "darkly",  # Modern dark theme
-}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

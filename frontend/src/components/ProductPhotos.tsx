@@ -11,6 +11,33 @@ interface ProductPhotosProps {
   productName: string;
 }
 
+// Add a helper to build <picture> sources from image_variants
+function ResponsivePicture({ variants, alt, fallback, ...props }: { variants?: any, alt: string, fallback: string, [key: string]: any }) {
+  if (!variants) {
+    return <img src={fallback} alt={alt} {...props} />;
+  }
+  const getSrcSet = (fmt: string) => {
+    if (!variants[fmt]) return undefined;
+    return Object.entries(variants[fmt])
+      .map(([size, path]) => `${import.meta.env.VITE_API_BASE_URL}${path} ${size}w`)
+      .join(', ');
+  };
+  const webpSrcSet = getSrcSet('webp');
+  const avifSrcSet = getSrcSet('avif');
+  let defaultSrc = fallback;
+  if (webpSrcSet) {
+    const largest = Object.entries(variants.webp).sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (largest) defaultSrc = `${import.meta.env.VITE_API_BASE_URL}${largest[1]}`;
+  }
+  return (
+    <picture>
+      {avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes="100vw" />}
+      {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes="100vw" />}
+      <img src={defaultSrc} alt={alt} {...props} />
+    </picture>
+  );
+}
+
 const ProductPhotos: React.FC<ProductPhotosProps> = ({ productId, productSlug, productName }) => {
   const { user } = useAuth();
   const [photos, setPhotos] = useState<ProductPhoto[]>([]);
@@ -126,9 +153,10 @@ const ProductPhotos: React.FC<ProductPhotosProps> = ({ productId, productSlug, p
               >
                 {/* Photo */}
                 <div className="aspect-square relative">
-                  <img
-                    src={photo.photo}
+                  <ResponsivePicture
+                    variants={photo.image_variants}
                     alt={photo.caption || `${productName} on ${photo.username}`}
+                    fallback={photo.photo}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   

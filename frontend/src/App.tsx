@@ -22,6 +22,8 @@ import OrderTrackingPage from './pages/OrderTrackingPage';
 import Header from './components/Header';
 import OrderDetailPage from './pages/OrderDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
+import AboutUsPage from './pages/AboutUsPage';
+import ContactUsPage from './pages/ContactUsPage';
 
 // Suppress React Router future flag warnings
 const originalWarn = console.warn;
@@ -130,6 +132,8 @@ function App() {
                     <Route path="/orders" element={<Layout toggleTheme={toggleTheme} theme={theme}><OrdersPage /></Layout>} />
                     <Route path="/track-order" element={<Layout toggleTheme={toggleTheme} theme={theme}><OrderTrackingPage /></Layout>} />
                     <Route path="/order/:id" element={<Layout toggleTheme={toggleTheme} theme={theme}><OrderDetailPage /></Layout>} />
+                    <Route path="/about" element={<Layout toggleTheme={toggleTheme} theme={theme}><AboutUsPage /></Layout>} />
+                    <Route path="/contact" element={<Layout toggleTheme={toggleTheme} theme={theme}><ContactUsPage /></Layout>} />
                     <Route path="*" element={<Layout toggleTheme={toggleTheme} theme={theme}><NotFoundPage /></Layout>} />
                   </Routes>
                 </BrowserRouter>

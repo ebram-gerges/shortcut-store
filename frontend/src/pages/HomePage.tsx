@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getCollectionImages, CollectionImage, getProducts, getCategories, Category } from '../services/productService';
 import { Product } from '../types/product';
+import ReviewSummary from '../components/ReviewSummary';
+import ProductCard from '../components/ProductCard';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -74,6 +76,35 @@ const MarqueeBanner: React.FC = () => {
 
 // Add marquee animation to index.css or here via style tag if not present
 
+// Add a helper to build <picture> sources from image_variants
+function ResponsivePicture({ variants, alt, fallback, ...props }: { variants?: any, alt: string, fallback: string, [key: string]: any }) {
+  if (!variants) {
+    return <img src={fallback} alt={alt} {...props} />;
+  }
+  // Build srcSet strings for each format
+  const getSrcSet = (fmt: string) => {
+    if (!variants[fmt]) return undefined;
+    return Object.entries(variants[fmt])
+      .map(([size, path]) => `${import.meta.env.VITE_API_BASE_URL}${path} ${size}w`)
+      .join(', ');
+  };
+  const webpSrcSet = getSrcSet('webp');
+  const avifSrcSet = getSrcSet('avif');
+  // Use the largest webp as default src if available
+  let defaultSrc = fallback;
+  if (webpSrcSet) {
+    const largest = Object.entries(variants.webp).sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (largest) defaultSrc = `${import.meta.env.VITE_API_BASE_URL}${largest[1]}`;
+  }
+  return (
+    <picture>
+      {avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes="100vw" />}
+      {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes="100vw" />}
+      <img src={defaultSrc} alt={alt} {...props} />
+    </picture>
+  );
+}
+
 const HomePage = () => {
   // Animation for 'Shop by Categories' section
   const categoriesRef = useRef<HTMLDivElement | null>(null);
@@ -88,7 +119,7 @@ const HomePage = () => {
 
   // Hero carousel state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [heroImages, setHeroImages] = useState<{ url: string, variants?: any, alt: string }[]>([]);
 
   // Products state
   const [products, setProducts] = useState<Product[]>([]);
@@ -100,28 +131,29 @@ const HomePage = () => {
   // Fetch collection gallery images from backend
   useEffect(() => {
     (async () => {
-      const collections: CollectionImage[] = await getCollectionImages();
+      const collections: any[] = await getCollectionImages();
       // Use main image if available, otherwise fallback to gallery images
-      const heroImgs: string[] = collections
+      let heroImgs: { url: string, variants?: any, alt: string }[] = collections
+        .filter(col => !!col.image)
         .map(col => {
-          if (!col.image) return null;
-          if (col.image.startsWith('http')) return col.image;
-          // Always prepend base URL for /media/ paths
-          return `${apiBaseUrl}${col.image}`;
-        })
-        .filter((img): img is string => !!img);
+          const url = col.image.startsWith('http') ? col.image : `${apiBaseUrl}${col.image}`;
+          return {
+            url,
+            variants: col.image_variants,
+            alt: col.title || 'Collection',
+          };
+        });
       // If no main images, fallback to gallery images
       if (heroImgs.length === 0) {
-        const galleryImages: string[] = collections
-          .flatMap(col => col.images)
-          .map(img => {
-            if (img.image.startsWith('http')) return img.image;
-            return `${apiBaseUrl}${img.image}`;
-          });
-        setHeroImages(galleryImages);
-      } else {
-        setHeroImages(heroImgs);
+        const galleryImages: { url: string, variants?: any, alt: string }[] = collections
+          .flatMap(col => (col.images || []).map((img: any) => ({
+            url: img.image.startsWith('http') ? img.image : `${apiBaseUrl}${img.image}`,
+            variants: img.image_variants,
+            alt: (col.title || 'Collection Gallery'),
+          })));
+        heroImgs = galleryImages;
       }
+      setHeroImages(heroImgs);
     })();
   }, []);
 
@@ -237,46 +269,68 @@ const HomePage = () => {
     })();
   }, []);
 
+  // ---
+  // Previous dynamic aspect ratio code for rollback:
+  /*
+  const [heroAspectRatio, setHeroAspectRatio] = useState<number | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    setHeroAspectRatio(null);
+  }, [currentImageIndex]);
+
+  function handleHeroImgLoad(e: React.SyntheticEvent<HTMLImageElement, Event>) {
+    const img = e.currentTarget;
+    if (img.naturalWidth && img.naturalHeight) {
+      setHeroAspectRatio(img.naturalWidth / img.naturalHeight);
+    }
+  }
+  */
+  // ---
+
   return (
     <div className='overflow-hidden relative z-20'>
       {/* Hero Section */}
-      <section className="h-[60vh] flex justify-center items-center relative text-center overflow-hidden">
+      <section
+        className="flex justify-center items-center relative text-center overflow-hidden"
+        style={{ width: '100vw', height: '60vh', maxHeight: '100vh' }}
+      >
         {/* Background Images Carousel */}
         <div className="absolute inset-0 w-full h-full">
-          {heroImages.map((image, index) => (
+          {heroImages.map((img, index) => (
             <div
               key={index}
               className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
                 index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-              }`}
+              } flex items-center justify-center`}
             >
-              <img
-                src={image}
-                alt={`Collection ${index + 1}`}
-                className="object-cover w-full h-full"
-                onError={(e) => {
-                  // Fallback to gradient background if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                  }
-                }}
-              />
-              {/* Dark overlay for better text readability */}
+              <picture>
+                {/* AVIF/WEBP sources if available */}
+                {img.variants?.avif && (
+                  <source type="image/avif" srcSet={(Object.values(img.variants.avif) as string[]).map((p) => `${p}`).join(', ')} />
+                )}
+                {img.variants?.webp && (
+                  <source type="image/webp" srcSet={(Object.values(img.variants.webp) as string[]).map((p) => `${p}`).join(', ')} />
+                )}
+                <img
+                  src={img.url}
+                  alt={img.alt}
+                  className="w-full h-full object-cover object-bottom"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              </picture>
               <div className="absolute inset-0 bg-black/40"></div>
             </div>
           ))}
         </div>
 
         {/* Content */}
-        <div className="flex relative z-10 flex-col justify-end items-center px-4 pb-20 mx-auto max-w-4xl h-full">
-          {/* Shop Now Button at the bottom with pop-up animation */}
-          <div className={`transition-all duration-700 ease-out transform ${
+        <div className="relative z-10 w-full h-full">
+          {/* Shop Now Button centered vertically with animation */}
+          <div className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 translate-y-[180%] transition-all duration-700 ease-out ${
             buttonVisible 
-              ? 'opacity-100 scale-100 translate-y-0' 
-              : 'opacity-0 scale-95 translate-y-10'
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-95'
           }`}>
             <Link
               to="/products"
@@ -362,26 +416,7 @@ const HomePage = () => {
                 <p>No products found.</p>
               ) : (
                 products.map(product => (
-                  <Link to={`/product/${product.id}`} key={product.id} className="group">
-                    <div className="overflow-hidden relative w-full rounded-xl shadow-md transition-transform duration-300 aspect-square group-hover:scale-105">
-                       {(product.indoor_image || product.outdoor_image) ? (
-                         <img
-                           src={(product.indoor_image || product.outdoor_image)?.startsWith('http') 
-                             ? (product.indoor_image || product.outdoor_image) 
-                             : `${apiBaseUrl}${product.indoor_image || product.outdoor_image}`}
-                           alt={product.name}
-                           className="object-cover absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-110"
-                           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                         />
-                       ) : (
-                         <div className="flex absolute inset-0 justify-center items-center w-full h-full text-2xl bg-zinc-200 text-zinc-400">No Image</div>
-                       )}
-                      <div className="flex absolute bottom-0 left-0 flex-col items-start p-4 w-full bg-gradient-to-t from-black/80 to-black/0">
-                        <h3 className="mb-1 text-lg font-bold text-white">{product.name}</h3>
-                        <p className="text-sm text-white/80">${product.price}</p>
-                      </div>
-                    </div>
-                  </Link>
+                  <ProductCard product={product} key={product.id} />
                 ))
               )}
             </div>
@@ -417,6 +452,9 @@ const HomePage = () => {
           </div>
         </section>
       </div>
+
+      {/* Website Review Section at the bottom */}
+      <ReviewSummary />
     </div>
   );
 };
