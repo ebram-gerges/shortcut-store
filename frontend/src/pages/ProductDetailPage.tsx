@@ -310,6 +310,7 @@ const ProductDetailPage = () => {
                       src={mainImage}
                       alt={product.name + (selectedColor ? ` (${selectedColor})` : '')}
                           className="object-contain w-full h-auto max-h-[400px]"
+                          loading="lazy"
                           initial={{ opacity: 0, x: 40 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -40 }}
@@ -327,6 +328,7 @@ const ProductDetailPage = () => {
                     key={img.id || idx}
                     src={img.image}
                     alt={img.alt_text || product.name}
+                    loading="lazy"
                     className={`h-16 w-16 object-cover rounded border-2 cursor-pointer ${currentImageIdx === idx ? 'border-[#059669]' : 'border-zinc-600'}`}
                     onClick={() => handleThumbnailClick(idx)}
                     initial={{ opacity: 0, y: 20 }}
