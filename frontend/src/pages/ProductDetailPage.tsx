@@ -7,7 +7,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { getProductBySlug } from '../services/productService';
 import { Product as ProductType } from '../types/product';
-import ProductReviews from '../components/ProductReviews';
+import Reviews from '../components/Reviews';
 import Slider from 'react-slick';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -582,7 +582,7 @@ const ProductDetailPage = () => {
                       Add a review to {product.name}
                     </Link>
                   </div>
-                  <ProductReviews productId={product.id} productName={product.name} productSlug={product.slug} />
+                  <Reviews productId={product.id.toString()} />
                 </div>
               )}
             </div>
