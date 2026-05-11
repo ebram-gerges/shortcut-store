@@ -97,3 +97,6 @@ managed_context/
 # Logs directory
 logs/ 
 /memory/ 
+
+performance_optimization_prompt.txt
+.env/
